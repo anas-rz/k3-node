@@ -4,5 +4,5 @@
 </a>
 
 
-Based on [Spektral](https://github.com/danielegrattarola/spektral/tree/master)
+Based on [Spektral](https://github.com/danielegrattarola/spektral/tree/master), [PyTorch Geometric](https://github.com/pyg-team/pytorch_geometric/) and [StellarGraph](https://github.com/stellargraph/stellargraph)
 
