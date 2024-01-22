@@ -1,3 +1,5 @@
+# ported from spektral
+
 import inspect
 from keras import layers, ops
 

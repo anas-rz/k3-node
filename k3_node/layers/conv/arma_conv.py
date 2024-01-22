@@ -1,8 +1,9 @@
+# ported from spektral
+
 from keras import activations
 from keras import ops
 from keras.layers import Dropout
 
-# from spektral.layers import ops
 from k3_node.layers.conv.conv import Conv
 from k3_node.utils import normalized_adjacency
 from k3_node.ops import modal_dot

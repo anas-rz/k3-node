@@ -1,3 +1,5 @@
+# ported from spektral
+
 import warnings
 from functools import wraps
 

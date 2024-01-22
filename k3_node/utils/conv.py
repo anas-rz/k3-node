@@ -1,3 +1,5 @@
+# ported from spektral
+
 import numpy as np
 import warnings, copy
 

@@ -1,3 +1,5 @@
+# ported from spektral
+
 from keras import ops
 from keras.layers import Dense
 

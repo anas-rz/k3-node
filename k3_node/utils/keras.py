@@ -1,3 +1,5 @@
+# ported from spektral
+
 from keras import activations, constraints, initializers, regularizers
 from keras import ops
 

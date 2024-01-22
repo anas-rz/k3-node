@@ -1,3 +1,5 @@
+# ported from spektral
+
 from keras import ops as k_ops
 
 
