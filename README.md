@@ -7,12 +7,12 @@ Ported from [Spektral](https://github.com/danielegrattarola/spektral/tree/master
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 
-> [!IMPORTANT]
-> Due to current Keras limitations, `k3_node` only supports 
-> operations on dense adjacency matrix. Support to sparse adjacency
-> matrix will be added as soon as Keras adds support for sparse operations
-> (Or I may add support for multibackend sparse ops myself using torch-sparse,
-> jax.sparse, tf.sparse) after making the current framework tested and stable
+[!IMPORTANT] > Due to current Keras limitations, k3_node only
+supports > operations on dense adjacency matrix. Support to sparse
+adjacency > matrix will be added as soon as Keras adds support for
+sparse operations > (Or I may add support for multibackend sparse
+ops myself using torch-sparse, > jax.sparse, tf.sparse) after making
+the current framework tested and stable.
 
 
 # What's Included: 
