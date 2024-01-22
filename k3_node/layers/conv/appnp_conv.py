@@ -2,9 +2,9 @@ from keras import activations
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
 
-from k3_node.ops import ops as k_ops
 from k3_node.layers.conv.conv import Conv
 from k3_node.utils import gcn_filter
+from k3_node.ops import modal_dot
 
 
 class APPNPConv(Conv):
@@ -75,7 +75,7 @@ class APPNPConv(Conv):
         mlp_out = self.mlp(x)
         output = mlp_out
         for _ in range(self.propagations):
-            output = (1 - self.alpha) * k_ops.modal_dot(
+            output = (1 - self.alpha) * modal_dot(
                 a, output
             ) + self.alpha * mlp_out
         if mask[0] is not None:
