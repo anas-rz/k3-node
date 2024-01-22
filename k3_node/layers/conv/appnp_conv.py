@@ -75,9 +75,7 @@ class APPNPConv(Conv):
         mlp_out = self.mlp(x)
         output = mlp_out
         for _ in range(self.propagations):
-            output = (1 - self.alpha) * modal_dot(
-                a, output
-            ) + self.alpha * mlp_out
+            output = (1 - self.alpha) * modal_dot(a, output) + self.alpha * mlp_out
         if mask[0] is not None:
             output *= mask[0]
         output = self.activation(output)
