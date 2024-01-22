@@ -3,7 +3,7 @@ import keras
 from keras import layers, ops
 
 
-class DenseSAGEConv(layers.Layer):
+class SAGEConv(layers.Layer):
     def __init__(self, out_channels, normalize=False, bias=True):
         super().__init__()
         self.out_channels = out_channels

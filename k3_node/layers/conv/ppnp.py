@@ -3,7 +3,7 @@ from keras.layers import Layer
 from keras import ops
 
 
-class PPNPPropagationLayer(Layer):
+class PPNPPropagation(Layer):
     def __init__(self, units, final_layer=None, input_dim=None, **kwargs):
         if "input_shape" not in kwargs and input_dim is not None:
             kwargs["input_shape"] = (input_dim,)
