@@ -42,3 +42,6 @@ Ported from [Spektral](https://github.com/danielegrattarola/spektral/tree/master
 
 ## Attention Layers:
 - `Performer`: The linear scaled attention mechanism from the "Rethinking Attention with Performers"
+
+# Contributions
+Help us improve K3Node! Report issues, submit patches, or share your suggestions.
