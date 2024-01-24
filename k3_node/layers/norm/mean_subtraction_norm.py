@@ -1,4 +1,6 @@
 from keras import layers, ops
+
+
 class MeanSubtractionNorm(layers.Layer):
     def __init__(self, **kwargs):
         super(MeanSubtractionNorm, self).__init__(**kwargs)
