@@ -1,7 +1,6 @@
 # ported from spektral
 
-from keras import activations, constraints, initializers, regularizers
-from keras import ops
+from keras import ops, activations, constraints, initializers, regularizers
 
 
 def segment_softmax(x, indices, n_nodes=None):

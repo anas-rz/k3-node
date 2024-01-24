@@ -5,8 +5,7 @@ from keras.layers import Dense, Dropout
 from keras.models import Sequential
 
 from k3_node.layers.conv.conv import Conv
-from k3_node.utils import gcn_filter
-from k3_node.ops import modal_dot
+from k3_node.ops import gcn_filter, modal_dot
 
 
 class APPNPConv(Conv):

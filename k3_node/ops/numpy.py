@@ -14,14 +14,11 @@ else:
 
 
 def polyval(p, x):
-    """
-    Evaluate a polynomial at a point x.
-    """
     if backend.backend() == "tensorflow":
         return tf.math.polyval(p, x)
     elif backend.backend() == "torch":
         raise NotImplementedError
-        return torch.polyval(p, x)
+    
     elif backend.backend() == "jax":
         return jnp.polyval(p, x)
     elif backend.backend() == "numpy":
