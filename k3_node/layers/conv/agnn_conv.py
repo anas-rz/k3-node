@@ -25,8 +25,7 @@ class AGNNConv(MessagePassing):
             self.beta = ops.cast(1.0, self.dtype)
         self.built = True
 
-    def call(self, inputs, **kwargs):
-        x, a, _ = self.get_inputs(inputs)
+    def call(self, x, a, **kwargs):
         x_norm = keras.utils.normalize(x, axis=-1)
         output = self.propagate(x, a, x_norm=x_norm)
         output = self.activation(output)

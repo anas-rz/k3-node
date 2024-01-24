@@ -21,6 +21,6 @@ def get_source_target(a):
         if isinstance(a, tf.sparse.SparseTensor):
             return a.indices[:, 0], a.indices[:, 1]
         else:
-            k_ops.where(a != 0)
+            return k_ops.where(a != 0)
     else:
         return k_ops.where(a != 0)
