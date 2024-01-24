@@ -36,5 +36,9 @@ Ported from [Spektral](https://github.com/danielegrattarola/spektral/tree/master
 - `SoftmaxAggregation`
 - `PowerMeanAggregation`
 
+## Normalization Layers
+- `MeanSubtractionNorm`
+- `MessageNorm`
+
 ## Attention Layers:
 - `Performer`: The linear scaled attention mechanism from the "Rethinking Attention with Performers"
