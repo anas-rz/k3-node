@@ -32,22 +32,7 @@ class PPNPPropagation(Layer):
         self.built = True
 
     def call(self, inputs):
-        features, *As = inputs
-        batch_dim, n_nodes, _ = ops.shape(features)
-        if batch_dim != 1:
-            raise ValueError(
-                "Currently full-batch methods only support a batch dimension of one"
-            )
-
-        # Remove singleton batch dimension
-        features = ops.squeeze(features, 0)
-
-        # Propagate the features
-        A = As[0]
-        output = ops.dot(A, features)
-
-        # Add batch dimension back if we removed it
-        if batch_dim == 1:
-            output = ops.expand_dims(output, 0)
-
+        x, a = inputs
+        n_nodes, _ = ops.shape(x)
+        output = ops.dot(x, a)
         return output

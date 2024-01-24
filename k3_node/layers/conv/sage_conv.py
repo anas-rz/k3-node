@@ -15,7 +15,6 @@ class SAGEConv(layers.Layer):
     def call(self, x, adj, mask=None):
         x = ops.expand_dims(x, axis=0) if len(ops.shape(x)) == 2 else x
         adj = ops.expand_dims(adj, axis=0) if len(ops.shape(adj)) == 2 else adj
-        B, N = ops.shape(adj)[0], ops.shape(adj)[1]
 
         out = ops.matmul(adj, x)
         out = out / ops.clip(
@@ -25,7 +24,6 @@ class SAGEConv(layers.Layer):
 
         if self.normalize:
             out = keras.utils.normalize(out, axis=-1)
-
         if mask is not None:
             mask = ops.expand_dims(mask, axis=-1)
             out = ops.multiply(out, mask)

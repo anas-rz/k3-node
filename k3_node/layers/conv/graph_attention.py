@@ -132,16 +132,7 @@ class GraphAttention(Layer):
         A = inputs[1]  # Adjacency matrix (1 X N x N)
         N = ops.shape(A)[-1]
 
-        batch_dim, n_nodes, _ = ops.shape(X)
-        if batch_dim != 1:
-            raise ValueError(
-                "Currently full-batch methods only support a batch dimension of one"
-            )
-
-        else:
-            # Remove singleton batch dimension
-            X = ops.squeeze(X, 0)
-            A = ops.squeeze(A, 0)
+        assert len(ops.shape(A)) == 2, f'Adjacency matrix A should be 2-D'
 
         outputs = []
         for head in range(self.attn_heads):
@@ -206,11 +197,7 @@ class GraphAttention(Layer):
         else:
             output = ops.mean(ops.stack(outputs), axis=0)  # N x F')
 
-        # Nonlinear activation function
         output = self.activation(output)
 
-        # Add batch dimension back if we removed it
-        if batch_dim == 1:
-            output = ops.expand_dims(output, 0)
 
         return output

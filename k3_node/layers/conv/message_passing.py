@@ -11,6 +11,7 @@ from k3_node.utils import (
     serialize_kwarg,
     is_keras_kwarg,
 )
+from k3_node.ops import get_source_target
 
 
 class MessagePassing(layers.Layer):
@@ -38,7 +39,7 @@ class MessagePassing(layers.Layer):
 
     def propagate(self, x, a, e=None, **kwargs):
         self.n_nodes = ops.shape(x)[-2]
-        self.index_sources, self.index_targets = ops.where(a != 0)
+        self.index_sources, self.index_targets = get_source_target(a)
 
         msg_kwargs = self.get_kwargs(x, a, e, self.msg_signature, kwargs)
         messages = self.message(x, **msg_kwargs)
