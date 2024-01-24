@@ -8,7 +8,7 @@ Ported from [Spektral](https://github.com/danielegrattarola/spektral/tree/master
 </a>
 
 > [!IMPORTANT]
-> `K3 Node` only supports operations on sparce adjacency matrix operations with `TensorFlow` backend. Support to sparse adjacency matrix for JAX or PyTorch backends will be added as soon as Keras adds support for sparse operations (Or I may add support for multibackend sparse ops myself using `torch-sparse`, `jax.sparse`) after making the current framework tested and stable.
+> `K3 Node` only supports operations on sparce adjacency matrix with `TensorFlow` backend. Support for JAX or PyTorch backends will be added future releases.
 
 
 # What's Included: 
