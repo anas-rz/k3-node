@@ -18,7 +18,7 @@ def polyval(p, x):
         return tf.math.polyval(p, x)
     elif backend.backend() == "torch":
         raise NotImplementedError
-    
+
     elif backend.backend() == "jax":
         return jnp.polyval(p, x)
     elif backend.backend() == "numpy":
