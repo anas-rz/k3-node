@@ -12,4 +12,4 @@ def test_mean_subtraction_norm():
 
     out = norm(x)
     assert ops.shape(out) == (6, 16)
-    assert np.allclose(ops.mean(out), ops.convert_to_numpy(0.), atol=1e-6)
+    assert np.allclose(ops.mean(out), ops.convert_to_numpy(0.0), atol=1e-6)

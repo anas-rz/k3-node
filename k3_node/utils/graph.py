@@ -1,5 +1,6 @@
 from keras import ops
 
+
 def edge_index_to_adjacency_matrix(edge_index):
     edge_index = ops.convert_to_tensor(edge_index)
     num_nodes = ops.max(edge_index) + 1

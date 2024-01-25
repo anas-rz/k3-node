@@ -17,7 +17,7 @@ def normalize_A(A):
 
 
 def get_source_target(a):
-    if backend.backend() == "tensorflow": 
+    if backend.backend() == "tensorflow":
         if isinstance(a, tf.sparse.SparseTensor):
             return a.indices[:, 0], a.indices[:, 1]
         else:

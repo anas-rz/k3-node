@@ -10,7 +10,6 @@ def test_message_norm():
     out = norm((x, msg))
     assert ops.shape(out) == (100, 16)
 
-
     norm = MessageNorm(learn_scale=False)
     out = norm((x, msg))
     assert ops.shape(out) == (100, 16)

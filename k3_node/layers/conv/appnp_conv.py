@@ -72,7 +72,6 @@ class APPNPConv(Conv):
 
     def call(self, inputs, mask=None):
         x, a = inputs
-
         mlp_out = self.mlp(x)
         output = mlp_out
         for _ in range(self.propagations):

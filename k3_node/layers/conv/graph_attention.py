@@ -132,7 +132,7 @@ class GraphAttention(Layer):
         A = inputs[1]  # Adjacency matrix (1 X N x N)
         N = ops.shape(A)[-1]
 
-        assert len(ops.shape(A)) == 2, f'Adjacency matrix A should be 2-D'
+        assert len(ops.shape(A)) == 2, f"Adjacency matrix A should be 2-D"
 
         outputs = []
         for head in range(self.attn_heads):
@@ -198,6 +198,5 @@ class GraphAttention(Layer):
             output = ops.mean(ops.stack(outputs), axis=0)  # N x F')
 
         output = self.activation(output)
-
 
         return output

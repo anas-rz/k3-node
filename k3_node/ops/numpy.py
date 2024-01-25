@@ -1,6 +1,7 @@
 from keras import backend
 from k3_node.utils.backend_import import *
 
+
 def polyval(p, x):
     if backend.backend() == "tensorflow":
         return tf.math.polyval(p, x)
