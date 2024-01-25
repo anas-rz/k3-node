@@ -63,7 +63,7 @@ class GatedGraphConv(MessagePassing):
     def call(self, inputs):
         x, a, _ = self.get_inputs(inputs)
         F = ops.shape(x)[-1]
-
+        assert F <= self.channels
         to_pad = self.channels - F
         ndims = len(x.shape) - 1
         output = ops.pad(x, [[0, 0]] * ndims + [[0, to_pad]])
