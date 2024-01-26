@@ -13,8 +13,8 @@ class SAGEConv(layers.Layer):
         self.lin_root = layers.Dense(out_channels, use_bias=bias)
 
     def call(self, x, adj, mask=None):
-        x = ops.expand_dims(x, axis=0) if len(ops.shape(x)) == 2 else x
-        adj = ops.expand_dims(adj, axis=0) if len(ops.shape(adj)) == 2 else adj
+        # x = ops.expand_dims(x, axis=0) if len(ops.shape(x)) == 2 else x
+        # adj = ops.expand_dims(adj, axis=0) if len(ops.shape(adj)) == 2 else adj
 
         out = ops.matmul(adj, x)
         out = out / ops.clip(
