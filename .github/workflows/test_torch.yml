@@ -1,4 +1,4 @@
-name: Tests and coverage
+name: Tests and coverage with PyTorch Backend
 
 on: [push, pull_request]
 

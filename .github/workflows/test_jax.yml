@@ -1,4 +1,4 @@
-name: Tests and coverage
+name: Tests and coverage with JAX Backend
 
 on: [push, pull_request]
 

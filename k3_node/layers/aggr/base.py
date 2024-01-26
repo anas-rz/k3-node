@@ -38,11 +38,12 @@ class Aggregation(layers.Layer):
 
         if axis not in [-2, 0]:
             raise ValueError(
-                f"Aggregation needs to perform aggregation in first dimension (got '{dim}')"
+                f"Aggregation needs to perform aggregation in first dimension (got '{axis}')"
             )
 
     def reduce(self, x, index=None, axis=-2, reduce_fn=ops.segment_sum):
         self.assert_two_dimensional_input(x, axis)
         if index is None:
             raise NotImplementedError("Aggregation requires 'index' to be specified")
-        return reduce_fn(x, index)
+        num_segments = ops.max(index) + 1
+        return reduce_fn(x, index, num_segments=num_segments)
