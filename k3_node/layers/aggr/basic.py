@@ -98,7 +98,7 @@ def get_unique(inputs):
         return np.unique(inputs, return_inverse=True)
 
 
-def _segment_mean(data, segment_ids):
+def _segment_mean(data, segment_ids, num_segments=None):
     data = ops.convert_to_tensor(data)
     segment_ids = ops.convert_to_tensor(segment_ids)
     unique_segment_ids, indices = get_unique(segment_ids)
