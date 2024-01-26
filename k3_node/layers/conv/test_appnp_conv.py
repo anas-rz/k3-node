@@ -6,7 +6,6 @@ from k3_node.utils import edge_index_to_adjacency_matrix
 
 
 @pytest.mark.parametrize("channels", [32, 64])
-# @pytest.mark.parametrize("propagations", [1, 2, 3, 4])
 @pytest.mark.parametrize("use_bias", [True, False])
 def test_appnp_conv(channels, use_bias):
     x = random.normal((4, 16))
