@@ -23,12 +23,12 @@ jobs:
         python -m pip install pytest coverage codecov
     - name: Install dependencies
       run: |
-        pip3 install torch --index-url https://download.pytorch.org/whl/cpu
-        pip3 install -r requirements.txt
+        pip install tensorflow
+        pip install -r requirements.txt
 
     - name: Test with pytest and coverage
       run: |
-        export KERAS_BACKEND=torch
+        export KERAS_BACKEND=tensorflow
         python -m coverage run --source=. -m pytest
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
