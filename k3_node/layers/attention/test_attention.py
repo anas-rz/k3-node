@@ -2,7 +2,6 @@ import pytest
 from keras import ops, random
 
 from k3_node.layers import PerformerAttention
-from k3_node.utils import edge_index_to_adjacency_matrix
 
 
 def test_performer_attention():
