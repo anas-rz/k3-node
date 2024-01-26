@@ -2,6 +2,9 @@ name: Tests and coverage with PyTorch Backend
 
 on: [push, pull_request]
 
+env:
+  KERAS_BACKEND: torch
+
 jobs:
   build:
 
@@ -28,7 +31,6 @@ jobs:
 
     - name: Test with pytest and coverage
       run: |
-        export KERAS_BACKEND=torch
         python -m coverage run --source=. -m pytest
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
