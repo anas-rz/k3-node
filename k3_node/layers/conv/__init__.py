@@ -9,3 +9,4 @@ from .gin_conv import *
 from .graph_attention import *
 from .ppnp import *
 from .sage_conv import *
+from .diffusion_conv import *

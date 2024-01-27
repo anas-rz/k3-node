@@ -14,6 +14,7 @@ from k3_node.layers.conv import (
     GraphAttention,
     PPNPPropagation,
     SAGEConv,
+    DiffusionConv
 )
 from k3_node.utils import edge_index_to_adjacency_matrix
 
@@ -59,6 +60,19 @@ def test_arma_conv(channels, iterations, use_bias):
     )
     out = conv((x, adj1))
     assert ops.shape(out) == (4, channels)
+
+@pytest.mark.parametrize("out_channels", [32, 64])
+@pytest.mark.parametrize("K", [6, 8])
+@pytest.mark.parametrize("in_channels", [32, 64])
+def test_diffusion_conv(out_channels, in_channels, K):
+    x = random.normal((4, in_channels))
+    edge_index = [[0, 0, 0, 1, 2, 3], [1, 2, 3, 0, 0, 0]]
+    adj1 = edge_index_to_adjacency_matrix(edge_index)
+
+    conv = DiffusionConv(out_channels,
+        K=K)
+    out = conv((x, adj1))
+    assert ops.shape(out) == (4, out_channels)
 
 
 @pytest.mark.parametrize("aggregate", ["sum", "max"])
