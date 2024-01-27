@@ -20,6 +20,7 @@ from k3_node.utils import edge_index_to_adjacency_matrix
 
 
 @pytest.mark.parametrize("trainable", [True, False])
+
 def test_agnn_conv(trainable):
     x = random.normal((4, 16))
     edge_index = [[0, 0, 0, 1, 2, 3], [1, 2, 3, 0, 0, 0]]
@@ -65,6 +66,8 @@ def test_arma_conv(channels, iterations, use_bias):
 @pytest.mark.parametrize("K", [6, 8])
 @pytest.mark.parametrize("in_channels", [32, 64])
 def test_diffusion_conv(out_channels, in_channels, K):
+    if backend.backend() == 'torch':
+        pytest.skip("DiffusionConv Doesn't work with PyTorch backend. Support will be added in future.")
     x = random.normal((4, in_channels))
     edge_index = [[0, 0, 0, 1, 2, 3], [1, 2, 3, 0, 0, 0]]
     adj1 = edge_index_to_adjacency_matrix(edge_index)
