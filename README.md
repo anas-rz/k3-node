@@ -39,13 +39,14 @@ Ported from [Spektral](https://github.com/danielegrattarola/spektral/tree/master
 
 ## Examples
 ### TensorFlow Backend
-- Model based on `ARMAConv` using features from `spektral`<a target="_blank" href="https://colab.research.google.com/github/anas-rz/k3-node/blob/main/examples/tensorflow/ogb_arxiv_spektral_dataset.ipynb">
+- Model based on `ARMAConv` using features from `spektral` <a target="_blank" href="https://colab.research.google.com/github/anas-rz/k3-node/blob/main/examples/tensorflow/ogb_arxiv_spektral_dataset.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 
 ### PyTorch Backend
-- Model based on `GatedGraphConv` using features from `torch_geometric`<a target="_blank" href="https://colab.research.google.com/github/anas-rz/k3-node/blob/main/examples/torch/planetoid_PyTorch_Geometric.ipynb">
+- Model based on `GatedGraphConv` using features from `torch_geometric` <a target="_blank" href="https://colab.research.google.com/github/anas-rz/k3-node/blob/main/examples/torch/planetoid_PyTorch_Geometric.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
+
 # Contributions
 Help us improve K3Node! Report issues, submit patches, or share your suggestions.
