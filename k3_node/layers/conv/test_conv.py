@@ -1,5 +1,5 @@
 import pytest
-from keras import ops, random
+from keras import ops, random, backend
 
 # import all layers from k3_node.layers.conv
 from k3_node.layers.conv import (
