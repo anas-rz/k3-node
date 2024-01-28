@@ -14,3 +14,14 @@ def polyval(p, x):
         return np.polyval(p, x)
     else:
         raise NotImplementedError
+
+
+def get_unique(inputs):
+    if backend.backend() == "tensorflow":
+        return tf.unique(inputs)
+    elif backend.backend() == "torch":
+        return torch.unique(inputs, return_inverse=True)
+    elif backend.backend() == "jax":
+        return jnp.unique(inputs, return_inverse=True)
+    elif backend.backend() == "numpy":
+        return np.unique(inputs, return_inverse=True)

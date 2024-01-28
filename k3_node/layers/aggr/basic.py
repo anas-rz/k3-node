@@ -2,6 +2,7 @@
 
 from keras import ops
 from k3_node.layers.aggr import Aggregation
+from k3_node.ops import get_unique
 
 
 class SumAggregation(Aggregation):
@@ -77,25 +78,7 @@ class PowerMeanAggregation(Aggregation):
         return out
 
 
-def get_unique(inputs):
-    from keras import backend
 
-    if backend.backend() == "tensorflow":
-        import tensorflow as tf
-
-        return tf.unique(inputs)
-    elif backend.backend() == "torch":
-        import torch
-
-        return torch.unique(inputs, return_inverse=True)
-    elif backend.backend() == "jax":
-        import jax.numpy as jnp
-
-        return jnp.unique(inputs, return_inverse=True)
-    elif backend.backend() == "numpy":
-        import numpy as np
-
-        return np.unique(inputs, return_inverse=True)
 
 
 def _segment_mean(data, segment_ids, num_segments=None):
