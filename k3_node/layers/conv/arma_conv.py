@@ -9,6 +9,28 @@ from k3_node.ops import modal_dot, normalized_adjacency
 
 
 class ARMAConv(Conv):
+    """
+    `k3_node.layers.ARMAConv` 
+    Implementation of ARMAConv layer
+    
+    Args:
+        channels: The number of output channels.
+        order: The order of the ARMA filter.
+        iterations: The number of iterations to perform.
+        share_weights: Whether to share the weights across iterations.
+        gcn_activation: The activation function to use for GCN.
+        dropout_rate: The dropout rate.
+        activation: The activation function to use in the layer.
+        use_bias: Whether to add a bias to the linear transformation.
+        kernel_initializer: Initializer for the `kernel` weights matrix.
+        bias_initializer: Initializer for the bias vector.
+        kernel_regularizer: Regularizer for the `kernel` weights matrix.
+        bias_regularizer: Regularizer for the bias vector.
+        activity_regularizer: Regularizer for the output.
+        kernel_constraint: Constraint for the `kernel` weights matrix.
+        bias_constraint: Constraint for the bias vector.
+        **kwargs: Additional keyword arguments.
+    """
     def __init__(
         self,
         channels,
@@ -28,6 +50,7 @@ class ARMAConv(Conv):
         bias_constraint=None,
         **kwargs,
     ):
+
         super().__init__(
             activation=activation,
             use_bias=use_bias,

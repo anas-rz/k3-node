@@ -13,6 +13,16 @@ def segment_softmax(x, indices, n_nodes=None):
 
 
 class AGNNConv(MessagePassing):
+    """
+    `k3_node.layers.AGNNConv` 
+    Implementation of Attention-based Graph Neural Network (AGNN) layer
+
+    Args:
+        trainable: Whether to learn the scaling factor beta.
+        aggregate: Aggregation function to use (one of 'sum', 'mean', 'max').
+        activation: Activation function to use.
+        **kwargs: Additional arguments to pass to the `MessagePassing` superclass.
+    """
     def __init__(self, trainable=True, aggregate="sum", activation=None, **kwargs):
         super().__init__(aggregate=aggregate, activation=activation, **kwargs)
         self.trainable = trainable

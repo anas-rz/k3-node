@@ -4,6 +4,15 @@ from keras import layers, ops
 
 
 class SAGEConv(layers.Layer):
+    """
+    `k3_node.layers.SAGEConv`
+    Implementation of GraphSAGE layer
+
+    Args:
+        out_channels: The number of output channels.
+        normalize: Whether to normalize the output.
+        bias: Whether to add a bias to the linear transformation.
+    """
     def __init__(self, out_channels, normalize=False, bias=True):
         super().__init__()
         self.out_channels = out_channels

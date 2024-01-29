@@ -5,7 +5,6 @@ from k3_node.ops import normalized_adjacency, polyval
 
 
 class DiffuseFeatures(layers.Layer):
-
     def __init__(
         self,
         num_diffusion_steps,
@@ -41,6 +40,19 @@ class DiffuseFeatures(layers.Layer):
 
 
 class DiffusionConv(Conv):
+    """
+    `k3_node.layers.DiffusionConv`
+    Implementation of Diffusion Convolutional Neural Networks (DCNN) layer
+
+    Args:
+        channels: The number of output channels.
+        K: The number of diffusion steps.
+        activation: Activation function to use.
+        kernel_initializer: Initializer for the `kernel` weights matrix.
+        kernel_regularizer: Regularizer for the `kernel` weights matrix.
+        kernel_constraint: Constraint for the `kernel` weights matrix.
+        **kwargs: Additional arguments to pass to the `Conv` superclass.
+    """
     def __init__(
         self,
         channels,

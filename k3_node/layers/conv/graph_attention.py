@@ -5,6 +5,31 @@ from keras.layers import Layer, LeakyReLU, Dropout
 
 
 class GraphAttention(Layer):
+    """
+    `k3_node.layers.GraphAttention`
+    Implementation of Graph Attention (GAT) layer
+
+    Args:
+        units: Positive integer, dimensionality of the output space.
+        attn_heads: Positive integer, number of attention heads.
+        attn_heads_reduction: {'concat', 'average'} Method for reducing attention heads.
+        in_dropout_rate: Dropout rate applied to the input (node features).
+        attn_dropout_rate: Dropout rate applied to attention coefficients.
+        activation: Activation function to use.
+        use_bias: Whether to add a bias to the linear transformation.
+        final_layer: Deprecated, use tf.gather or GatherIndices instead.
+        saliency_map_support: Whether to support saliency map calculations.
+        kernel_initializer: Initializer for the `kernel` weights matrix.
+        kernel_regularizer: Regularizer for the `kernel` weights matrix.
+        kernel_constraint: Constraint for the `kernel` weights matrix.
+        bias_initializer: Initializer for the bias vector.
+        bias_regularizer: Regularizer for the bias vector.
+        bias_constraint: Constraint for the bias vector.
+        attn_kernel_initializer: Initializer for the attention kernel weights matrix.
+        attn_kernel_regularizer: Regularizer for the attention kernel weights matrix.
+        attn_kernel_constraint: Constraint for the attention kernel weights matrix.
+        **kwargs: Additional arguments to pass to the `Layer` superclass.
+    """
     def __init__(
         self,
         units,

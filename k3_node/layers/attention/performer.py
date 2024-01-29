@@ -60,6 +60,20 @@ class PerformerProjection(layers.Layer):
 
 
 class PerformerAttention(layers.Layer):
+    """
+    `k3_node.layers.PerformerAttention`
+    
+    Initialization Arguments:
+
+    Args:
+        channels: The number of output channels.
+        heads: The number of attention heads.
+        head_channels: The number of attention heads.
+        kernel: activation function.
+        qkv_bias: activation function.
+        attn_out_bias: Bias in Attention Out.
+        dropout: Dropout rate.
+    """
     def __init__(
         self,
         channels,

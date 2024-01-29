@@ -6,21 +6,58 @@ from k3_node.ops import get_unique
 
 
 class SumAggregation(Aggregation):
+    """`k3_node.layers.SumAggregation`
+    Compute and return the sum of two numbers.
+
+    Args:
+        `**kwargs`: Additional keyword arguments passed to the `Layer` superclass.
+
+    Returns:
+        A callable layer instance.
+    """
+
     def call(self, x, index=None, axis=-2):
         return self.reduce(x, index, axis=axis, reduce_fn=ops.segment_sum)
 
 
 class MaxAggregation(Aggregation):
+    """`k3_node.layers.MaxAggregation`
+    Compute and return the sum of two numbers.
+
+    Args:
+        `**kwargs`: Additional keyword arguments passed to the `Layer` superclass.
+
+    Returns:
+        A callable layer instance.
+    """
     def call(self, x, index=None, axis=-2):
         return self.reduce(x, index, axis=axis, reduce_fn=ops.segment_max)
 
 
 class MeanAggregation(Aggregation):
+    """`k3_node.layers.MeanAggregation`
+    Compute and return the sum of two numbers.
+
+    Args:
+        `**kwargs`: Additional keyword arguments passed to the `Layer` superclass.
+
+    Returns:
+        A callable layer instance.
+    """
     def call(self, x, index=None, axis=-2):
         return self.reduce(x, index, axis=axis, reduce_fn=_segment_mean)
 
 
 class SoftmaxAggregation(Aggregation):
+    """`k3_node.layers.SoftmaxAggregation`
+    Compute and return the sum of two numbers.
+
+    Args:
+        `**kwargs`: Additional keyword arguments passed to the `Layer` superclass.
+
+    Returns:
+        A callable layer instance.
+    """
     def __init__(self, t=1.0, trainable=False, channels=1):
         super().__init__()
 
@@ -50,6 +87,16 @@ class SoftmaxAggregation(Aggregation):
 
 
 class PowerMeanAggregation(Aggregation):
+    """`k3_node.layers.SoftmaxAggregation`
+    Compute and return the sum of two numbers.
+
+    Args:
+        **kwargs: Additional keyword arguments passed to the `Layer` superclass.
+
+    Returns:
+        A callable layer instance.
+        
+    """
     def __init__(self, p=1.0, trainable=False, channels=1):
         super().__init__()
 
@@ -76,9 +123,6 @@ class PowerMeanAggregation(Aggregation):
         if not isinstance(p, (int, float)) or p != 1:
             out = ops.clip(out, 0, 100) ** (1.0 / p)
         return out
-
-
-
 
 
 def _segment_mean(data, segment_ids, num_segments=None):

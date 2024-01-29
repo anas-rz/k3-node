@@ -5,6 +5,24 @@ from keras.layers import Layer, dot
 
 
 class GraphConvolution(Layer):
+    """
+    `k3_node.layers.GraphConvolution` 
+    Implementation of Graph Convolution (GCN) layer
+
+    Args:
+        units: Positive integer, dimensionality of the output space.
+        activation: Activation function to use.
+        use_bias: Whether to add a bias to the linear transformation.
+        final_layer: Deprecated, use tf.gather or GatherIndices instead.
+        input_dim: Deprecated, use `keras.layers.Input` with `input_shape` instead.
+        kernel_initializer: Initializer for the `kernel` weights matrix.
+        kernel_regularizer: Regularizer for the `kernel` weights matrix.
+        kernel_constraint: Constraint for the `kernel` weights matrix.
+        bias_initializer: Initializer for the bias vector.
+        bias_regularizer: Regularizer for the bias vector.
+        bias_constraint: Constraint for the bias vector.
+        **kwargs: Additional arguments to pass to the `Layer` superclass.
+    """
     def __init__(
         self,
         units,

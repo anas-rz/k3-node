@@ -9,6 +9,28 @@ from k3_node.ops import gcn_filter, modal_dot
 
 
 class APPNPConv(Conv):
+    """
+        `k3_node.layers.APPNPConv`
+        Implementation of Approximate Personalized Propagation of Neural Predictions
+
+        Args:
+            channels: The number of output channels.
+            alpha: The teleport probability.
+            propagations: The number of propagation steps.
+            mlp_hidden: A list of hidden channels for the MLP.
+            mlp_activation: The activation function to use in the MLP.
+            dropout_rate: The dropout rate for the MLP.
+            activation: The activation function to use in the layer.
+            use_bias: Whether to add a bias to the linear transformation.
+            kernel_initializer: Initializer for the `kernel` weights matrix.
+            bias_initializer: Initializer for the bias vector.
+            kernel_regularizer: Regularizer for the `kernel` weights matrix.
+            bias_regularizer: Regularizer for the bias vector.
+            activity_regularizer: Regularizer for the output.
+            kernel_constraint: Constraint for the `kernel` weights matrix.
+            bias_constraint: Constraint for the bias vector.
+            **kwargs: Additional keyword arguments.
+    """
     def __init__(
         self,
         channels,
@@ -28,6 +50,7 @@ class APPNPConv(Conv):
         bias_constraint=None,
         **kwargs,
     ):
+  
         super().__init__(
             activation=activation,
             use_bias=use_bias,

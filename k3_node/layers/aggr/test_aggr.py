@@ -28,8 +28,6 @@ def test_basic_aggregation(Aggregation):
     assert ops.shape(out) == (3, ops.shape(x)[-1])
 
 
-
-
 @pytest.mark.parametrize(
     "in_channels, local_units, global_units",
     [
@@ -49,4 +47,3 @@ def test_deep_sets_aggregation(in_channels, local_units, global_units):
 
     out = aggr(x, index)
     assert ops.shape(out) == (3, global_units)
-

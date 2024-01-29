@@ -3,6 +3,7 @@ from keras import ops, random
 
 from k3_node.layers import PerformerAttention
 
+
 @pytest.mark.parametrize("in_channels", [32, 64])
 @pytest.mark.parametrize("out_channels", [32, 64])
 @pytest.mark.parametrize("heads", [4, 8])

@@ -15,6 +15,14 @@ from k3_node.ops import get_source_target
 
 
 class MessagePassing(layers.Layer):
+    """
+    `k3_node.layers.conv.MessagePassing`
+    Base class for message passing layers.
+
+    Args:
+        aggregate: Aggregation function to use (one of 'sum', 'mean', 'max').
+        **kwargs: Additional arguments to pass to the `Layer` superclass.
+    """
     def __init__(self, aggregate="sum", **kwargs):
         super().__init__(**{k: v for k, v in kwargs.items() if is_keras_kwarg(k)})
         self.kwargs_keys = []

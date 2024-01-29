@@ -7,6 +7,26 @@ from k3_node.layers.conv.message_passing import MessagePassing
 
 
 class GatedGraphConv(MessagePassing):
+    """
+    `k3_node.layers.GatedGraphConv` 
+
+    Implementation of Gated Graph Convolution (GGC) layer
+
+    Args:
+        channels: The number of output channels.
+        n_layers: The number of GGC layers to stack.
+        activation: Activation function to use.
+        use_bias: Whether to add a bias to the linear transformation.
+        kernel_initializer: Initializer for the `kernel` weights matrix.
+        bias_initializer: Initializer for the bias vector.
+        kernel_regularizer: Regularizer for the `kernel` weights matrix.
+        bias_regularizer: Regularizer for the bias vector.
+        activity_regularizer: Regularizer for the output.
+        kernel_constraint: Constraint for the `kernel` weights matrix.
+        bias_constraint: Constraint for the bias vector.
+        **kwargs: Additional arguments to pass to the `MessagePassing` superclass.
+    
+    """
     def __init__(
         self,
         channels,

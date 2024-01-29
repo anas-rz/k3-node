@@ -4,6 +4,16 @@ from keras import ops
 
 
 class PPNPPropagation(Layer):
+    """
+    `k3_node.layers.PPNPPropagation`
+    Implementation of PPNP layer
+
+    Args:
+        units: Positive integer, dimensionality of the output space.
+        final_layer: Deprecated, use tf.gather or GatherIndices instead.
+        input_dim: Deprecated, use `keras.layers.Input` with `input_shape` instead.
+        **kwargs: Additional arguments to pass to the `Layer` superclass. 
+    """
     def __init__(self, units, final_layer=None, input_dim=None, **kwargs):
         if "input_shape" not in kwargs and input_dim is not None:
             kwargs["input_shape"] = (input_dim,)

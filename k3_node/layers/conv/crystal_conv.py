@@ -7,6 +7,23 @@ from k3_node.layers.conv.message_passing import MessagePassing
 
 
 class CrystalConv(MessagePassing):
+    """
+    `k3_node.layers.CrystalConv`
+    Implementation of Crystal Graph Convolutional Neural Networks (CGCNN) layer
+
+    Args:
+        aggregate: Aggregation function to use (one of 'sum', 'mean', 'max').
+        activation: Activation function to use.
+        use_bias: Whether to add a bias to the linear transformation.
+        kernel_initializer: Initializer for the `kernel` weights matrix.
+        bias_initializer: Initializer for the bias vector.
+        kernel_regularizer: Regularizer for the `kernel` weights matrix.
+        bias_regularizer: Regularizer for the bias vector.
+        activity_regularizer: Regularizer for the output.
+        kernel_constraint: Constraint for the `kernel` weights matrix.
+        bias_constraint: Constraint for the bias vector.
+        **kwargs: Additional arguments to pass to the `MessagePassing` superclass. 
+    """
     def __init__(
         self,
         aggregate="sum",
@@ -21,6 +38,7 @@ class CrystalConv(MessagePassing):
         bias_constraint=None,
         **kwargs,
     ):
+        
         super().__init__(
             aggregate=aggregate,
             activation=activation,
