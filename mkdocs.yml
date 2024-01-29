@@ -1,0 +1,13 @@
+site_name: K3 Node
+
+theme:
+  name: "material"
+
+plugins:
+  - mkdocstrings
+
+nav:
+  - k3_node.layers: layers.md
+  - Aggregation Layers: aggr_layers.md
+  - Convolution Layers: conv_layers.md
+  - Normalization Layers: norm_layers.md
