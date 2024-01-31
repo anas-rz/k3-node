@@ -1,7 +1,8 @@
-site_name: K3 Node
+site_name: K3Node
 # steal from Patrick Kidger
 theme:
   name: "material"
+  logo: images/logo.svg
   features:
         - navigation.sections  # Sections are included in the navigation on the left.
         - toc.integrate  # Table of contents is integrated on the left; does not appear separately on the right.
@@ -22,6 +23,9 @@ theme:
           toggle:
             icon: material/weather-sunny
             name: Switch to light mode
+  font:
+        text: Montserrat
+        code: Ubuntu Mono
 
 plugins:
   - mkdocstrings
