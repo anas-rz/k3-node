@@ -32,8 +32,8 @@ plugins:
 docs_dir: _docs
 site_dir: docs
 
-repo_url: https://github.com/anas-rz/k3im
-repo_name: anas-rz/k3im
+repo_url: https://github.com/anas-rz/k3-node
+repo_name: anas-rz/k3-node
 edit_uri: ""  # No edit button, as some of our pages are in /docs and some in /examples via symlink, so it's impossible for them all to be accurate
 
 
@@ -42,5 +42,5 @@ nav:
   - Aggregation Layers: aggr_layers.md
   - Convolution Layers: conv_layers.md
   - Normalization Layers: norm_layers.md
-  - Example TensorFlow: examples/tensorflow/ogb_arxiv_spektral_dataset.ipynb
-  - Example PyTorch: examples/torch/planetoid_PyTorch_Geometric.ipynb
+  # - Example TensorFlow: examples/tensorflow/ogb_arxiv_spektral_dataset.ipynb
+  # - Example PyTorch: examples/torch/planetoid_PyTorch_Geometric.ipynb
