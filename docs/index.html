@@ -344,6 +344,9 @@
 
 
 <h1 id="welcome-to-k3-node">Welcome to K3 Node</h1>
+<div style="text-align: center;">
+  <img src="images/logo.svg" alt="alt text" width="200"/>
+</div>
 
 
 <div class="doc doc-object doc-module">
@@ -355,7 +358,19 @@
   
       <p><code>k3_node</code> is a library for building multibackend graph neural networks. 
 Built upon Keras 3.0 the models can be trained using TensorFlow, PyTorch, 
-or JAX</p>
+or JAX.</p>
+<p>To install the package, run:</p>
+<pre><code class="language-bash">git clone https://github.com/anas-rz/k3-node.git # bash
+</code></pre>
+<pre><code class="language-python"># in your code
+import sys
+sys.path.append('k3-node')
+
+import os
+os.environ['KERAS_BACKEND'] = 'tensorflow' # or 'torch' or 'jax'
+
+from k3_node import ...
+</code></pre>
 
   
 
