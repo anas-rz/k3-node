@@ -48,3 +48,9 @@ nav:
   - Normalization Layers: norm_layers.md
   # - Example TensorFlow: examples/tensorflow/ogb_arxiv_spektral_dataset.ipynb
   # - Example PyTorch: examples/torch/planetoid_PyTorch_Geometric.ipynb
+
+markdown_extensions:
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
