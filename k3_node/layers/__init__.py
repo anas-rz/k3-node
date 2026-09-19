@@ -9,3 +9,6 @@ from .aggr import *
 from .attention import *
 from .dense import *
 from .pool import *
+from .unpool import *
+from .kge import *
+from .functional import *
