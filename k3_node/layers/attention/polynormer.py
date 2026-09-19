@@ -15,6 +15,7 @@ class PolynormerAttention(keras.layers.Layer):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.supports_masking = True
 
         self.channels = channels
         self.heads = heads
@@ -45,6 +46,9 @@ class PolynormerAttention(keras.layers.Layer):
         self.lns = keras.layers.LayerNormalization(epsilon=1e-5)
         self.lin_out = keras.layers.Dense(inner_channels)
         self.dropout = keras.layers.Dropout(dropout)
+
+    def compute_mask(self, inputs, mask=None):
+        return mask
 
     def call(self, x, mask=None, training=None):
         shape = ops.shape(x)

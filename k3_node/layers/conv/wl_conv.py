@@ -21,6 +21,9 @@ class WLConv(keras.layers.Layer):
     def reset_parameters(self):
         self.hashmap = {}
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, x, edge_index):
         if len(ops.shape(x)) > 1:
             x = ops.argmax(x, axis=-1)
@@ -80,6 +83,9 @@ class WLConvContinuous(MessagePassing):
     def __init__(self, **kwargs):
         kwargs.setdefault("aggr", "add")
         super().__init__(**kwargs)
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def call(self, x, edge_index, edge_weight=None):
         if isinstance(x, (tuple, list)):

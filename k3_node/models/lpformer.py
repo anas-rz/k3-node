@@ -81,6 +81,9 @@ class LPAttLayer(keras.layers.Layer):
         self.post_att_norm = keras.layers.LayerNormalization()
         self.drop = keras.layers.Dropout(dropout) if dropout > 0 else None
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, edge_feats, node_feats, ppr_rpes=None, training=False):
         # edge_feats has shape (B, in_channels * 2) or (B, in_channels)
         # Apply self-attention / multi-head transformation across pairs

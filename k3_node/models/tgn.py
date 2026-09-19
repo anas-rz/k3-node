@@ -66,6 +66,9 @@ class MeanAggregator(keras.layers.Layer):
         super().__init__(**kwargs)
         self.mean_aggr = MeanAggregation()
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, msg, index, t, dim_size: int):
         return self.mean_aggr(msg, index=index, dim_size=dim_size, dim=0)
 
@@ -188,6 +191,9 @@ class TGNMemory(keras.layers.Layer):
         self.msg_s_store = {}
         self.msg_d_store = {}
         self._reset_message_store()
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def reset_parameters(self):
         if hasattr(self.msg_s_module, "reset_parameters"):

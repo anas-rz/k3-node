@@ -35,6 +35,9 @@ class GATEConv(MessagePassing):
         self.att_r = self.add_weight(shape=(1, in_channels), initializer="glorot_uniform", name="att_r")
         self.bias = self.add_weight(shape=(out_channels,), initializer="zeros", name="bias")
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, x, edge_index, edge_attr, training=None):
         row, col = ops.cast(edge_index[0], "int32"), ops.cast(edge_index[1], "int32")
 

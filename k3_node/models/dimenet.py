@@ -183,6 +183,9 @@ class ResidualLayer(keras.layers.Layer):
         self.lin1 = keras.layers.Dense(hidden_channels)
         self.lin2 = keras.layers.Dense(hidden_channels)
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, x):
         return x + self.act(self.lin2(self.act(self.lin1(x))))
 
@@ -226,6 +229,9 @@ class InteractionBlock(keras.layers.Layer):
             ResidualLayer(hidden_channels, act) for _ in range(num_after_skip)
         ]
         self.sum_aggr = SumAggregation()
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def call(self, x, rbf, sbf, idx_kj, idx_ji):
         rbf = self.lin_rbf(rbf)
@@ -286,6 +292,9 @@ class InteractionPPBlock(keras.layers.Layer):
         ]
         self.sum_aggr = SumAggregation()
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, x, rbf, sbf, idx_kj, idx_ji):
         x_ji = self.act(self.lin_ji(x))
         x_kj = self.act(self.lin_kj(x))
@@ -337,6 +346,9 @@ class OutputBlock(keras.layers.Layer):
         )
         self.sum_aggr = SumAggregation()
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, x, rbf, i, num_nodes: Optional[int] = None):
         x = self.lin_rbf(rbf) * x
         x = self.sum_aggr(x, index=i, dim_size=num_nodes)
@@ -370,6 +382,9 @@ class OutputPPBlock(keras.layers.Layer):
             kernel_initializer=output_initializer,
         )
         self.sum_aggr = SumAggregation()
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def call(self, x, rbf, i, num_nodes: Optional[int] = None):
         x = self.lin_rbf(rbf) * x

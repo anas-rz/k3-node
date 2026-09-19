@@ -38,6 +38,9 @@ class NodeBlock(keras.layers.Layer):
         self.bn = keras.layers.BatchNormalization()
         self.sum_aggr = SumAggregation()
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, node_emb, edge_emb, i):
         node_i = ops.take(node_emb, i, axis=0)
         c1 = ops.concatenate([node_i, edge_emb], axis=1)
@@ -61,6 +64,9 @@ class EdgeBlock(keras.layers.Layer):
         self.bn_c2_2 = keras.layers.BatchNormalization()
         self.bn_c3_2 = keras.layers.BatchNormalization()
         self.sum_aggr = SumAggregation()
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def call(
         self,

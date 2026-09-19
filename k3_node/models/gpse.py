@@ -11,6 +11,9 @@ class BatchNorm1dNode(keras.layers.Layer):
         super().__init__(**kwargs)
         self.bn = keras.layers.BatchNormalization(epsilon=1e-5, momentum=0.9)
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, x, training=False):
         return self.bn(x, training=training)
 
@@ -19,6 +22,9 @@ class BatchNorm1dEdge(keras.layers.Layer):
     def __init__(self, channels: int, **kwargs):
         super().__init__(**kwargs)
         self.bn = keras.layers.BatchNormalization(epsilon=1e-5, momentum=0.9)
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def call(self, edge_attr, training=False):
         return self.bn(edge_attr, training=training)
@@ -63,6 +69,9 @@ class GeneralLayer(keras.layers.Layer):
             self.act = keras.activations.get(act)
         else:
             self.act = None
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def call(self, x, edge_index=None, training=False):
         if self.name_type == "linear":
@@ -115,6 +124,9 @@ class GeneralMultiLayer(keras.layers.Layer):
                     act=act_i,
                 )
             )
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def call(self, x, edge_index=None, training=False):
         for layer in self.layers_list:
@@ -346,6 +358,9 @@ class GPSE(keras.layers.Layer):
                 dropout=dropout,
                 act=act,
             )
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def call(self, x, edge_index=None, batch=None, training=False):
         # Support both (x, edge_index, batch) and batch object with attributes

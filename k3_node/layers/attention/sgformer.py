@@ -27,6 +27,7 @@ class SGFormerAttention(keras.layers.Layer):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.supports_masking = True
         assert channels % heads == 0
         if head_channels is None:
             head_channels = channels // heads
@@ -40,6 +41,9 @@ class SGFormerAttention(keras.layers.Layer):
         self.q = keras.layers.Dense(inner_channels, use_bias=qkv_bias)
         self.k = keras.layers.Dense(inner_channels, use_bias=qkv_bias)
         self.v = keras.layers.Dense(inner_channels, use_bias=qkv_bias)
+
+    def compute_mask(self, inputs, mask=None):
+        return mask
 
     def call(self, x, mask: Optional[any] = None):
         shape = ops.shape(x)

@@ -45,6 +45,9 @@ class HeteroConv(keras.layers.Layer):
         self.convs = convs
         self.aggr = aggr
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, *args_dict, **kwargs_dict) -> Dict[str, any]:
         out_dict: Dict[str, List[any]] = {}
 

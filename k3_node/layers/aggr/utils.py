@@ -17,6 +17,7 @@ class MultiheadAttentionBlock(layers.Layer):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.supports_masking = True
         self.channels = channels
         self.heads = heads
         self.dropout = dropout
@@ -30,6 +31,9 @@ class MultiheadAttentionBlock(layers.Layer):
         self.lin = layers.Dense(channels)
         self.layer_norm1 = layers.LayerNormalization() if layer_norm else None
         self.layer_norm2 = layers.LayerNormalization() if layer_norm else None
+
+    def compute_mask(self, inputs, mask=None):
+        return mask
 
     def reset_parameters(self):
         pass
@@ -88,7 +92,11 @@ class SetAttentionBlock(layers.Layer):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.supports_masking = True
         self.mab = MultiheadAttentionBlock(channels, heads, layer_norm, dropout)
+
+    def compute_mask(self, inputs, mask=None):
+        return mask
 
     def reset_parameters(self):
         self.mab.reset_parameters()
@@ -117,6 +125,7 @@ class InducedSetAttentionBlock(layers.Layer):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.supports_masking = True
         self.channels = channels
         self.num_induced_points = num_induced_points
 
@@ -128,6 +137,9 @@ class InducedSetAttentionBlock(layers.Layer):
         )
         self.mab1 = MultiheadAttentionBlock(channels, heads, layer_norm, dropout)
         self.mab2 = MultiheadAttentionBlock(channels, heads, layer_norm, dropout)
+
+    def compute_mask(self, inputs, mask=None):
+        return mask
 
     def reset_parameters(self):
         init = initializers.GlorotUniform()
@@ -162,6 +174,7 @@ class PoolingByMultiheadAttention(layers.Layer):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.supports_masking = True
         self.channels = channels
         self.num_seed_points = num_seed_points
         self.lin = layers.Dense(channels)
@@ -172,6 +185,9 @@ class PoolingByMultiheadAttention(layers.Layer):
             name="seed",
         )
         self.mab = MultiheadAttentionBlock(channels, heads, layer_norm, dropout)
+
+    def compute_mask(self, inputs, mask=None):
+        return None
 
     def reset_parameters(self):
         self.lin.reset_parameters()

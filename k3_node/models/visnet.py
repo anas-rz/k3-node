@@ -199,6 +199,9 @@ class NeighborEmbedding(keras.layers.Layer):
         self.cutoff = CosineCutoff(cutoff)
         self.sum_aggr = SumAggregation()
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, z, x, edge_index, edge_weight, edge_attr):
         row = edge_index[0]
         col = edge_index[1]
@@ -231,6 +234,9 @@ class EdgeEmbedding(keras.layers.Layer):
     def __init__(self, num_rbf: int, hidden_channels: int, **kwargs):
         super().__init__(**kwargs)
         self.edge_proj = keras.layers.Dense(hidden_channels)
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def call(self, edge_index, edge_attr, x):
         row = edge_index[0]
@@ -287,6 +293,9 @@ class ViS_MP(keras.layers.Layer):
 
         self.o_proj = keras.layers.Dense(hidden_channels * 3)
         self.sum_aggr = SumAggregation()
+
+    def build(self, input_shape=None):
+        self.built = True
 
     @staticmethod
     def vector_rejection(vec, d_ij):

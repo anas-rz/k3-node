@@ -16,7 +16,10 @@ def semantic_group(xs: List[any], q: any, k_lin: keras.layers.Layer) -> Tuple[Op
     k_proj = ops.tanh(k_lin(out))  # (E, N, C)
     mean_k = ops.mean(k_proj, axis=1)  # (E, C)
     attn_score = ops.sum(q * mean_k, axis=-1)  # (E,)
-    attn = ops.softmax(attn_score, axis=0)  # (E,)
+    if num_edge_types == 1:
+        attn = ops.ones_like(attn_score)
+    else:
+        attn = ops.softmax(attn_score, axis=0)  # (E,)
 
     attn_expanded = ops.reshape(attn, (num_edge_types, 1, 1))
     out = ops.sum(attn_expanded * out, axis=0)  # (N, C)

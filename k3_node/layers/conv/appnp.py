@@ -43,6 +43,11 @@ class APPNP(MessagePassing):
         self._cached_norm = None
         self.dropout = layers.Dropout(dropout) if dropout > 0.0 else None
 
+    def build(self, input_shape=None):
+        if self.dropout is not None and hasattr(self.dropout, "build"):
+            self.dropout.build(input_shape)
+        self.built = True
+
     def call(self, x, edge_index=None, edge_weight=None, **kwargs):
         if edge_index is None and isinstance(x, (tuple, list)):
             x, edge_index = x[0], x[1]

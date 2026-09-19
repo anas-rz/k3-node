@@ -79,6 +79,9 @@ class RENet(keras.Model):
             keras.initializers.GlorotUniform()(self.rel.shape)
         )
 
+    def build(self, input_shape=None):
+        self.built = True
+
 
     def call(
         self,
