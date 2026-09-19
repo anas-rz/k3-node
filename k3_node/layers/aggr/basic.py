@@ -1,140 +1,283 @@
-# ported from PyTorch Geometric
+from typing import Optional
+from keras import initializers, ops
 
-from keras import ops
-from k3_node.layers.aggr import Aggregation
-from k3_node.ops import get_unique
+from .base import Aggregation
 
 
 class SumAggregation(Aggregation):
-    """`k3_node.layers.SumAggregation`
-    Compute and return the sum of two numbers.
+    r"""An aggregation operator that sums up features across a set of elements."""
 
-    Args:
-        `**kwargs`: Additional keyword arguments passed to the `Layer` superclass.
-
-    Returns:
-        A callable layer instance.
-    """
-
-    def call(self, x, index=None, axis=-2):
-        return self.reduce(x, index, axis=axis, reduce_fn=ops.segment_sum)
-
-
-class MaxAggregation(Aggregation):
-    """`k3_node.layers.MaxAggregation`
-    Compute and return the sum of two numbers.
-
-    Args:
-        `**kwargs`: Additional keyword arguments passed to the `Layer` superclass.
-
-    Returns:
-        A callable layer instance.
-    """
-    def call(self, x, index=None, axis=-2):
-        return self.reduce(x, index, axis=axis, reduce_fn=ops.segment_max)
+    def call(
+        self,
+        x,
+        index: Optional[any] = None,
+        ptr: Optional[any] = None,
+        dim_size: Optional[int] = None,
+        dim: int = -2,
+        **kwargs,
+    ):
+        return self.reduce(x, index, ptr, dim_size, dim, reduce="sum")
 
 
 class MeanAggregation(Aggregation):
-    """`k3_node.layers.MeanAggregation`
-    Compute and return the sum of two numbers.
+    r"""An aggregation operator that averages features across a set of elements."""
 
-    Args:
-        `**kwargs`: Additional keyword arguments passed to the `Layer` superclass.
+    def call(
+        self,
+        x,
+        index: Optional[any] = None,
+        ptr: Optional[any] = None,
+        dim_size: Optional[int] = None,
+        dim: int = -2,
+        **kwargs,
+    ):
+        return self.reduce(x, index, ptr, dim_size, dim, reduce="mean")
 
-    Returns:
-        A callable layer instance.
-    """
-    def call(self, x, index=None, axis=-2):
-        return self.reduce(x, index, axis=axis, reduce_fn=_segment_mean)
+
+class MaxAggregation(Aggregation):
+    r"""An aggregation operator that takes the feature-wise maximum across a set of elements."""
+
+    def call(
+        self,
+        x,
+        index: Optional[any] = None,
+        ptr: Optional[any] = None,
+        dim_size: Optional[int] = None,
+        dim: int = -2,
+        **kwargs,
+    ):
+        return self.reduce(x, index, ptr, dim_size, dim, reduce="max")
+
+
+class MinAggregation(Aggregation):
+    r"""An aggregation operator that takes the feature-wise minimum across a set of elements."""
+
+    def call(
+        self,
+        x,
+        index: Optional[any] = None,
+        ptr: Optional[any] = None,
+        dim_size: Optional[int] = None,
+        dim: int = -2,
+        **kwargs,
+    ):
+        return self.reduce(x, index, ptr, dim_size, dim, reduce="min")
+
+
+class MulAggregation(Aggregation):
+    r"""An aggregation operator that multiplies features across a set of elements."""
+
+    def call(
+        self,
+        x,
+        index: Optional[any] = None,
+        ptr: Optional[any] = None,
+        dim_size: Optional[int] = None,
+        dim: int = -2,
+        **kwargs,
+    ):
+        self.assert_index_present(index)
+        return self.reduce(x, index, ptr, dim_size, dim, reduce="mul")
+
+
+class VarAggregation(Aggregation):
+    r"""An aggregation operator that takes the feature-wise variance across a set of elements."""
+
+    def __init__(self, semi_grad: bool = False, **kwargs):
+        super().__init__(**kwargs)
+        self.semi_grad = semi_grad
+
+    def call(
+        self,
+        x,
+        index: Optional[any] = None,
+        ptr: Optional[any] = None,
+        dim_size: Optional[int] = None,
+        dim: int = -2,
+        **kwargs,
+    ):
+        mean = self.reduce(x, index, ptr, dim_size, dim, reduce="mean")
+        x_sq = ops.power(x, 2)
+        if self.semi_grad:
+            x_sq = ops.stop_gradient(x_sq)
+        mean2 = self.reduce(x_sq, index, ptr, dim_size, dim, reduce="mean")
+        return mean2 - ops.power(mean, 2)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(semi_grad={self.semi_grad})"
+
+
+class StdAggregation(Aggregation):
+    r"""An aggregation operator that takes the feature-wise standard deviation across a set of elements."""
+
+    def __init__(self, semi_grad: bool = False, **kwargs):
+        super().__init__(**kwargs)
+        self.semi_grad = semi_grad
+        self.var_aggr = VarAggregation(semi_grad=semi_grad)
+
+    def call(
+        self,
+        x,
+        index: Optional[any] = None,
+        ptr: Optional[any] = None,
+        dim_size: Optional[int] = None,
+        dim: int = -2,
+        **kwargs,
+    ):
+        var = self.var_aggr(x, index, ptr, dim_size, dim)
+        out = ops.sqrt(ops.maximum(var, 1e-5))
+        out = ops.where(out <= (1e-5**0.5), 0.0, out)
+        return out
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(semi_grad={self.semi_grad})"
 
 
 class SoftmaxAggregation(Aggregation):
-    """`k3_node.layers.SoftmaxAggregation`
-    Compute and return the sum of two numbers.
+    r"""The softmax aggregation operator based on a temperature term."""
 
-    Args:
-        `**kwargs`: Additional keyword arguments passed to the `Layer` superclass.
+    def __init__(
+        self,
+        t: float = 1.0,
+        learn: bool = False,
+        semi_grad: bool = False,
+        channels: int = 1,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
 
-    Returns:
-        A callable layer instance.
-    """
-    def __init__(self, t=1.0, trainable=False, channels=1):
-        super().__init__()
-
-        if not trainable and channels != 1:
+        if learn and semi_grad:
             raise ValueError(
-                "Cannot set 'channels' greater than '1' in case 'SoftmaxAggregation' is not trainable"
+                f"Cannot enable 'semi_grad' in '{self.__class__.__name__}' in "
+                f"case the temperature term 't' is learnable"
+            )
+
+        if not learn and channels != 1:
+            raise ValueError(
+                f"Cannot set 'channels' greater than '1' in case "
+                f"'{self.__class__.__name__}' is not trainable"
             )
 
         self._init_t = t
-        self.trainable = trainable
+        self.learn = learn
+        self.semi_grad = semi_grad
         self.channels = channels
 
-        self.t = self.add_weight((channels,), initializer="zeros") if trainable else t
+        if learn:
+            self.t = self.add_weight(
+                shape=(channels,),
+                initializer=initializers.Constant(t),
+                trainable=True,
+                name="t",
+            )
+        else:
+            self.t = t
 
-    def call(self, x, index=None, axis=-2):
+    def reset_parameters(self):
+        if self.learn:
+            self.t.assign(ops.full((self.channels,), self._init_t, dtype=self.t.dtype))
+
+    def call(
+        self,
+        x,
+        index: Optional[any] = None,
+        ptr: Optional[any] = None,
+        dim_size: Optional[int] = None,
+        dim: int = -2,
+        **kwargs,
+    ):
         t = self.t
         if self.channels != 1:
-            self.assert_two_dimensional_input(x, axis)
-            assert ops.is_tensor(t)
+            self.assert_two_dimensional_input(x, dim)
             t = ops.reshape(t, (1, self.channels))
 
         alpha = x
-        if not isinstance(t, (int, float)) or t != 1:
+        if self.learn or t != 1.0:
             alpha = x * t
-        alpha = ops.softmax(alpha, axis=axis)
-        return self.reduce(x * alpha, index=index, axis=axis, reduce_fn=ops.segment_sum)
+
+        if not self.learn and self.semi_grad:
+            alpha = ops.stop_gradient(alpha)
+
+        # Graph-wise softmax over segments
+        index = ops.cast(index, dtype="int32")
+        dim_size = dim_size or (int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0)
+
+        max_val = ops.segment_max(alpha, index, num_segments=dim_size)
+        max_exp = ops.take(max_val, index, axis=0)
+        exp_alpha = ops.exp(alpha - max_exp)
+        sum_exp = ops.segment_sum(exp_alpha, index, num_segments=dim_size)
+        sum_exp_taken = ops.take(sum_exp, index, axis=0)
+        alpha_sm = exp_alpha / ops.maximum(sum_exp_taken, 1e-12)
+
+        return self.reduce(x * alpha_sm, index, ptr, dim_size, dim, reduce="sum")
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(learn={self.learn})"
 
 
 class PowerMeanAggregation(Aggregation):
-    """`k3_node.layers.SoftmaxAggregation`
-    Compute and return the sum of two numbers.
+    r"""The powermean aggregation operator based on a power term."""
 
-    Args:
-        **kwargs: Additional keyword arguments passed to the `Layer` superclass.
+    def __init__(
+        self,
+        p: float = 1.0,
+        learn: bool = False,
+        channels: int = 1,
+        clamp_min: Optional[float] = 1e-4,
+        clamp_max: Optional[float] = 100.0,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
 
-    Returns:
-        A callable layer instance.
-        
-    """
-    def __init__(self, p=1.0, trainable=False, channels=1):
-        super().__init__()
-
-        if not trainable and channels != 1:
+        if not learn and channels != 1:
             raise ValueError(
-                f"Cannot set 'channels' greater than '1' in case '{self.__class__.__name__}' is not trainable"
+                f"Cannot set 'channels' greater than '1' in case "
+                f"'{self.__class__.__name__}' is not trainable"
             )
 
         self._init_p = p
-        self.trainable = trainable
+        self.learn = learn
         self.channels = channels
+        self.min_value = clamp_min if clamp_min is not None else 1e-4
+        self.max_value = clamp_max if clamp_max is not None else 100.0
 
-        self.p = self.add_weight((channels,), "zeros") if trainable else p
+        if learn:
+            self.p = self.add_weight(
+                shape=(channels,),
+                initializer=initializers.Constant(p),
+                trainable=True,
+                name="p",
+            )
+        else:
+            self.p = p
 
-    def call(self, x, index=None, axis=-2):
+    def reset_parameters(self):
+        if self.learn:
+            self.p.assign(ops.full((self.channels,), self._init_p, dtype=self.p.dtype))
+
+    def call(
+        self,
+        x,
+        index: Optional[any] = None,
+        ptr: Optional[any] = None,
+        dim_size: Optional[int] = None,
+        dim: int = -2,
+        **kwargs,
+    ):
         p = self.p
         if self.channels != 1:
-            assert ops.is_tensor(p)
-            self.assert_two_dimensional_input(x, axis)
+            self.assert_two_dimensional_input(x, dim)
             p = ops.reshape(p, (-1, self.channels))
-        if not isinstance(p, (int, float)) or p != 1.0:
-            x = ops.clip(x, 0, 100) ** p
-        out = self.reduce(x, index, axis, reduce_fn=_segment_mean)
-        if not isinstance(p, (int, float)) or p != 1:
-            out = ops.clip(out, 0, 100) ** (1.0 / p)
+
+        if self.learn or p != 1.0:
+            x = ops.power(ops.clip(x, self.min_value, self.max_value), p)
+
+        out = self.reduce(x, index, ptr, dim_size, dim, reduce="mean")
+
+        if self.learn or p != 1.0:
+            out = ops.power(ops.clip(out, self.min_value, self.max_value), 1.0 / p)
+
         return out
 
-
-def _segment_mean(data, segment_ids, num_segments=None):
-    data = ops.convert_to_tensor(data)
-    segment_ids = ops.convert_to_tensor(segment_ids)
-    unique_segment_ids, indices = get_unique(segment_ids)
-    segment_sums = ops.segment_sum(data, indices, ops.shape(unique_segment_ids)[0])
-    segment_counts = ops.segment_sum(
-        ops.ones_like(data), indices, ops.shape(unique_segment_ids)[0]
-    )
-    segment_counts = ops.where(
-        segment_counts > 0, segment_counts, ops.ones_like(segment_counts)
-    )
-    segment_means = segment_sums / segment_counts
-    return segment_means
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(learn={self.learn})"
