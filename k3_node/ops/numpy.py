@@ -1,19 +1,16 @@
-from keras import backend
+from keras import backend, ops
 from k3_node.utils.backend_import import *
 
 
 def polyval(p, x):
-    if backend.backend() == "tensorflow":
-        return tf.math.polyval(p, x)
-    elif backend.backend() == "torch":
-        raise NotImplementedError
+    p = ops.convert_to_tensor(p)
 
-    elif backend.backend() == "jax":
-        return jnp.polyval(p, x)
-    elif backend.backend() == "numpy":
-        return np.polyval(p, x)
-    else:
-        raise NotImplementedError
+    result = ops.zeros_like(x)
+
+    for i in range(p.shape[0]):
+        result = result * x + p[i]
+
+    return result
 
 
 def get_unique(inputs):

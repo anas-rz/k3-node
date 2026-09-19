@@ -33,7 +33,7 @@ class DiffuseFeatures(layers.Layer):
     def call(self, inputs):
         x, a = inputs
 
-        diffusion_matrix = polyval(ops.unstack(self.kernel), a)
+        diffusion_matrix = polyval(self.kernel, a)
         diffused_features = ops.matmul(diffusion_matrix, x)
         H = ops.sum(diffused_features, axis=-1)
         return ops.expand_dims(H, -1)
