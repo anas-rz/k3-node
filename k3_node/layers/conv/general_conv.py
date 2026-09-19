@@ -149,7 +149,7 @@ class GeneralConv(MessagePassing):
             is_legacy = True
 
         if is_legacy:
-            if hasattr(edge_index, "indices"):
+            if hasattr(edge_index, "indices") and not callable(edge_index.indices):
                 edge_index = ops.transpose(edge_index.indices)
             else:
                 adj = edge_index

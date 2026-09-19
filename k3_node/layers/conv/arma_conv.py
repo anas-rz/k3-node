@@ -152,7 +152,7 @@ class ARMAConv(MessagePassing):
             is_legacy = True
 
         if is_legacy:
-            if hasattr(edge_index, "indices"):
+            if hasattr(edge_index, "indices") and not callable(edge_index.indices):
                 edge_weight = edge_index.values
                 edge_index = ops.transpose(edge_index.indices)
             else:
