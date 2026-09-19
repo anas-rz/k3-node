@@ -168,6 +168,8 @@ class Data(BaseData):
         try:
             return getattr(self._store, key)
         except AttributeError:
+            if key in ('x', 'edge_index', 'edge_attr', 'edge_weight', 'y', 'pos', 'face', 'normal', 'batch'):
+                return None
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{key}'") from None
 
     def __setattr__(self, key: str, value: Any):

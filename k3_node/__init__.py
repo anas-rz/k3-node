@@ -23,8 +23,10 @@ from k3_node import ...
 
 from k3_node import data
 from k3_node import loader
+from k3_node import transforms
 
 __all__ = [
     "data",
     "loader",
+    "transforms",
 ]

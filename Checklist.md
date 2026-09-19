@@ -21,9 +21,10 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | `torch_geometric.nn.models` | `k3_node.models` | ✅ 46/46 |
 | `torch_geometric.data` | `k3_node.data` | ✅ 19/19 |
 | `torch_geometric.loader` | `k3_node.loader` | ✅ 26/26 |
+| `torch_geometric.transforms` | `k3_node.transforms` | ✅ 62/62 |
 
-`conv`, `pool`, `unpool`, `kge`, `functional`, `norm`, `aggr`, `dense`, `models`, `data`, and
-`loader` are at full parity with PyG's public API (see each package's `__all__`).
+`conv`, `pool`, `unpool`, `kge`, `functional`, `norm`, `aggr`, `dense`, `models`, `data`,
+`loader`, and `transforms` are at full parity with PyG's public API (see each package's `__all__`).
 
 ## `torch_geometric.nn.models` (parity status)
 
@@ -129,6 +130,15 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | `AffinityMixin` | ✅ | `k3_node.loader.AffinityMixin` | CPU worker core affinitization context manager |
 | `MultithreadingMixin` | ✅ | `k3_node.loader.MultithreadingMixin` | Worker subprocess thread count configuration |
 | `LogMemoryMixin` | ✅ | `k3_node.loader.LogMemoryMixin` | Worker RSS memory consumption logger |
+
+
+## `torch_geometric.transforms` (parity status)
+
+| Group | PyG classes | Status | k3-node location | Notes |
+|---|---|---|---|---|
+| General (15) | `BaseTransform`, `Compose`, `ComposeFilters`, `ToDevice`, `ToSparseTensor`, `Constant`, `NormalizeFeatures`, `SVDFeatureReduction`, `RemoveTrainingClasses`, `RandomNodeSplit`, `RandomLinkSplit`, `NodePropertySplit`, `IndexToMask`, `MaskToIndex`, `Pad` | ✅ 15/15 | `k3_node.transforms.general` | Multi-backend support (`torch.Tensor`, numpy arrays, Keras tensors) |
+| Graph (26) | `ToUndirected`, `OneHotDegree`, `TargetIndegree`, `LocalDegreeProfile`, `AddSelfLoops`, `AddRemainingSelfLoops`, `RemoveSelfLoops`, `RemoveIsolatedNodes`, `RemoveDuplicatedEdges`, `KNNGraph`, `RadiusGraph`, `ToDense`, `TwoHop`, `LineGraph`, `LaplacianLambdaMax`, `GDC`, `SIGN`, `GCNNorm`, `AddMetaPaths`, `AddRandomMetaPaths`, `RootedEgoNets`, `RootedRWSubgraph`, `LargestConnectedComponents`, `VirtualNode`, `AddLaplacianEigenvectorPE`, `AddRandomWalkPE`, `AddGPSE`, `FeaturePropagation`, `HalfHop` | ✅ 26/26 | `k3_node.transforms.graph` | Self-contained graph transformations with sparse matrix computations |
+| Vision / Spatial (21) | `Distance`, `Cartesian`, `LocalCartesian`, `Polar`, `Spherical`, `PointPairFeatures`, `Center`, `NormalizeRotation`, `NormalizeScale`, `RandomJitter`, `RandomFlip`, `LinearTransformation`, `RandomScale`, `RandomRotate`, `RandomShear`, `FaceToEdge`, `SamplePoints`, `FixedPoints`, `GenerateMeshNormals`, `Delaunay`, `ToSLIC`, `GridSampling`, `RandomTranslate` | ✅ 21/21 | `k3_node.transforms.spatial` | 3D mesh and point cloud geometric processing with Delaunay & grid clustering |
 
 
 ## Notes on non-goals / caveats
