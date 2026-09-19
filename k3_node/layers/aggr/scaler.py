@@ -86,8 +86,9 @@ class DegreeScalerAggregation(Aggregation):
         dim_size = dim_size or (int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0)
 
         # Compute degree per index
-        ones = ops.ones((ops.shape(index)[0], 1), dtype=out.dtype)
+        ones = ops.ones((ops.shape(index)[0],), dtype=out.dtype)
         deg = ops.segment_sum(ones, index, num_segments=dim_size)
+        deg = ops.reshape(deg, (dim_size,) + (1,) * (len(ops.shape(out)) - 1))
 
         avg_deg_log = self.avg_deg_log
         avg_deg_lin = self.avg_deg_lin

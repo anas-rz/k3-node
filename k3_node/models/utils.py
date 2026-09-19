@@ -65,3 +65,33 @@ def negative_sampling(edge_index, num_nodes=None, num_neg_samples=None):
     row = neg_idx // max(num_nodes, 1)
     col = neg_idx % max(num_nodes, 1)
     return ops.convert_to_tensor(np.stack([row, col], axis=0), dtype="int64")
+
+
+def structured_negative_sampling(edge_index, num_nodes=None, contains_neg_self_loops=True):
+    r"""Samples a negative edge :obj:`(i,k)` for every positive edge
+    :obj:`(i,j)` in the graph given by :attr:`edge_index`, and returns it as a
+    tuple of the form :obj:`(i,j,k)`.
+    """
+    edge_index_np = ops.convert_to_numpy(edge_index).astype(np.int64)
+    if num_nodes is None:
+        num_nodes = int(edge_index_np.max()) + 1 if edge_index_np.size > 0 else 0
+
+    row, col = edge_index_np[0], edge_index_np[1]
+    pos_idx = set((row * num_nodes + col).tolist())
+    if not contains_neg_self_loops:
+        loop_idx = np.arange(num_nodes) * (num_nodes + 1)
+        pos_idx.update(loop_idx.tolist())
+
+    k_list = []
+    for r in row:
+        for _ in range(100):
+            cand = int(np.random.randint(0, max(num_nodes, 1)))
+            if (r * num_nodes + cand) not in pos_idx:
+                k_list.append(cand)
+                break
+        else:
+            k_list.append(0)
+
+    k_tensor = ops.convert_to_tensor(np.array(k_list, dtype=np.int64), dtype="int64")
+    return edge_index[0], edge_index[1], k_tensor
+

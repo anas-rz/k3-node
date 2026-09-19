@@ -29,15 +29,56 @@ from torch_geometric.nn.models import MaskLabel as PyGMaskLabel
 from torch_geometric.nn.models import MetaLayer as PyGMetaLayer
 from torch_geometric.nn.models import PMLP as PyGPMLP
 from torch_geometric.nn.models import Polynormer as PyGPolynormer
+from torch_geometric.nn.models import (
+    GCN as PyGGCN,
+    GraphSAGE as PyGGraphSAGE,
+    LabelPropagation as PyGLabelPropagation,
+    CorrectAndSmooth as PyGCorrectAndSmooth,
+    LightGCN as PyGLightGCN,
+    RECT_L as PyGRECT_L,
+    GroupAddRev as PyGGroupAddRev,
+    MetaPath2Vec as PyGMetaPath2Vec,
+)
+from torch_geometric.nn.attention import SGFormerAttention as PyGSGFormerAttention
+from torch_geometric.nn.models.tgn import (
+    TimeEncoder as PyGTimeEncoder,
+    IdentityMessage as PyGIdentityMessage,
+)
+from torch_geometric.nn.models.schnet import (
+    ShiftedSoftplus as PyGShiftedSoftplus,
+    GaussianSmearing as PyGGaussianSmearing,
+)
+from torch_geometric.nn.models.dimenet import (
+    Envelope as PyGEnvelope,
+    BesselBasisLayer as PyGBesselBasisLayer,
+)
+from torch_geometric.nn.models.visnet import (
+    CosineCutoff as PyGCosineCutoff,
+    Sphere as PyGSphere,
+)
+from torch_geometric.nn.models.gpse import (
+    GPSENodeEncoder as PyGGPSENodeEncoder,
+)
 
 from k3_node.models import MLP, ARLinkPredictor, GAE, DeepGraphInfomax, DeepGCNLayer, AttentiveFP
 from k3_node.models import (
     JumpingKnowledge, HeteroJumpingKnowledge,
     MaskLabel, MetaLayer, PMLP, Polynormer,
+    GCN, GraphSAGE, LabelPropagation, CorrectAndSmooth, LightGCN, RECT_L,
+    GroupAddRev, MetaPath2Vec,
+    TimeEncoder, IdentityMessage,
+    ShiftedSoftplus, GaussianSmearing,
+    DimeNet, DimeNetPlusPlus, BesselBasisLayer,
+    GPSE, GPSENodeEncoder,
+    ViSNet, LPFormer,
 )
+from k3_node.models.dimenet import Envelope
+from k3_node.models.visnet import CosineCutoff, Sphere
+from k3_node.layers.attention import SGFormerAttention
 from k3_node.models.attentive_fp import GATEConv
 from k3_node.layers.conv import GCNConv
 from k3_node.layers.norm import LayerNorm
+
 
 
 def _copy_gru(pyg_cell, k3_cell, units):
@@ -446,4 +487,275 @@ def test_reference_polynormer():
     out_k3_g = ops.convert_to_numpy(k3(x, edge_index, batch, training=False))
     diff_g = np.max(np.abs(out_pyg_g - out_k3_g))
     assert diff_g < 1e-3
+
+
+def test_reference_gcn():
+    torch.manual_seed(42)
+    pyg_gcn = PyGGCN(8, 16, num_layers=2, out_channels=4, dropout=0.0)
+    k3_gcn = GCN(8, 16, num_layers=2, out_channels=4, dropout=0.0)
+    x = torch.randn(4, 8)
+    edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]])
+
+    _ = k3_gcn(x, edge_index)
+    for i in range(2):
+        k3_gcn.convs[i].lin.kernel.assign(pyg_gcn.convs[i].lin.weight.detach().t())
+        if pyg_gcn.convs[i].bias is not None:
+            k3_gcn.convs[i].bias.assign(pyg_gcn.convs[i].bias.detach())
+
+    pyg_gcn.eval()
+    out_pyg = pyg_gcn(x, edge_index).detach().numpy()
+    out_k3 = ops.convert_to_numpy(k3_gcn(x, edge_index, training=False))
+    assert np.allclose(out_pyg, out_k3, atol=1e-4)
+
+
+def test_reference_graph_sage():
+    torch.manual_seed(42)
+    pyg_sage = PyGGraphSAGE(8, 16, num_layers=2, out_channels=4, dropout=0.0)
+    k3_sage = GraphSAGE(8, 16, num_layers=2, out_channels=4, dropout=0.0)
+    x = torch.randn(4, 8)
+    edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]])
+
+    _ = k3_sage(x, edge_index)
+    for i in range(2):
+        k3_sage.convs[i].lin_l.kernel.assign(pyg_sage.convs[i].lin_l.weight.detach().t())
+        k3_sage.convs[i].lin_r.kernel.assign(pyg_sage.convs[i].lin_r.weight.detach().t())
+        if pyg_sage.convs[i].lin_l.bias is not None:
+            k3_sage.convs[i].lin_l.bias.assign(pyg_sage.convs[i].lin_l.bias.detach())
+
+    pyg_sage.eval()
+    out_pyg = pyg_sage(x, edge_index).detach().numpy()
+    out_k3 = ops.convert_to_numpy(k3_sage(x, edge_index, training=False))
+    assert np.allclose(out_pyg, out_k3, atol=1e-4)
+
+
+def test_reference_label_prop():
+    torch.manual_seed(42)
+    pyg_lp = PyGLabelPropagation(num_layers=2, alpha=0.5)
+    k3_lp = LabelPropagation(num_layers=2, alpha=0.5)
+    y = torch.tensor([1, 0, 0, 2])
+    edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]])
+
+    out_pyg = pyg_lp(y, edge_index).detach().numpy()
+    out_k3 = ops.convert_to_numpy(k3_lp(y, edge_index))
+    assert np.allclose(out_pyg, out_k3, atol=1e-5)
+
+
+def test_reference_correct_and_smooth():
+    torch.manual_seed(42)
+    pyg_cs = PyGCorrectAndSmooth(2, 0.5, 2, 0.5, autoscale=False, scale=1.0)
+    k3_cs = CorrectAndSmooth(2, 0.5, 2, 0.5, autoscale=False, scale=1.0)
+    y_soft = torch.tensor([[0.1, 0.9], [0.8, 0.2], [0.3, 0.7], [0.6, 0.4]])
+    y_true = torch.tensor([1, 0, 1, 0])
+    mask = torch.tensor([True, False, True, False])
+    edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]])
+
+    out_pyg = pyg_cs.correct(y_soft, y_true[mask], mask, edge_index).detach().numpy()
+    out_k3 = ops.convert_to_numpy(k3_cs.correct(y_soft, y_true[mask], mask, edge_index))
+    assert np.allclose(out_pyg, out_k3, atol=1e-5)
+
+
+def test_reference_lightgcn():
+    torch.manual_seed(42)
+    pyg_lg = PyGLightGCN(10, 8, num_layers=2)
+    k3_lg = LightGCN(10, 8, num_layers=2)
+    k3_lg.build((None,))
+    k3_lg.embedding.weights[0].assign(pyg_lg.embedding.weight.detach())
+
+    edges = torch.tensor([[0, 1, 2, 3], [1, 2, 3, 0]])
+    labels = torch.tensor([[0, 1], [2, 3]])
+    out_pyg = pyg_lg(edges, labels).detach().numpy()
+    out_k3 = ops.convert_to_numpy(k3_lg(edges, labels))
+    assert np.allclose(out_pyg, out_k3, atol=1e-4)
+
+
+def test_reference_rect():
+    torch.manual_seed(42)
+    x = torch.randn(4, 8)
+    edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]])
+
+    pyg_rect = PyGRECT_L(8, 16)
+    k3_rect = RECT_L(8, 16)
+    _ = k3_rect(x, edge_index)
+
+    k3_rect.conv.lin.kernel.assign(pyg_rect.conv.lin.weight.detach().t())
+    k3_rect.conv.bias.assign(pyg_rect.conv.bias.detach())
+    k3_rect.lin.kernel.assign(pyg_rect.lin.weight.detach().t())
+    k3_rect.lin.bias.assign(pyg_rect.lin.bias.detach())
+
+    pyg_rect.eval()
+    out_pyg = pyg_rect(x, edge_index).detach().numpy()
+    out_k3 = ops.convert_to_numpy(k3_rect(x, edge_index, training=False))
+    assert np.allclose(out_pyg, out_k3, atol=1e-4)
+
+
+def test_reference_sgformer_attention():
+    torch.manual_seed(42)
+    attn_pyg = PyGSGFormerAttention(16, heads=2, head_channels=8)
+    attn_k3 = SGFormerAttention(16, heads=2, head_channels=8)
+
+    x = torch.randn(2, 4, 16)
+    mask = torch.tensor([[True, True, True, False], [True, True, False, False]])
+
+    _ = attn_k3(x, mask)
+    attn_k3.q.kernel.assign(attn_pyg.q.weight.detach().t())
+    attn_k3.k.kernel.assign(attn_pyg.k.weight.detach().t())
+    attn_k3.v.kernel.assign(attn_pyg.v.weight.detach().t())
+
+    out_pyg = attn_pyg(x, mask).detach().numpy()
+    out_k3 = ops.convert_to_numpy(attn_k3(x, mask))
+    assert np.allclose(out_pyg, out_k3, atol=1e-5)
+
+
+def test_reference_group_add_rev():
+    torch.manual_seed(42)
+    conv1_pyg = PyGGCNConv(8, 8)
+    conv2_pyg = PyGGCNConv(8, 8)
+    rev_pyg = PyGGroupAddRev(torch.nn.ModuleList([conv1_pyg, conv2_pyg]), disable=True)
+
+    conv1_k3 = GCNConv(8, 8)
+    conv2_k3 = GCNConv(8, 8)
+    rev_k3 = GroupAddRev([conv1_k3, conv2_k3])
+
+    x = torch.randn(4, 16)
+    edge_index = torch.tensor([[0, 1, 2, 3], [1, 2, 3, 0]])
+
+    _ = rev_k3(x, edge_index=edge_index)
+    conv1_k3.lin.kernel.assign(conv1_pyg.lin.weight.detach().t())
+    conv1_k3.bias.assign(conv1_pyg.bias.detach())
+    conv2_k3.lin.kernel.assign(conv2_pyg.lin.weight.detach().t())
+    conv2_k3.bias.assign(conv2_pyg.bias.detach())
+
+    out_pyg = rev_pyg(x, edge_index).detach().numpy()
+    out_k3 = ops.convert_to_numpy(rev_k3(x, edge_index=edge_index))
+    assert np.allclose(out_pyg, out_k3, atol=1e-5)
+
+    inv_pyg = rev_pyg._inverse(torch.from_numpy(out_pyg), edge_index).detach().numpy()
+    inv_k3 = ops.convert_to_numpy(rev_k3.inverse(out_k3, edge_index=edge_index))
+    assert np.allclose(inv_pyg, inv_k3, atol=1e-5)
+
+
+def test_reference_metapath2vec():
+    torch.manual_seed(42)
+    edge_index_dict = {
+        ("a", "w", "p"): torch.tensor([[0, 1], [0, 1]]),
+        ("p", "b", "a"): torch.tensor([[0, 1], [0, 1]]),
+    }
+    metapath = [("a", "w", "p"), ("p", "b", "a")]
+
+    pyg_m2v = PyGMetaPath2Vec(edge_index_dict, 16, metapath, 2, 2)
+    k3_m2v = MetaPath2Vec(edge_index_dict, 16, metapath, 2, 2)
+
+    _ = k3_m2v("a")
+    k3_m2v.embedding.embeddings.assign(pyg_m2v.embedding.weight.detach())
+
+    pos_rw = torch.tensor([[0, 1], [1, 0]])
+    neg_rw = torch.tensor([[0, 2], [1, 2]])
+
+    loss_pyg = pyg_m2v.loss(pos_rw, neg_rw).item()
+    loss_k3 = float(ops.convert_to_numpy(k3_m2v.loss(pos_rw, neg_rw)))
+    assert abs(loss_pyg - loss_k3) < 1e-5
+
+
+def test_reference_tgn_helpers():
+    torch.manual_seed(42)
+    enc_pyg = PyGTimeEncoder(16)
+    enc_k3 = TimeEncoder(16)
+
+    t = torch.tensor([1.0, 2.5, 3.7])
+    _ = enc_k3(t)
+    enc_k3.lin.kernel.assign(enc_pyg.lin.weight.detach().t())
+    enc_k3.lin.bias.assign(enc_pyg.lin.bias.detach())
+
+    out_pyg = enc_pyg(t).detach().numpy()
+    out_k3 = ops.convert_to_numpy(enc_k3(t))
+    assert np.allclose(out_pyg, out_k3, atol=1e-5)
+
+    msg_pyg = PyGIdentityMessage(8, 16, 16)
+    msg_k3 = IdentityMessage(8, 16, 16)
+    z_src = torch.randn(3, 16)
+    z_dst = torch.randn(3, 16)
+    raw_msg = torch.randn(3, 8)
+    t_enc = torch.randn(3, 16)
+
+    m_pyg = msg_pyg(z_src, z_dst, raw_msg, t_enc).detach().numpy()
+    m_k3 = ops.convert_to_numpy(msg_k3(z_src, z_dst, raw_msg, t_enc))
+    assert np.allclose(m_pyg, m_k3, atol=1e-5)
+
+
+def test_reference_schnet_components():
+    x = torch.tensor([-1.0, 0.0, 1.0, 2.0])
+    out_pyg = PyGShiftedSoftplus()(x).numpy()
+    out_k3 = ops.convert_to_numpy(ShiftedSoftplus()(x))
+    assert np.allclose(out_pyg, out_k3, atol=1e-6)
+
+    d = torch.tensor([0.5, 1.5, 3.0])
+    out_pyg = PyGGaussianSmearing(0.0, 5.0, 10)(d).numpy()
+    out_k3 = ops.convert_to_numpy(GaussianSmearing(0.0, 5.0, 10)(d))
+    assert np.allclose(out_pyg, out_k3, atol=1e-5)
+
+
+def test_reference_dimenet_components():
+    d = torch.tensor([0.5, 1.5, 3.0])
+    env_pyg = PyGEnvelope(5)(d / 5.0).numpy()
+    env_k3 = ops.convert_to_numpy(Envelope(5)(d / 5.0))
+    assert np.allclose(env_pyg, env_k3, atol=1e-6)
+
+    bessel_pyg = PyGBesselBasisLayer(6, 5.0)(d).detach().numpy()
+    bessel_k3 = ops.convert_to_numpy(BesselBasisLayer(6, 5.0)(d))
+    assert np.allclose(bessel_pyg, bessel_k3, atol=1e-5)
+
+
+def test_reference_visnet_components():
+    d = torch.tensor([0.5, 1.5, 3.0, 5.0, 6.0])
+    cutoff_pyg = PyGCosineCutoff(5.0)(d).numpy()
+    cutoff_k3 = ops.convert_to_numpy(CosineCutoff(5.0)(d))
+    assert np.allclose(cutoff_pyg, cutoff_k3, atol=1e-6)
+
+    torch.manual_seed(42)
+    v = torch.randn(5, 3)
+    sh_pyg = PyGSphere(lmax=2)(v).numpy()
+    sh_k3 = ops.convert_to_numpy(Sphere(lmax=2)(v))
+    assert np.allclose(sh_pyg, sh_k3, atol=1e-5)
+
+
+def test_reference_gpse_encoder():
+    torch.manual_seed(42)
+    pyg_enc = PyGGPSENodeEncoder(
+        dim_emb=32,
+        dim_pe_in=16,
+        dim_pe_out=8,
+        dim_in=12,
+        expand_x=True,
+        norm_type=None,
+        model_type="linear",
+        dropout_be=0.0,
+        dropout_ae=0.0,
+    )
+    k3_enc = GPSENodeEncoder(
+        dim_emb=32,
+        dim_pe_in=16,
+        dim_pe_out=8,
+        dim_in=12,
+        expand_x=True,
+        norm_type=None,
+        model_type="linear",
+        dropout_be=0.0,
+        dropout_ae=0.0,
+    )
+
+    x = torch.randn(4, 12)
+    pe = torch.randn(4, 16)
+    _ = k3_enc(x, pe)
+
+    k3_enc.linear_x.kernel.assign(pyg_enc.linear_x.weight.detach().t())
+    k3_enc.linear_x.bias.assign(pyg_enc.linear_x.bias.detach())
+    k3_enc.pe_encoder.kernel.assign(pyg_enc.pe_encoder.weight.detach().t())
+    k3_enc.pe_encoder.bias.assign(pyg_enc.pe_encoder.bias.detach())
+
+    out_pyg = pyg_enc(x, pe).detach().numpy()
+    out_k3 = ops.convert_to_numpy(k3_enc(x, pe))
+    assert np.allclose(out_pyg, out_k3, atol=1e-5)
+
+
+
 

@@ -11,6 +11,60 @@ from .mask_label import MaskLabel
 from .meta import MetaLayer
 from .pmlp import PMLP
 from .polynormer import Polynormer
+from .basic_gnn import BasicGNN, GCN, GraphSAGE, GIN, GAT, PNA, EdgeCNN
+from .label_prop import LabelPropagation
+from .correct_and_smooth import CorrectAndSmooth
+from .lightgcn import LightGCN, BPRLoss
+from .linkx import LINKX, SparseLinear
+from .rect import RECT_L
+from .signed_gcn import SignedGCN
+from .neural_fingerprint import NeuralFingerprint
+from .graph_unet import GraphUNet
+from .rev_gnn import GroupAddRev
+from .sgformer import SGFormer
+from .node2vec import Node2Vec
+from .metapath2vec import MetaPath2Vec
+from .renet import RENet
+from .tgn import (
+    TGNMemory,
+    IdentityMessage,
+    LastAggregator,
+    MeanAggregator,
+    TimeEncoder,
+    LastNeighborLoader,
+)
+from .schnet import (
+    SchNet,
+    CFConv,
+    InteractionBlock as SchNetInteractionBlock,
+    GaussianSmearing,
+    ShiftedSoftplus,
+    RadiusInteractionGraph,
+)
+from .dimenet import (
+    DimeNet,
+    DimeNetPlusPlus,
+    BesselBasisLayer,
+    SphericalBasisLayer,
+    triplets,
+)
+from .gnnff import (
+    GNNFF,
+    NodeBlock,
+    EdgeBlock,
+    GaussianFilter,
+)
+from .gpse import (
+    GPSE,
+    GPSENodeEncoder,
+    GeneralLayer,
+    GeneralMultiLayer,
+    GNNStackStage,
+    GNNInductiveHybridMultiHead,
+)
+from .visnet import ViSNet
+from .lpformer import LPFormer, LPAttLayer
+from .captum import to_captum_model, to_captum_input, captum_output_to_dicts
 
 __all__ = [
     "MLP",
@@ -29,4 +83,59 @@ __all__ = [
     "MetaLayer",
     "PMLP",
     "Polynormer",
+    "BasicGNN",
+    "GCN",
+    "GraphSAGE",
+    "GIN",
+    "GAT",
+    "PNA",
+    "EdgeCNN",
+    "LabelPropagation",
+    "CorrectAndSmooth",
+    "LightGCN",
+    "BPRLoss",
+    "LINKX",
+    "SparseLinear",
+    "RECT_L",
+    "SignedGCN",
+    "NeuralFingerprint",
+    "GraphUNet",
+    "GroupAddRev",
+    "SGFormer",
+    "Node2Vec",
+    "MetaPath2Vec",
+    "RENet",
+    "TGNMemory",
+    "IdentityMessage",
+    "LastAggregator",
+    "MeanAggregator",
+    "TimeEncoder",
+    "LastNeighborLoader",
+    "SchNet",
+    "CFConv",
+    "SchNetInteractionBlock",
+    "GaussianSmearing",
+    "ShiftedSoftplus",
+    "RadiusInteractionGraph",
+    "DimeNet",
+    "DimeNetPlusPlus",
+    "BesselBasisLayer",
+    "SphericalBasisLayer",
+    "triplets",
+    "GNNFF",
+    "NodeBlock",
+    "EdgeBlock",
+    "GaussianFilter",
+    "GPSE",
+    "GPSENodeEncoder",
+    "GeneralLayer",
+    "GeneralMultiLayer",
+    "GNNStackStage",
+    "GNNInductiveHybridMultiHead",
+    "ViSNet",
+    "LPFormer",
+    "LPAttLayer",
+    "to_captum_model",
+    "to_captum_input",
+    "captum_output_to_dicts",
 ]

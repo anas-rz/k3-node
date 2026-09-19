@@ -18,13 +18,12 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | `torch_geometric.nn.norm` | `k3_node.layers.norm` | ✅ 11/11 |
 | `torch_geometric.nn.aggr` | `k3_node.layers.aggr` | ✅ 26/26 |
 | `torch_geometric.nn.dense` | `k3_node.layers.dense` | ✅ 11/11 |
-| `torch_geometric.nn.models` | `k3_node.models` | 🟡 16/46 |
+| `torch_geometric.nn.models` | `k3_node.models` | ✅ 46/46 |
 
-`conv`, `pool`, `unpool`, `kge`, `functional`, `norm`, `aggr` and `dense` are
-at full parity with PyG's public API (see each package's `__all__`). The
-remaining gap is almost entirely `torch_geometric.nn.models`.
+`conv`, `pool`, `unpool`, `kge`, `functional`, `norm`, `aggr`, `dense`, and
+`models` are at full parity with PyG's public API (see each package's `__all__`).
 
-## `torch_geometric.nn.models` (the gap)
+## `torch_geometric.nn.models` (parity status)
 
 | PyG class | Status | k3-node location | Notes |
 |---|---|---|---|
@@ -38,39 +37,40 @@ remaining gap is almost entirely `torch_geometric.nn.models`.
 | `DeepGraphInfomax` | ✅ | `k3_node.models.DeepGraphInfomax` | |
 | `DeepGCNLayer` | ✅ | `k3_node.models.DeepGCNLayer` | `ckpt_grad` accepted but a no-op (no uniform gradient-checkpoint API across Keras backends) |
 | `AttentiveFP` | ✅ | `k3_node.models.AttentiveFP` | Molecular graph attention model |
-| `GCN` | ⬜ | | `torch_geometric.nn.models.basic_gnn.GCN` |
-| `GraphSAGE` | ⬜ | | `basic_gnn.GraphSAGE` |
-| `GIN` | ⬜ | | `basic_gnn.GIN` |
-| `GAT` | ⬜ | | `basic_gnn.GAT` |
-| `PNA` | ⬜ | | `basic_gnn.PNA` |
-| `EdgeCNN` | ⬜ | | `basic_gnn.EdgeCNN` |
+| `GCN` | ✅ | `k3_node.models.GCN` | `BasicGNN` with GCNConv layers |
+| `GraphSAGE` | ✅ | `k3_node.models.GraphSAGE` | `BasicGNN` with SAGEConv layers |
+| `GIN` | ✅ | `k3_node.models.GIN` | `BasicGNN` with GINConv layers + MLP |
+| `GAT` | ✅ | `k3_node.models.GAT` | `BasicGNN` with GATConv/GATv2Conv layers |
+| `PNA` | ✅ | `k3_node.models.PNA` | `BasicGNN` with PNAConv layers |
+| `EdgeCNN` | ✅ | `k3_node.models.EdgeCNN` | `BasicGNN` with EdgeConv layers + MLP |
 | `JumpingKnowledge` | ✅ | `k3_node.models.JumpingKnowledge` | Supports cat, max, and lstm modes |
 | `HeteroJumpingKnowledge` | ✅ | `k3_node.models.HeteroJumpingKnowledge` | Heterogeneous graph jumping knowledge |
 | `MetaLayer` | ✅ | `k3_node.models.MetaLayer` | Edge, node, and global network modules |
-| `Node2Vec` | ⬜ | | random-walk + skip-gram embedding |
-| `SignedGCN` | ⬜ | | |
-| `RENet` | ⬜ | | temporal knowledge graphs |
-| `GraphUNet` | ⬜ | | U-Net-style pooling/unpooling GNN |
-| `SchNet` | ⬜ | | molecular, continuous-filter convs |
-| `DimeNet` / `DimeNetPlusPlus` | ⬜ | | directional message passing |
-| `GPSE` / `GPSENodeEncoder` | ⬜ | | |
-| `to_captum_model` / `to_captum_input` / `captum_output_to_dicts` | ⬜ | | Captum (PyTorch-only) explainability glue; likely out of scope |
-| `MetaPath2Vec` | ⬜ | | heterogeneous network embedding |
-| `TGNMemory` | ⬜ | | temporal graph networks |
-| `LabelPropagation` | ⬜ | | |
-| `CorrectAndSmooth` | ⬜ | | |
-| `RECT_L` | ⬜ | | |
-| `LINKX` | ⬜ | | |
-| `LightGCN` | ⬜ | | |
+| `Node2Vec` | ✅ | `k3_node.models.Node2Vec` | Random-walk + skip-gram embedding without pyg-lib C++ dependency |
+| `SignedGCN` | ✅ | `k3_node.models.SignedGCN` | Signed graph convolutional network with balanced losses |
+| `RENet` | ✅ | `k3_node.models.RENet` | Temporal knowledge graph reasoning with GRU and mean aggregation |
+| `GraphUNet` | ✅ | `k3_node.models.GraphUNet` | U-Net-style pooling/unpooling GNN |
+| `SchNet` | ✅ | `k3_node.models.SchNet` | Molecular continuous-filter convs with GaussianSmearing & ShiftedSoftplus |
+| `DimeNet` / `DimeNetPlusPlus` | ✅ | `k3_node.models.DimeNet` / `DimeNetPlusPlus` | Directional message passing with BesselBasis, SphericalBasis, and triplets |
+| `GPSE` / `GPSENodeEncoder` | ✅ | `k3_node.models.GPSE` / `GPSENodeEncoder` | Graph Positional & Structural Encoder with multi-head predictions & node encoder |
+| `to_captum_model` / `to_captum_input` / `captum_output_to_dicts` | ✅ | `k3_node.models.captum` | PyTorch-exclusive interpretability stubs with documentation |
+| `MetaPath2Vec` | ✅ | `k3_node.models.MetaPath2Vec` | Heterogeneous network embedding with metapath random walks |
+| `TGNMemory` | ✅ | `k3_node.models.TGNMemory` | Temporal Graph Network memory model with TimeEncoder & aggregators |
+| `LabelPropagation` | ✅ | `k3_node.models.LabelPropagation` | Label propagation via symmetric normalized Laplacian |
+| `CorrectAndSmooth` | ✅ | `k3_node.models.CorrectAndSmooth` | Residual error correction + label smoothing |
+| `RECT_L` | ✅ | `k3_node.models.RECT_L` | Supervised class-reconstruction model |
+| `LINKX` | ✅ | `k3_node.models.LINKX` | Non-homophilous graph learner with SparseLinear |
+| `LightGCN` | ✅ | `k3_node.models.LightGCN` | Light graph convolution network for recommendation |
 | `MaskLabel` | ✅ | `k3_node.models.MaskLabel` | Label embedding and masking layer (add and concat) |
-| `GroupAddRev` | ⬜ | | reversible GNN (`rev_gnn.py`) |
-| `GNNFF` | ⬜ | | |
+| `GroupAddRev` | ✅ | `k3_node.models.GroupAddRev` | Reversible GNN block with inverse |
+| `GNNFF` | ✅ | `k3_node.models.GNNFF` | Graph Neural Network Force Field with NodeBlock, EdgeBlock, and GaussianFilter |
 | `PMLP` | ✅ | `k3_node.models.PMLP` | Propagational MLP with SimpleConv propagation at inference |
-| `NeuralFingerprint` | ⬜ | | |
-| `ViSNet` | ⬜ | | |
-| `LPFormer` | ⬜ | | |
-| `SGFormer` | ⬜ | | |
+| `NeuralFingerprint` | ✅ | `k3_node.models.NeuralFingerprint` | Molecular neural fingerprint with MFConv and add pool |
+| `ViSNet` | ✅ | `k3_node.models.ViSNet` | Equivariant vector-scalar interactive GNN with spherical harmonics & CosineCutoff |
+| `LPFormer` | ✅ | `k3_node.models.LPFormer` | Adaptive graph transformer for link prediction with PPR positional encodings |
+| `SGFormer` | ✅ | `k3_node.models.SGFormer` | All-pair linear attention + GNN graph transformer |
 | `Polynormer` | ✅ | `k3_node.models.Polynormer` | Full polynomial-expressive graph transformer (local + global) |
+
 
 ## Notes on non-goals / caveats
 
