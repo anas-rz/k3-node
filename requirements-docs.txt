@@ -4,3 +4,5 @@ mkdocstrings[python]>=0.25
 mkdocs-autorefs
 mknotebooks
 pymdown-extensions
+mkdocs-jupyter
+pygments
