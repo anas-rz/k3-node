@@ -1,3 +1,4 @@
+import numpy as np
 from keras import ops, random
 from k3_node.layers.conv import GCNConv
 from k3_node.models import GroupAddRev
@@ -19,5 +20,5 @@ def test_group_add_rev():
 
     inv = model.inverse(out, edge_index=edge_index)
     assert inv.shape == (6, 32)
-    assert ops.allclose(x, inv, atol=1e-5)
+    assert np.allclose(ops.convert_to_numpy(x), ops.convert_to_numpy(inv), atol=1e-5)
 
