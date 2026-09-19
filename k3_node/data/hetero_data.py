@@ -138,6 +138,11 @@ class HeteroData(BaseData):
     def num_edges_dict(self) -> Dict[EdgeType, int]:
         return {k: v.num_edges for k, v in self._edge_store_dict.items()}
 
+    def set_value_dict(self, key: str, value_dict: Optional[Dict[Any, Any]]):
+        for k, v in (value_dict or {}).items():
+            self[k][key] = v
+        return self
+
     def __copy__(self):
         out = self.__class__.__new__(self.__class__)
         out.__dict__["_node_store_dict"] = {}

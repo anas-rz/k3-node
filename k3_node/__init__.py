@@ -22,7 +22,9 @@ from k3_node import ...
 """
 
 from k3_node import data
+from k3_node import loader
 
 __all__ = [
     "data",
+    "loader",
 ]

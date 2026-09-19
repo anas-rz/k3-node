@@ -12,10 +12,26 @@ SliceDictType = Dict[str, Any]
 IncDictType = Dict[str, Any]
 
 
-def _batch_and_ptr(slices: Sequence, num_graphs: int) -> Tuple[Any, Any]:
+try:
+    import torch
+except ImportError:
+    torch = None
+
+
+def _concat_tensors(values: List[Any], axis: int) -> Any:
+    if torch is not None and isinstance(values[0], torch.Tensor):
+        return torch.cat(values, dim=axis)
+    elif isinstance(values[0], np.ndarray):
+        return np.concatenate(values, axis=axis)
+    return ops.concatenate(values, axis=axis)
+
+
+def _batch_and_ptr(slices: Sequence, num_graphs: int, is_torch: bool = False) -> Tuple[Any, Any]:
     repeats = [int(slices[i + 1] - slices[i]) for i in range(num_graphs)]
     batch = np.repeat(np.arange(num_graphs), repeats)
     ptr = np.array(slices)
+    if is_torch and torch is not None:
+        return torch.from_numpy(batch).to(dtype=torch.long), torch.from_numpy(ptr).to(dtype=torch.long)
     return ops.convert_to_tensor(batch, dtype="int64"), ops.convert_to_tensor(ptr, dtype="int64")
 
 
@@ -85,19 +101,24 @@ def collate(
                     offset_values = []
                     for val, inc in zip(values, incs):
                         if inc != 0:
-                            inc_t = ops.convert_to_tensor(inc, dtype=val.dtype)
-                            offset_values.append(val + inc_t)
+                            if torch is not None and isinstance(val, torch.Tensor):
+                                inc_t = torch.as_tensor(inc, dtype=val.dtype, device=val.device)
+                                offset_values.append(val + inc_t)
+                            else:
+                                inc_t = ops.convert_to_tensor(inc, dtype=val.dtype)
+                                offset_values.append(val + inc_t)
                         else:
                             offset_values.append(val)
                     values = offset_values
 
-                out_val = ops.concatenate(values, axis=cat_dim)
+                out_val = _concat_tensors(values, axis=cat_dim)
                 out_store[key] = out_val
                 slice_dict[key] = slices
                 inc_dict[key] = np.array(incs)
 
                 if key in follow_batch:
-                    batch_vec, ptr_vec = _batch_and_ptr(slices, len(data_list))
+                    is_t = torch is not None and isinstance(values[0], torch.Tensor)
+                    batch_vec, ptr_vec = _batch_and_ptr(slices, len(data_list), is_torch=is_t)
                     out_store[f"{key}_batch"] = batch_vec
                     out_store[f"{key}_ptr"] = ptr_vec
             else:
@@ -109,8 +130,13 @@ def collate(
             repeats = num_nodes_list
             batch_arr = np.repeat(np.arange(len(repeats)), repeats)
             ptr_arr = np.cumsum([0] + repeats)
-            out_store.batch = ops.convert_to_tensor(batch_arr, dtype="int64")
-            out_store.ptr = ops.convert_to_tensor(ptr_arr, dtype="int64")
+            is_t = torch is not None and any(isinstance(getattr(d, 'x', None), torch.Tensor) or isinstance(getattr(d, 'edge_index', None), torch.Tensor) for d in data_list)
+            if is_t and torch is not None:
+                out_store.batch = torch.from_numpy(batch_arr).to(dtype=torch.long)
+                out_store.ptr = torch.from_numpy(ptr_arr).to(dtype=torch.long)
+            else:
+                out_store.batch = ops.convert_to_tensor(batch_arr, dtype="int64")
+                out_store.ptr = ops.convert_to_tensor(ptr_arr, dtype="int64")
 
     else:
         # Heterogeneous Data
@@ -151,13 +177,14 @@ def collate(
                     slices = np.cumsum([0] + sizes)
                     incs = [0] * len(values)
 
-                    out_val = ops.concatenate(values, axis=cat_dim)
+                    out_val = _concat_tensors(values, axis=cat_dim)
                     out_store[key] = out_val
                     store_slice_dict[key] = slices
                     store_inc_dict[key] = np.array(incs)
 
                     if key in follow_batch:
-                        batch_vec, ptr_vec = _batch_and_ptr(slices, len(data_list))
+                        is_t = torch is not None and isinstance(values[0], torch.Tensor)
+                        batch_vec, ptr_vec = _batch_and_ptr(slices, len(data_list), is_torch=is_t)
                         out_store[f"{key}_batch"] = batch_vec
                         out_store[f"{key}_ptr"] = ptr_vec
                 else:
@@ -167,8 +194,13 @@ def collate(
                 repeats = num_nodes_list
                 batch_arr = np.repeat(np.arange(len(repeats)), repeats)
                 ptr_arr = np.cumsum([0] + repeats)
-                out_store.batch = ops.convert_to_tensor(batch_arr, dtype="int64")
-                out_store.ptr = ops.convert_to_tensor(ptr_arr, dtype="int64")
+                is_t = torch is not None and any(isinstance(getattr(d[n_type], 'x', None), torch.Tensor) for d in data_list)
+                if is_t and torch is not None:
+                    out_store.batch = torch.from_numpy(batch_arr).to(dtype=torch.long)
+                    out_store.ptr = torch.from_numpy(ptr_arr).to(dtype=torch.long)
+                else:
+                    out_store.batch = ops.convert_to_tensor(batch_arr, dtype="int64")
+                    out_store.ptr = ops.convert_to_tensor(ptr_arr, dtype="int64")
 
             slice_dict[n_type] = store_slice_dict
             inc_dict[n_type] = store_inc_dict
@@ -211,14 +243,17 @@ def collate(
                         offset_values = []
                         for i, val in enumerate(values):
                             inc_arr = np.array([[src_incs[i]], [dst_incs[i]]], dtype=np.int64)
-                            inc_t = ops.convert_to_tensor(inc_arr, dtype=val.dtype)
+                            if torch is not None and isinstance(val, torch.Tensor):
+                                inc_t = torch.as_tensor(inc_arr, dtype=val.dtype, device=val.device)
+                            else:
+                                inc_t = ops.convert_to_tensor(inc_arr, dtype=val.dtype)
                             offset_values.append(val + inc_t)
                         values = offset_values
                         incs = np.stack([src_incs, dst_incs], axis=1)
                     else:
                         incs = np.zeros(len(values))
 
-                    out_val = ops.concatenate(values, axis=cat_dim)
+                    out_val = _concat_tensors(values, axis=cat_dim)
                     out_store[key] = out_val
                     store_slice_dict[key] = slices
                     store_inc_dict[key] = incs

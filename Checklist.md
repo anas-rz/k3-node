@@ -20,9 +20,10 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | `torch_geometric.nn.dense` | `k3_node.layers.dense` | ✅ 11/11 |
 | `torch_geometric.nn.models` | `k3_node.models` | ✅ 46/46 |
 | `torch_geometric.data` | `k3_node.data` | ✅ 19/19 |
+| `torch_geometric.loader` | `k3_node.loader` | ✅ 26/26 |
 
-`conv`, `pool`, `unpool`, `kge`, `functional`, `norm`, `aggr`, `dense`, `models`, and
-`data` are at full parity with PyG's public API (see each package's `__all__`).
+`conv`, `pool`, `unpool`, `kge`, `functional`, `norm`, `aggr`, `dense`, `models`, `data`, and
+`loader` are at full parity with PyG's public API (see each package's `__all__`).
 
 ## `torch_geometric.nn.models` (parity status)
 
@@ -96,6 +97,38 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | `download_url` | ✅ | `k3_node.data.download_url` | HTTP file downloader with progress |
 | `download_google_url` | ✅ | `k3_node.data.download_google_url` | Google Drive download helper |
 | `extract_tar` / `extract_zip` / `extract_bz2` / `extract_gz` | ✅ | `k3_node.data.extract_*` | Archive extraction helpers |
+
+
+## `torch_geometric.loader` (parity status)
+
+| PyG class | Status | k3-node location | Notes |
+|---|---|---|---|
+| `DataLoader` | ✅ | `k3_node.loader.DataLoader` | Multi-backend graph batch loader with `follow_batch` & `exclude_keys` |
+| `NodeLoader` | ✅ | `k3_node.loader.NodeLoader` | Mini-batch sampling from node information |
+| `LinkLoader` | ✅ | `k3_node.loader.LinkLoader` | Mini-batch sampling from link/edge information |
+| `NeighborLoader` | ✅ | `k3_node.loader.NeighborLoader` | Multi-hop neighbor sampling without external C++ binary dependency |
+| `LinkNeighborLoader` | ✅ | `k3_node.loader.LinkNeighborLoader` | Link-centric neighbor sampling with positive & negative link supervision |
+| `HGTLoader` | ✅ | `k3_node.loader.HGTLoader` | Heterogeneous Graph Transformer balanced neighbor sampling |
+| `ClusterData` | ✅ | `k3_node.loader.ClusterData` | Graph partitioner with METIS and pure Python/BFS fallback |
+| `ClusterLoader` | ✅ | `k3_node.loader.ClusterLoader` | Merges partitioned subgraphs into mini-batches |
+| `GraphSAINTSampler` | ✅ | `k3_node.loader.GraphSAINTSampler` | GraphSAINT random subgraph sampler base class |
+| `GraphSAINTNodeSampler` | ✅ | `k3_node.loader.GraphSAINTNodeSampler` | Node-based GraphSAINT sampler |
+| `GraphSAINTEdgeSampler` | ✅ | `k3_node.loader.GraphSAINTEdgeSampler` | Edge-probability GraphSAINT sampler |
+| `GraphSAINTRandomWalkSampler` | ✅ | `k3_node.loader.GraphSAINTRandomWalkSampler` | Random-walk-based GraphSAINT sampler |
+| `ShaDowKHopSampler` | ✅ | `k3_node.loader.ShaDowKHopSampler` | Decoupled shallow ego-network subgraph extractor |
+| `RandomNodeLoader` | ✅ | `k3_node.loader.RandomNodeLoader` | Random node partition loader for large graphs |
+| `ZipLoader` | ✅ | `k3_node.loader.ZipLoader` | Combines multiple loaders into synchronized tuples |
+| `DataListLoader` | ✅ | `k3_node.loader.DataListLoader` | Yields lists of `Data` objects without batch merging |
+| `DenseDataLoader` | ✅ | `k3_node.loader.DenseDataLoader` | Stacks graphs with dense adjacency matrices |
+| `TemporalDataLoader` | ✅ | `k3_node.loader.TemporalDataLoader` | Successive temporal event window mini-batch loader |
+| `NeighborSampler` | ✅ | `k3_node.loader.NeighborSampler` | Legacy layer-by-layer bipartite neighbor sampler |
+| `ImbalancedSampler` | ✅ | `k3_node.loader.ImbalancedSampler` | Class-frequency weighted random sampler |
+| `DynamicBatchSampler` | ✅ | `k3_node.loader.DynamicBatchSampler` | Dynamic node/edge budget mini-batch sampler |
+| `PrefetchLoader` | ✅ | `k3_node.loader.PrefetchLoader` | Asynchronous host-to-device memory prefetcher |
+| `CachedLoader` | ✅ | `k3_node.loader.CachedLoader` | In-memory mini-batch cache across epochs |
+| `AffinityMixin` | ✅ | `k3_node.loader.AffinityMixin` | CPU worker core affinitization context manager |
+| `MultithreadingMixin` | ✅ | `k3_node.loader.MultithreadingMixin` | Worker subprocess thread count configuration |
+| `LogMemoryMixin` | ✅ | `k3_node.loader.LogMemoryMixin` | Worker RSS memory consumption logger |
 
 
 ## Notes on non-goals / caveats
