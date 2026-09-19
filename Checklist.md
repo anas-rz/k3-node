@@ -19,9 +19,10 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | `torch_geometric.nn.aggr` | `k3_node.layers.aggr` | ✅ 26/26 |
 | `torch_geometric.nn.dense` | `k3_node.layers.dense` | ✅ 11/11 |
 | `torch_geometric.nn.models` | `k3_node.models` | ✅ 46/46 |
+| `torch_geometric.data` | `k3_node.data` | ✅ 19/19 |
 
-`conv`, `pool`, `unpool`, `kge`, `functional`, `norm`, `aggr`, `dense`, and
-`models` are at full parity with PyG's public API (see each package's `__all__`).
+`conv`, `pool`, `unpool`, `kge`, `functional`, `norm`, `aggr`, `dense`, `models`, and
+`data` are at full parity with PyG's public API (see each package's `__all__`).
 
 ## `torch_geometric.nn.models` (parity status)
 
@@ -70,6 +71,31 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | `LPFormer` | ✅ | `k3_node.models.LPFormer` | Adaptive graph transformer for link prediction with PPR positional encodings |
 | `SGFormer` | ✅ | `k3_node.models.SGFormer` | All-pair linear attention + GNN graph transformer |
 | `Polynormer` | ✅ | `k3_node.models.Polynormer` | Full polynomial-expressive graph transformer (local + global) |
+
+
+## `torch_geometric.data` (parity status)
+
+| PyG class / function | Status | k3-node location | Notes |
+|---|---|---|---|
+| `Data` | ✅ | `k3_node.data.Data` | Homogeneous graph container with multi-backend tensor support |
+| `HeteroData` | ✅ | `k3_node.data.HeteroData` | Heterogeneous graph container with multi-backend tensor support |
+| `Batch` / `HeteroBatch` | ✅ | `k3_node.data.Batch` | Disjoint graph batching & separation for Data & HeteroData |
+| `TemporalData` | ✅ | `k3_node.data.TemporalData` | Continuous-time temporal event stream container |
+| `HypergraphData` | ✅ | `k3_node.data.HypergraphData` | Hypergraph container with hyperedge indexing |
+| `Dataset` | ✅ | `k3_node.data.Dataset` | Base graph dataset abstraction |
+| `InMemoryDataset` | ✅ | `k3_node.data.InMemoryDataset` | In-memory graph dataset with serialization |
+| `OnDiskDataset` | ✅ | `k3_node.data.OnDiskDataset` | Out-of-core graph dataset with database backend |
+| `FeatureStore` | ✅ | `k3_node.data.FeatureStore` | Multi-backend feature store interface |
+| `GraphStore` | ✅ | `k3_node.data.GraphStore` | Graph edge store interface |
+| `TensorAttr` | ✅ | `k3_node.data.TensorAttr` | Feature store tensor metadata attribute |
+| `EdgeAttr` / `EdgeLayout` | ✅ | `k3_node.data.EdgeAttr` | Graph store edge layout and metadata |
+| `Database` | ✅ | `k3_node.data.Database` | Abstract key-value database interface |
+| `SQLiteDatabase` | ✅ | `k3_node.data.SQLiteDatabase` | SQLite3-backed persistent graph store |
+| `RocksDatabase` | ✅ | `k3_node.data.RocksDatabase` | RocksDB-backed database stub |
+| `makedirs` | ✅ | `k3_node.data.makedirs` | Recursive directory creation utility |
+| `download_url` | ✅ | `k3_node.data.download_url` | HTTP file downloader with progress |
+| `download_google_url` | ✅ | `k3_node.data.download_google_url` | Google Drive download helper |
+| `extract_tar` / `extract_zip` / `extract_bz2` / `extract_gz` | ✅ | `k3_node.data.extract_*` | Archive extraction helpers |
 
 
 ## Notes on non-goals / caveats

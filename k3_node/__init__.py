@@ -20,3 +20,9 @@ os.environ['KERAS_BACKEND'] = 'tensorflow' # or 'torch' or 'jax'
 from k3_node import ...
 ```
 """
+
+from k3_node import data
+
+__all__ = [
+    "data",
+]

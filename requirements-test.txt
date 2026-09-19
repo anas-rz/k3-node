@@ -1,0 +1,21 @@
+# Base dependencies
+-r requirements.txt
+
+# Testing framework
+pytest>=8.0.0
+pytest-cov
+
+# Multi-backend execution engines
+torch>=2.0.0
+tensorflow>=2.16.0
+jax
+jaxlib
+
+# Reference validation & evaluation dependencies
+torch-geometric>=2.5.0
+networkx
+scikit-learn
+tqdm
+fsspec
+requests
+
