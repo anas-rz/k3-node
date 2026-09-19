@@ -1,3 +1,5 @@
 keras>=3.0
 scipy
 pynndescent
+scipy
+sympy
