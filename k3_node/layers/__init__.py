@@ -8,3 +8,4 @@ from .norm import *
 from .aggr import *
 from .attention import *
 from .dense import *
+from .pool import *
