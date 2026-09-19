@@ -1,5 +1,9 @@
 site_name: K3Node
 # steal from Patrick Kidger
+site_url: https://anas-rz.github.io/k3-node/
+repo_url: https://github.com/anas-rz/k3-node
+repo_name: anas-rz/k3-node
+edit_uri: edit/main/docs/
 theme:
   name: "material"
   logo: images/logo.svg
@@ -33,11 +37,9 @@ plugins:
   - autorefs  # Cross-links to headings
   - mknotebooks  # Jupyter notebooks
   - mkdocs-jupyter
-docs_dir: _docs
-site_dir: docs
 
-repo_url: https://github.com/anas-rz/k3-node
-repo_name: anas-rz/k3-node
+
+
 edit_uri: ""  # No edit button, as some of our pages are in /docs and some in /examples via symlink, so it's impossible for them all to be accurate
 
 
