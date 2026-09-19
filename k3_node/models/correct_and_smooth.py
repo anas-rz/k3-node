@@ -1,8 +1,6 @@
-from typing import Optional
 
 import keras
 from keras import ops
-import numpy as np
 
 from k3_node.models.label_prop import LabelPropagation
 
