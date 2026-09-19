@@ -12,8 +12,8 @@ class SimpleConv(MessagePassing):
         aggr: The aggregation scheme to use (``"sum"``, ``"mean"``,
             ``"min"``, ``"max"``, ``"mul"``). (default: ``"sum"``)
         combine_root: The way to combine root node features with the
-            aggregated output (``"sum"``, ``"cat"``, or :obj:`None`).
-            (default: :obj:`None`)
+            aggregated output (``"sum"``, ``"cat"``, ``"self_loop"``,
+            or :obj:`None`). (default: :obj:`None`)
     """
 
     def __init__(
@@ -24,8 +24,10 @@ class SimpleConv(MessagePassing):
     ):
         super().__init__(aggr=aggr, **kwargs)
         self.combine_root = combine_root
-        if combine_root is not None and combine_root not in ["sum", "cat"]:
-            raise ValueError(f"combine_root must be 'sum', 'cat', or None, got {combine_root}")
+        if combine_root is not None and combine_root not in ["sum", "cat", "self_loop"]:
+            raise ValueError(
+                f"combine_root must be 'sum', 'cat', 'self_loop', or None, got {combine_root}"
+            )
 
     def build(self, input_shape):
         self.built = True
@@ -39,9 +41,14 @@ class SimpleConv(MessagePassing):
         else:
             x_src, x_dst = x[0], x[1]
 
+        if self.combine_root == "self_loop":
+            from k3_node.layers.conv.utils import add_self_loops
+            num_nodes = ops.shape(x_src)[0]
+            edge_index, edge_weight = add_self_loops(edge_index, edge_weight, num_nodes=num_nodes)
+
         out = self.propagate(edge_index, x=(x_src, x_dst), edge_weight=edge_weight, size=size)
 
-        if self.combine_root is not None and x_dst is not None:
+        if self.combine_root is not None and x_dst is not None and self.combine_root != "self_loop":
             if self.combine_root == "sum":
                 out = out + x_dst
             elif self.combine_root == "cat":

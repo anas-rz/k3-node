@@ -23,8 +23,18 @@ from torch_geometric.nn import GCNConv as PyGGCNConv
 from torch_geometric.nn import LayerNorm as PyGLayerNorm
 from torch_geometric.nn.models.attentive_fp import GATEConv as PyGGATEConv
 from torch_geometric.nn.models.attentive_fp import AttentiveFP as PyGAttentiveFP
+from torch_geometric.nn import JumpingKnowledge as PyGJK
+from torch_geometric.nn import HeteroJumpingKnowledge as PyGHeteroJK
+from torch_geometric.nn.models import MaskLabel as PyGMaskLabel
+from torch_geometric.nn.models import MetaLayer as PyGMetaLayer
+from torch_geometric.nn.models import PMLP as PyGPMLP
+from torch_geometric.nn.models import Polynormer as PyGPolynormer
 
 from k3_node.models import MLP, ARLinkPredictor, GAE, DeepGraphInfomax, DeepGCNLayer, AttentiveFP
+from k3_node.models import (
+    JumpingKnowledge, HeteroJumpingKnowledge,
+    MaskLabel, MetaLayer, PMLP, Polynormer,
+)
 from k3_node.models.attentive_fp import GATEConv
 from k3_node.layers.conv import GCNConv
 from k3_node.layers.norm import LayerNorm
@@ -222,3 +232,218 @@ def test_reference_attentive_fp():
 
     diff = (out_pyg - out_k3).abs().max().item()
     assert diff < 1e-3
+
+
+def test_reference_jumping_knowledge():
+    torch.manual_seed(42)
+    num_nodes, channels, num_layers = 10, 8, 4
+    xs_torch = [torch.randn(num_nodes, channels) for _ in range(num_layers)]
+
+    # cat mode
+    pyg_cat = PyGJK('cat')
+    k3_cat = JumpingKnowledge('cat')
+    out_pyg = pyg_cat(xs_torch)
+    out_k3 = k3_cat(xs_torch)
+    assert np.allclose(out_pyg.detach().numpy(), ops.convert_to_numpy(out_k3), atol=1e-6)
+
+    # max mode
+    pyg_max = PyGJK('max')
+    k3_max = JumpingKnowledge('max')
+    out_pyg = pyg_max(xs_torch)
+    out_k3 = k3_max(xs_torch)
+    assert np.allclose(out_pyg.detach().numpy(), ops.convert_to_numpy(out_k3), atol=1e-6)
+
+
+def test_reference_hetero_jumping_knowledge():
+    torch.manual_seed(42)
+    num_nodes, channels, num_layers = 10, 8, 4
+    types = ["author", "paper"]
+    xs_dict_torch = {
+        key: [torch.randn(num_nodes, channels) for _ in range(num_layers)]
+        for key in types
+    }
+
+    # cat mode
+    pyg = PyGHeteroJK(types, mode='cat')
+    k3 = HeteroJumpingKnowledge(types, mode='cat')
+    out_pyg = pyg(xs_dict_torch)
+    out_k3 = k3(xs_dict_torch)
+    for k in types:
+        assert np.allclose(out_pyg[k].detach().numpy(), ops.convert_to_numpy(out_k3[k]), atol=1e-6)
+
+    # max mode
+    pyg = PyGHeteroJK(types, mode='max')
+    k3 = HeteroJumpingKnowledge(types, mode='max')
+    out_pyg = pyg(xs_dict_torch)
+    out_k3 = k3(xs_dict_torch)
+    for k in types:
+        assert np.allclose(out_pyg[k].detach().numpy(), ops.convert_to_numpy(out_k3[k]), atol=1e-6)
+
+
+def test_reference_mask_label():
+    torch.manual_seed(42)
+    pyg_add = PyGMaskLabel(num_classes=5, out_channels=10, method="add")
+    k3_add = MaskLabel(num_classes=5, out_channels=10, method="add")
+    k3_add.build((None, 10))
+    k3_add.emb.weights[0].assign(pyg_add.emb.weight.detach())
+
+    x = torch.randn(6, 10)
+    y = torch.tensor([0, 1, 4, 2, 3, 1])
+    mask = torch.tensor([True, False, True, False, True, False])
+
+    out_pyg = pyg_add(x, y, mask)
+    out_k3 = k3_add(x, y, mask)
+    assert np.allclose(out_pyg.detach().numpy(), ops.convert_to_numpy(out_k3), atol=1e-6)
+
+    pyg_cat = PyGMaskLabel(num_classes=5, out_channels=10, method="concat")
+    k3_cat = MaskLabel(num_classes=5, out_channels=10, method="concat")
+    k3_cat.build((None, 10))
+    k3_cat.emb.weights[0].assign(pyg_cat.emb.weight.detach())
+
+    out_pyg = pyg_cat(x, y, mask)
+    out_k3 = k3_cat(x, y, mask)
+    assert np.allclose(out_pyg.detach().numpy(), ops.convert_to_numpy(out_k3), atol=1e-6)
+
+
+def test_reference_meta_layer():
+    torch.manual_seed(42)
+
+    class PyGEdgeModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.lin = torch.nn.Linear(2 * 4 + 3 + 2, 5)
+
+        def forward(self, src, dst, edge_attr, u, batch):
+            out = torch.cat([src, dst, edge_attr, u[batch]], 1)
+            return self.lin(out)
+
+    class K3EdgeModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.lin = torch.nn.Linear(2 * 4 + 3 + 2, 5)
+
+        def forward(self, src, dst, edge_attr, u, batch):
+            out = torch.cat([src, dst, edge_attr, u[batch]], 1)
+            return self.lin(out)
+
+    pyg_edge = PyGEdgeModel()
+    k3_edge = K3EdgeModel()
+    k3_edge.lin.weight.data.copy_(pyg_edge.lin.weight.data)
+    k3_edge.lin.bias.data.copy_(pyg_edge.lin.bias.data)
+
+    pyg_op = PyGMetaLayer(edge_model=pyg_edge)
+    k3_op = MetaLayer(edge_model=k3_edge)
+
+    x = torch.randn(5, 4)
+    edge_index = torch.tensor([[0, 1, 2], [1, 2, 0]])
+    edge_attr = torch.randn(3, 3)
+    u = torch.randn(2, 2)
+    batch = torch.tensor([0, 0, 0, 1, 1])
+
+    x_pyg, e_pyg, u_pyg = pyg_op(x, edge_index, edge_attr, u, batch)
+    x_k3, e_k3, u_k3 = k3_op(x, edge_index, edge_attr, u, batch)
+
+    assert np.allclose(e_pyg.detach().numpy(), ops.convert_to_numpy(e_k3), atol=1e-5)
+
+
+def test_reference_pmlp():
+    torch.manual_seed(42)
+    in_c, hidden_c, out_c, num_layers = 8, 16, 4, 3
+    pyg = PyGPMLP(in_c, hidden_c, out_c, num_layers=num_layers, dropout=0.0, norm=False, bias=True)
+    k3 = PMLP(in_c, hidden_c, out_c, num_layers=num_layers, dropout=0.0, norm=False, bias=True)
+
+    for i in range(num_layers):
+        k3._weights_list[i].assign(pyg.lins[i].weight.detach().t())
+        k3._biases_list[i].assign(pyg.lins[i].bias.detach())
+
+    x = torch.randn(6, in_c)
+    edge_index = torch.tensor([[0, 1, 2, 3], [1, 2, 3, 0]])
+
+    # Train mode
+    pyg.train()
+    k3.training = True
+    out_pyg = pyg(x)
+    out_k3 = k3(x, training=True)
+    assert np.allclose(out_pyg.detach().numpy(), ops.convert_to_numpy(out_k3), atol=1e-5)
+
+    # Eval mode
+    pyg.eval()
+    k3.training = False
+    out_pyg = pyg(x, edge_index)
+    out_k3 = k3(x, edge_index, training=False)
+    diff = np.max(np.abs(out_pyg.detach().numpy() - ops.convert_to_numpy(out_k3)))
+    assert diff < 1e-4
+
+
+def test_reference_polynormer():
+    torch.manual_seed(42)
+    in_c, hidden_c, out_c = 16, 16, 8
+    pyg = PyGPolynormer(
+        in_c, hidden_c, out_c,
+        local_layers=1, global_layers=1,
+        in_dropout=0.0, dropout=0.0, global_dropout=0.0,
+        pre_ln=False, post_bn=False, qk_shared=True,
+    )
+    k3 = Polynormer(
+        in_c, hidden_c, out_c,
+        local_layers=1, global_layers=1,
+        in_dropout=0.0, dropout=0.0, global_dropout=0.0,
+        pre_ln=False, post_bn=False, qk_shared=True,
+    )
+
+    x = torch.randn(6, in_c)
+    edge_index = torch.tensor([[0, 1, 2, 3], [1, 2, 3, 0]])
+    batch = torch.tensor([0, 0, 0, 1, 1, 1])
+
+    # Build all paths by running forward pass
+    k3._global = False
+    _ = k3(x, edge_index, batch)
+    k3._global = True
+    _ = k3(x, edge_index, batch)
+
+    # Copy local weights
+    k3.local_convs[0].lin.kernel.assign(pyg.local_convs[0].lin.weight.detach().t())
+    k3.local_convs[0].bias.assign(pyg.local_convs[0].bias.detach())
+    k3.h_lins[0].kernel.assign(pyg.h_lins[0].weight.detach().t())
+    k3.h_lins[0].bias.assign(pyg.h_lins[0].bias.detach())
+    k3.lins[0].kernel.assign(pyg.lins[0].weight.detach().t())
+    k3.lins[0].bias.assign(pyg.lins[0].bias.detach())
+    k3.lns[0].weights[0].assign(pyg.lns[0].weight.detach())
+    k3.lns[0].weights[1].assign(pyg.lns[0].bias.detach())
+    k3.pred_local.kernel.assign(pyg.pred_local.weight.detach().t())
+    k3.pred_local.bias.assign(pyg.pred_local.bias.detach())
+
+    # Eval local
+    pyg.eval()
+    pyg._global = False
+    k3._global = False
+    out_pyg = pyg(x, edge_index, batch).detach().numpy()
+    out_k3 = ops.convert_to_numpy(k3(x, edge_index, batch, training=False))
+    diff = np.max(np.abs(out_pyg - out_k3))
+    assert diff < 1e-4
+
+    # Copy global weights
+    k3.ln.weights[0].assign(pyg.ln.weight.detach())
+    k3.ln.weights[1].assign(pyg.ln.bias.detach())
+    k3.pred_global.kernel.assign(pyg.pred_global.weight.detach().t())
+    k3.pred_global.bias.assign(pyg.pred_global.bias.detach())
+
+    pyg_attn = pyg.global_attn[0]
+    k3_attn = k3.global_attn[0]
+    k3_attn.h_lins.kernel.assign(pyg_attn.h_lins.weight.detach().t())
+    k3_attn.h_lins.bias.assign(pyg_attn.h_lins.bias.detach())
+    k3_attn.k.kernel.assign(pyg_attn.k.weight.detach().t())
+    k3_attn.v.kernel.assign(pyg_attn.v.weight.detach().t())
+    k3_attn.lns.weights[0].assign(pyg_attn.lns.weight.detach())
+    k3_attn.lns.weights[1].assign(pyg_attn.lns.bias.detach())
+    k3_attn.lin_out.kernel.assign(pyg_attn.lin_out.weight.detach().t())
+    k3_attn.lin_out.bias.assign(pyg_attn.lin_out.bias.detach())
+
+    # Eval global
+    pyg._global = True
+    k3._global = True
+    out_pyg_g = pyg(x, edge_index, batch).detach().numpy()
+    out_k3_g = ops.convert_to_numpy(k3(x, edge_index, batch, training=False))
+    diff_g = np.max(np.abs(out_pyg_g - out_k3_g))
+    assert diff_g < 1e-3
+

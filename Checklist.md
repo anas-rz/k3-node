@@ -18,7 +18,7 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | `torch_geometric.nn.norm` | `k3_node.layers.norm` | ✅ 11/11 |
 | `torch_geometric.nn.aggr` | `k3_node.layers.aggr` | ✅ 26/26 |
 | `torch_geometric.nn.dense` | `k3_node.layers.dense` | ✅ 11/11 |
-| `torch_geometric.nn.models` | `k3_node.models` | 🟡 6/46 |
+| `torch_geometric.nn.models` | `k3_node.models` | 🟡 16/46 |
 
 `conv`, `pool`, `unpool`, `kge`, `functional`, `norm`, `aggr` and `dense` are
 at full parity with PyG's public API (see each package's `__all__`). The
@@ -44,9 +44,9 @@ remaining gap is almost entirely `torch_geometric.nn.models`.
 | `GAT` | ⬜ | | `basic_gnn.GAT` |
 | `PNA` | ⬜ | | `basic_gnn.PNA` |
 | `EdgeCNN` | ⬜ | | `basic_gnn.EdgeCNN` |
-| `JumpingKnowledge` | ⬜ | | |
-| `HeteroJumpingKnowledge` | ⬜ | | |
-| `MetaLayer` | ⬜ | | |
+| `JumpingKnowledge` | ✅ | `k3_node.models.JumpingKnowledge` | Supports cat, max, and lstm modes |
+| `HeteroJumpingKnowledge` | ✅ | `k3_node.models.HeteroJumpingKnowledge` | Heterogeneous graph jumping knowledge |
+| `MetaLayer` | ✅ | `k3_node.models.MetaLayer` | Edge, node, and global network modules |
 | `Node2Vec` | ⬜ | | random-walk + skip-gram embedding |
 | `SignedGCN` | ⬜ | | |
 | `RENet` | ⬜ | | temporal knowledge graphs |
@@ -62,15 +62,15 @@ remaining gap is almost entirely `torch_geometric.nn.models`.
 | `RECT_L` | ⬜ | | |
 | `LINKX` | ⬜ | | |
 | `LightGCN` | ⬜ | | |
-| `MaskLabel` | ⬜ | | |
+| `MaskLabel` | ✅ | `k3_node.models.MaskLabel` | Label embedding and masking layer (add and concat) |
 | `GroupAddRev` | ⬜ | | reversible GNN (`rev_gnn.py`) |
 | `GNNFF` | ⬜ | | |
-| `PMLP` | ⬜ | | |
+| `PMLP` | ✅ | `k3_node.models.PMLP` | Propagational MLP with SimpleConv propagation at inference |
 | `NeuralFingerprint` | ⬜ | | |
 | `ViSNet` | ⬜ | | |
 | `LPFormer` | ⬜ | | |
 | `SGFormer` | ⬜ | | |
-| `Polynormer` | 🟡 | `k3_node.layers.attention.PolynormerAttention` | Only the attention block is ported, not the full model wrapper (local/global layers, readout) |
+| `Polynormer` | ✅ | `k3_node.models.Polynormer` | Full polynomial-expressive graph transformer (local + global) |
 
 ## Notes on non-goals / caveats
 
