@@ -1,7 +1,5 @@
-from typing import Optional, Callable, Union, Tuple
-import keras
+from typing import Optional, Callable, Tuple
 from keras import ops
-from keras.layers import Layer
 
 from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.conv.utils import remove_self_loops, add_self_loops

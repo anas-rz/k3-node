@@ -1,5 +1,3 @@
-from typing import Optional, Union, Tuple
-import keras
 from keras import layers, ops
 
 from k3_node.layers.conv.message_passing import MessagePassing

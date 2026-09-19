@@ -1,4 +1,3 @@
-from typing import Optional
 from k3_node.layers.conv.gat_conv import GATConv
 from k3_node.layers.conv.sage_conv import SAGEConv
 from k3_node.layers.conv.rgcn_conv import CuGraphRGCNConv

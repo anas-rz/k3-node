@@ -1,5 +1,4 @@
 import math
-from typing import Optional
 import keras
 from keras import ops
 from k3_node.layers.conv.gcn_conv import gcn_norm

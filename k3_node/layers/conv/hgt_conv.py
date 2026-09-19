@@ -1,6 +1,5 @@
 import math
-from typing import Dict, List, Optional, Tuple, Union
-import keras
+from typing import Dict, List, Tuple, Union
 from keras import ops
 from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.conv.utils import softmax

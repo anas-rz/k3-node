@@ -1,5 +1,4 @@
 from typing import Optional, Union, Callable
-import keras
 from keras import ops, activations
 from keras.layers import Dropout
 

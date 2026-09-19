@@ -1,7 +1,6 @@
 from typing import Optional, Union, Tuple
-import keras
+
 from keras import ops
-from keras.layers import Layer
 
 from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.conv.utils import scatter

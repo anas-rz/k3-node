@@ -1,5 +1,4 @@
 from typing import Optional, List
-import keras
 from keras import ops
 from keras.layers import Dense
 

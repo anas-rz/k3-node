@@ -1,7 +1,6 @@
 import inspect
 from typing import Any, List, Optional, Tuple, Union
-import keras
-from keras import layers, ops, backend
+from keras import layers, ops
 
 from k3_node.utils import (
     is_layer_kwarg,

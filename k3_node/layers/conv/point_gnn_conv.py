@@ -1,7 +1,5 @@
-from typing import Optional, Callable
-import keras
+from typing import Callable
 from keras import ops
-from keras.layers import Layer
 
 from k3_node.layers.conv.message_passing import MessagePassing
 

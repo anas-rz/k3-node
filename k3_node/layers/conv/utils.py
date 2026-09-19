@@ -1,5 +1,5 @@
 from typing import Optional, Tuple, Union
-from keras import ops, backend
+from keras import ops
 
 
 def degree(index, num_nodes: Optional[int] = None, dtype=None):

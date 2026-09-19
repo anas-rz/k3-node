@@ -1,10 +1,10 @@
-from typing import Optional, Union, Tuple
+from typing import Optional
 import keras
 from keras import ops
 from keras.layers import Dense
 
 from k3_node.layers.conv.message_passing import MessagePassing
-from k3_node.layers.conv.utils import softmax, scatter
+from k3_node.layers.conv.utils import softmax
 
 
 class RGATConv(MessagePassing):

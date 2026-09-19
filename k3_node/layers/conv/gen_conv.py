@@ -1,4 +1,4 @@
-from typing import Optional, Union, Tuple, List, Callable
+from typing import Optional, Union, Tuple
 import keras
 from keras import ops
 from keras.layers import Dense, BatchNormalization, LayerNormalization

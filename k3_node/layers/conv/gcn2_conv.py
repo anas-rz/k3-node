@@ -1,7 +1,6 @@
 import math
 from typing import Optional, Union, Tuple
-import keras
-from keras import layers, ops
+from keras import ops
 
 from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.conv.utils import gcn_norm

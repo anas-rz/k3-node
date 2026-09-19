@@ -1,10 +1,9 @@
 from typing import Optional, Union, Tuple, List
-import keras
+
 from keras import layers, ops
 
 from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.aggr.base import Aggregation
-from k3_node.layers.aggr.multi import MultiAggregation
 
 
 class SAGEConv(MessagePassing):

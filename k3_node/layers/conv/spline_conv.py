@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 import keras
 from keras import ops
 from k3_node.layers.conv.message_passing import MessagePassing

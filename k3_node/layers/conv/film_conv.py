@@ -1,8 +1,7 @@
 import copy
 from typing import Optional, Union, Tuple, Callable
-import keras
 from keras import ops, activations
-from keras.layers import Dense, Layer
+from keras.layers import Dense
 
 from k3_node.layers.conv.message_passing import MessagePassing
 

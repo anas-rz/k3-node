@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union, Tuple, List
+from typing import Callable, Optional, Union, List
 import keras
 from keras import layers, ops, activations
 

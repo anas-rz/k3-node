@@ -1,5 +1,4 @@
-from typing import Optional, Union, Tuple
-import keras
+from typing import Union, Tuple
 from keras import ops
 from keras.layers import Dense
 
