@@ -36,4 +36,3 @@ class GraphSizeNorm(layers.Layer):
         if isinstance(input_shape, (tuple, list)) and isinstance(input_shape[0], (tuple, list)):
             return input_shape[0]
         return input_shape
-

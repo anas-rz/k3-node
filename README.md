@@ -7,7 +7,7 @@ Ported from [Spektral](https://github.com/danielegrattarola/spektral/tree/master
 > [!IMPORTANT]
 > `K3 Node` only supports operations on sparse adjacency matrix with `TensorFlow` backend. Support for JAX or PyTorch backends will be added future releases.
 
-
+For the full, up-to-date breakdown of what's been ported from `torch_geometric.nn` (and what's still outstanding), see [Checklist.md](Checklist.md).
 
 # What's Included: 
 
@@ -36,6 +36,16 @@ Ported from [Spektral](https://github.com/danielegrattarola/spektral/tree/master
 
 ## Attention Layers:
 - `Performer`: The linear scaled attention mechanism from the "Rethinking Attention with Performers"
+
+## Models (`k3_node.models`)
+- `MLP`: A configurable Multi-Layer Perceptron with per-layer norm/activation/dropout
+- `ARLinkPredictor`: Attract-Repel link predictor for undirected graphs
+- `GAE`, `VGAE`, `ARGA`, `ARGVA`, `InnerProductDecoder`: (Variational / adversarially regularized) Graph Auto-Encoders
+- `DeepGraphInfomax`: Mutual-information-based unsupervised graph representation learning
+- `DeepGCNLayer`: Skip-connection wrapper (`res+`/`res`/`dense`/`plain`) for building very deep GCNs
+- `AttentiveFP`: Graph attention model for molecular property prediction
+
+See [Checklist.md](Checklist.md) for the full list of ported vs. outstanding `torch_geometric.nn.models` classes.
 
 ## Examples
 ### TensorFlow Backend
