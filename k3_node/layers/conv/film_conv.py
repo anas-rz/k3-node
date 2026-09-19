@@ -99,7 +99,9 @@ class FiLMConv(MessagePassing):
         for i in range(self.num_relations):
             if edge_type is not None:
                 mask = ops.equal(edge_type, i)
-                idx = ops.reshape(ops.where(mask), (-1,))
+                where_mask = ops.where(mask)
+                idx = where_mask[0] if isinstance(where_mask, (list, tuple)) else where_mask
+                idx = ops.reshape(idx, (-1,))
                 idx = ops.cast(idx, "int32")
                 if ops.shape(idx)[0] == 0:
                     continue

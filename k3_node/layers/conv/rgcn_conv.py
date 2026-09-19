@@ -139,7 +139,9 @@ class RGCNConv(MessagePassing):
         # Iterate over relations
         for r in range(self.num_relations):
             mask = ops.equal(edge_type, r)
-            idx = ops.reshape(ops.where(mask), (-1,))
+            where_mask = ops.where(mask)
+            idx = where_mask[0] if isinstance(where_mask, (list, tuple)) else where_mask
+            idx = ops.reshape(idx, (-1,))
             idx = ops.cast(idx, "int32")
             if ops.shape(idx)[0] == 0:
                 continue
