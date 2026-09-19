@@ -29,8 +29,10 @@ class GatedGraphConv(MessagePassing):
     """
     def __init__(
         self,
-        channels,
-        n_layers,
+        channels=None,
+        n_layers=None,
+        out_channels=None,
+        num_layers=None,
         activation=None,
         use_bias=True,
         kernel_initializer="glorot_uniform",
@@ -42,6 +44,8 @@ class GatedGraphConv(MessagePassing):
         bias_constraint=None,
         **kwargs,
     ):
+        channels = out_channels if out_channels is not None else channels
+        n_layers = num_layers if num_layers is not None else n_layers
         super().__init__(
             activation=activation,
             use_bias=use_bias,
@@ -55,10 +59,11 @@ class GatedGraphConv(MessagePassing):
             **kwargs,
         )
         self.channels = channels
+        self.out_channels = channels
         self.n_layers = n_layers
+        self.num_layers = n_layers
 
     def build(self, input_shape):
-        assert len(input_shape) >= 2
         self.kernel = self.add_weight(
             name="kernel",
             shape=(self.n_layers, self.channels, self.channels),
@@ -80,19 +85,31 @@ class GatedGraphConv(MessagePassing):
         )
         self.built = True
 
-    def call(self, inputs):
-        x, a, _ = self.get_inputs(inputs)
+    def call(self, x, edge_index=None, edge_weight=None, **kwargs):
+        is_legacy = False
+        if edge_index is None and isinstance(x, (tuple, list)):
+            x, a, _ = self.get_inputs(x)
+            edge_index = a
+            is_legacy = True
+
         F = ops.shape(x)[-1]
-        assert F <= self.channels
-        to_pad = self.channels - F
-        ndims = len(x.shape) - 1
-        output = ops.pad(x, [[0, 0]] * ndims + [[0, to_pad]])
+        if F < self.channels:
+            to_pad = self.channels - F
+            ndims = len(ops.shape(x)) - 1
+            output = ops.pad(x, [[0, 0]] * ndims + [[0, to_pad]])
+        else:
+            output = x
+
         for i in range(self.n_layers):
             m = ops.matmul(output, self.kernel[i])
-            m = self.propagate(m, a)
+            if is_legacy:
+                m = self.propagate(m, edge_index)
+            else:
+                m = self.propagate(edge_index, x=m, edge_weight=edge_weight)
             output = self.rnn(m, [output])[0]
 
-        output = self.activation(output)
+        if hasattr(self, "activation") and self.activation is not None and callable(self.activation):
+            output = self.activation(output)
         return output
 
     @property

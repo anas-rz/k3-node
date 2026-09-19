@@ -1,117 +1,172 @@
-# ported from spektral
-
-from keras import ops
-from keras import activations
-from keras.layers import BatchNormalization, Dense
-from keras.models import Sequential
+from typing import Callable, Optional, Union, Tuple, List
+import keras
+from keras import layers, ops, activations
 
 from k3_node.layers.conv.message_passing import MessagePassing
 
 
 class GINConv(MessagePassing):
-    """
-    `k3_node.layers.GINConv` 
-    Implementation of Graph Isomorphism Network (GIN) layer
+    r"""The graph isomorphism operator from the `"How Powerful are Graph
+    Neural Networks?" <https://arxiv.org/abs/1810.00826>`_ paper.
 
     Args:
-        channels: The number of output channels.
-        epsilon: The epsilon parameter for the MLP.
-        mlp_hidden: A list of hidden channels for the MLP.
-        mlp_activation: The activation function to use in the MLP.
-        mlp_batchnorm: Whether to use batch normalization in the MLP.
-        aggregate: Aggregation function to use (one of 'sum', 'mean', 'max').
-        activation: Activation function to use.
-        use_bias: Whether to add a bias to the linear transformation.
-        kernel_initializer: Initializer for the `kernel` weights matrix.
-        bias_initializer: Initializer for the bias vector.
-        kernel_regularizer: Regularizer for the `kernel` weights matrix.
-        bias_regularizer: Regularizer for the bias vector.
-        activity_regularizer: Regularizer for the output.
-        kernel_constraint: Constraint for the `kernel` weights matrix.
-        bias_constraint: Constraint for the bias vector.
-        **kwargs: Additional arguments to pass to the `MessagePassing` superclass.
+        nn: A neural network :math:`h_{\mathbf{\Theta}}` that maps node
+            features to new embeddings (e.g. a :class:`keras.Sequential` or callable).
+            Also accepts an integer `channels` for backward compatibility.
+        eps: (Initial) :math:`\epsilon`-value. (default: ``0.0``)
+        train_eps: If set to :obj:`True`, :math:`\epsilon` will be a learnable
+            parameter. (default: ``False``)
     """
+
     def __init__(
         self,
-        channels,
-        epsilon=None,
-        mlp_hidden=None,
-        mlp_activation="relu",
-        mlp_batchnorm=True,
-        aggregate="sum",
-        activation=None,
-        use_bias=True,
-        kernel_initializer="glorot_uniform",
-        bias_initializer="zeros",
-        kernel_regularizer=None,
-        bias_regularizer=None,
-        activity_regularizer=None,
-        kernel_constraint=None,
-        bias_constraint=None,
+        nn: Union[Callable, int],
+        eps: float = 0.0,
+        train_eps: bool = False,
+        epsilon: Optional[float] = None,
+        mlp_hidden: Optional[List[int]] = None,
+        mlp_activation: str = "relu",
+        mlp_batchnorm: bool = True,
         **kwargs,
     ):
-        super().__init__(
-            aggregate=aggregate,
-            activation=activation,
-            use_bias=use_bias,
-            kernel_initializer=kernel_initializer,
-            bias_initializer=bias_initializer,
-            kernel_regularizer=kernel_regularizer,
-            bias_regularizer=bias_regularizer,
-            activity_regularizer=activity_regularizer,
-            kernel_constraint=kernel_constraint,
-            bias_constraint=bias_constraint,
-            **kwargs,
-        )
-        self.channels = channels
-        self.epsilon = epsilon
-        self.mlp_hidden = mlp_hidden if mlp_hidden else []
-        self.mlp_activation = activations.get(mlp_activation)
-        self.mlp_batchnorm = mlp_batchnorm
+        super().__init__(aggr=kwargs.pop("aggr", kwargs.pop("aggregate", "add")), **kwargs)
+
+        if epsilon is not None:
+            eps = epsilon
+
+        self.initial_eps = eps
+        self.train_eps = train_eps
+
+        # Backward compatibility if nn is int (channels)
+        if isinstance(nn, int):
+            channels = nn
+            mlp_hidden = mlp_hidden or []
+            act = activations.get(mlp_activation)
+            seq_layers = []
+            for h in mlp_hidden:
+                seq_layers.append(layers.Dense(h, activation=act))
+                if mlp_batchnorm:
+                    seq_layers.append(layers.BatchNormalization())
+            seq_layers.append(layers.Dense(channels, activation=kwargs.get("activation", None)))
+            self.nn = keras.Sequential(seq_layers)
+        else:
+            self.nn = nn
+
+        if train_eps:
+            self.eps = self.add_weight(
+                shape=(1,),
+                initializer=keras.initializers.Constant(eps),
+                name="eps",
+            )
+        else:
+            self.eps = ops.cast(eps, "float32")
 
     def build(self, input_shape):
-        assert len(input_shape) >= 2
-        layer_kwargs = dict(
-            kernel_initializer=self.kernel_initializer,
-            bias_initializer=self.bias_initializer,
-            kernel_regularizer=self.kernel_regularizer,
-            bias_regularizer=self.bias_regularizer,
-            kernel_constraint=self.kernel_constraint,
-            bias_constraint=self.bias_constraint,
-        )
-
-        self.mlp = Sequential()
-        for channels in self.mlp_hidden:
-            self.mlp.add(Dense(channels, self.mlp_activation, **layer_kwargs))
-            if self.mlp_batchnorm:
-                self.mlp.add(BatchNormalization())
-        self.mlp.add(
-            Dense(
-                self.channels, self.activation, use_bias=self.use_bias, **layer_kwargs
-            )
-        )
-
-        if self.epsilon is None:
-            self.eps = self.add_weight(shape=(1,), initializer="zeros", name="eps")
-        else:
-            # If epsilon is given, keep it constant
-            self.eps = ops.cast(self.epsilon, self.dtype)
-        self.one = ops.cast(1, self.dtype)
-
+        if hasattr(self.nn, "build") and not getattr(self.nn, "built", False):
+            self.nn.build(input_shape)
         self.built = True
 
-    def call(self, inputs, **kwargs):
-        x, a, _ = self.get_inputs(inputs)
-        output = self.mlp((self.one + self.eps) * x + self.propagate(x, a))
+    def call(self, x, edge_index=None, size=None, **kwargs):
+        # Handle legacy calling: conv((x, adj))
+        if edge_index is None and isinstance(x, (tuple, list)) and len(x) == 2:
+            arg0, arg1 = x[0], x[1]
+            if len(ops.shape(arg1)) == 2 and ops.shape(arg1)[0] > 2 and ops.shape(arg1)[0] == ops.shape(arg1)[1]:
+                where_adj = ops.where(arg1 != 0)
+                where_adj = where_adj if not isinstance(where_adj, list) else where_adj
+                edge_index = ops.stack([where_adj[0], where_adj[1]], axis=0)
+                x = arg0
+            elif ops.shape(arg1)[0] == 2:
+                edge_index = arg1
+                x = arg0
 
-        return output
+        if not isinstance(x, (tuple, list)):
+            x_src, x_dst = x, x
+        else:
+            x_src, x_dst = x[0], x[1]
 
-    @property
-    def config(self):
-        return {
-            "channels": self.channels,
-            "epsilon": self.epsilon,
-            "mlp_hidden": self.mlp_hidden,
-            "mlp_activation": self.mlp_activation,
-            "mlp_batchnorm": self.mlp_batchnorm,
-        }
+        out = self.propagate(edge_index, x=(x_src, x_dst), size=size)
+
+        if x_dst is not None:
+            out = out + (1.0 + self.eps) * x_dst
+
+        return self.nn(out)
+
+    def message(self, x_j):
+        return x_j
+
+
+class GINEConv(MessagePassing):
+    r"""The modified :class:`GINConv` operator from the `"Strategies for
+    Pre-training Graph Neural Networks" <https://arxiv.org/abs/1905.12265>`_
+    paper, which is able to incorporate edge features into aggregation.
+
+    Args:
+        nn: A neural network :math:`h_{\mathbf{\Theta}}`.
+        eps: (Initial) :math:`\epsilon`-value. (default: ``0.0``)
+        train_eps: If set to :obj:`True`, :math:`\epsilon` will be a learnable
+            parameter. (default: ``False``)
+        edge_dim: Edge feature dimensionality. (default: :obj:`None`)
+    """
+
+    def __init__(
+        self,
+        nn: Callable,
+        eps: float = 0.0,
+        train_eps: bool = False,
+        edge_dim: Optional[int] = None,
+        **kwargs,
+    ):
+        super().__init__(aggr=kwargs.pop("aggr", kwargs.pop("aggregate", "add")), **kwargs)
+        self.nn = nn
+        self.initial_eps = eps
+        self.train_eps = train_eps
+        self.edge_dim = edge_dim
+
+        if train_eps:
+            self.eps = self.add_weight(
+                shape=(1,),
+                initializer=keras.initializers.Constant(eps),
+                name="eps",
+            )
+        else:
+            self.eps = ops.cast(eps, "float32")
+
+        if edge_dim is not None:
+            self.lin = layers.Dense(edge_dim, use_bias=True)
+        else:
+            self.lin = None
+
+    def build(self, input_shape):
+        if self.lin is not None:
+            if isinstance(input_shape, (tuple, list)) and len(input_shape) > 0 and isinstance(input_shape[0], (tuple, list)):
+                node_dim = input_shape[0][-1]
+            elif isinstance(input_shape, (tuple, list)):
+                node_dim = input_shape[-1]
+            else:
+                node_dim = 16
+            self.lin.units = node_dim
+            self.lin.build((None, self.edge_dim))
+        self.built = True
+
+    def call(self, x, edge_index=None, edge_attr=None, size=None, **kwargs):
+        if edge_index is None and isinstance(x, (tuple, list)):
+            x, edge_index = x[0], x[1]
+
+        if not isinstance(x, (tuple, list)):
+            x_src, x_dst = x, x
+        else:
+            x_src, x_dst = x[0], x[1]
+
+        out = self.propagate(edge_index, x=(x_src, x_dst), edge_attr=edge_attr, size=size)
+
+        if x_dst is not None:
+            out = out + (1.0 + self.eps) * x_dst
+
+        return self.nn(out)
+
+    def message(self, x_j, edge_attr=None):
+        if edge_attr is None:
+            return ops.relu(x_j)
+        if self.lin is not None:
+            edge_attr = self.lin(edge_attr)
+        return ops.relu(x_j + edge_attr)
