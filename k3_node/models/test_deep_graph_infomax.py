@@ -21,7 +21,7 @@ def test_infomax():
     assert ops.shape(summary) == (16,)
 
     loss = model.loss(pos_z, neg_z, summary)
-    assert float(loss) >= 0
+    assert float(ops.convert_to_numpy(loss)) >= 0
 
     acc = model.test(
         train_z=ops.ones((20, 16)),
@@ -65,4 +65,4 @@ def test_infomax_predefined_model():
     assert ops.shape(summary) == (16,)
 
     loss = model.loss(pos_z, neg_z, summary)
-    assert float(loss) >= 0
+    assert float(ops.convert_to_numpy(loss)) >= 0

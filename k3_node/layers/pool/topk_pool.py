@@ -36,6 +36,13 @@ class TopKPooling(layers.Layer):
         r"""Resets all learnable parameters of the module."""
         self.select.reset_parameters()
 
+    def build(self, input_shape=None):
+        if not self.select.built:
+            self.select.build(input_shape)
+        if hasattr(self.connect, "built") and not self.connect.built:
+            self.connect.build(None)
+        self.built = True
+
     def call(
         self,
         x,

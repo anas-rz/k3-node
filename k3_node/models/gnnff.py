@@ -161,6 +161,21 @@ class GNNFF(keras.layers.Layer):
         ])
         self.sum_aggr = SumAggregation()
 
+    def build(self, input_shape=None):
+        if hasattr(self.node_emb, "built") and not self.node_emb.built:
+            self.node_emb.build((None,))
+        if hasattr(self.edge_emb, "built") and not self.edge_emb.built:
+            self.edge_emb.build((None,))
+        for block in self.node_blocks:
+            if hasattr(block, "built") and not block.built:
+                block.build()
+        for block in self.edge_blocks:
+            if hasattr(block, "built") and not block.built:
+                block.build()
+        if hasattr(self.force_predictor, "built") and not self.force_predictor.built:
+            self.force_predictor.build((None, self.hidden_edge_channels))
+        self.built = True
+
     def call(self, z, pos, batch=None):
         edge_index = radius_graph(
             pos,

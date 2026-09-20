@@ -14,6 +14,9 @@ class CosineCutoff(keras.layers.Layer):
         super().__init__(**kwargs)
         self.cutoff = cutoff
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, distances):
         cutoffs = 0.5 * (ops.cos(distances * np.pi / self.cutoff) + 1.0)
         mask = ops.cast(distances < self.cutoff, cutoffs.dtype)
@@ -54,6 +57,11 @@ class ExpNormalSmearing(keras.layers.Layer):
             dtype="float32",
         )
 
+    def build(self, input_shape=None):
+        if hasattr(self.cutoff_fn, "built") and not self.cutoff_fn.built:
+            self.cutoff_fn.build(input_shape)
+        self.built = True
+
     def call(self, dist):
         dist = ops.expand_dims(dist, -1)
         exp_dist = ops.exp(self.alpha * (-dist))
@@ -67,6 +75,9 @@ class Sphere(keras.layers.Layer):
     def __init__(self, lmax: int = 1, **kwargs):
         super().__init__(**kwargs)
         self.lmax = lmax
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def call(self, edge_vec):
         x = edge_vec[..., 0]
@@ -116,6 +127,9 @@ class VecLayerNorm(keras.layers.Layer):
             dtype="float32",
         )
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def max_min_norm(self, vec):
         dist = ops.sqrt(ops.sum(ops.power(vec, 2), axis=1, keepdims=True)) + self.eps
         direct = vec / dist
@@ -161,6 +175,9 @@ class Distance(keras.layers.Layer):
         self.max_num_neighbors = max_num_neighbors
         self.add_self_loops = add_self_loops
 
+    def build(self, input_shape=None):
+        self.built = True
+
     def call(self, pos, batch=None):
         edge_index = radius_graph(
             pos,
@@ -193,6 +210,8 @@ class NeighborEmbedding(keras.layers.Layer):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.hidden_channels = hidden_channels
+        self.num_rbf = num_rbf
         self.embedding = keras.layers.Embedding(max_z, hidden_channels)
         self.distance_proj = keras.layers.Dense(hidden_channels)
         self.combine = keras.layers.Dense(hidden_channels)
@@ -200,6 +219,14 @@ class NeighborEmbedding(keras.layers.Layer):
         self.sum_aggr = SumAggregation()
 
     def build(self, input_shape=None):
+        if hasattr(self.embedding, "built") and not self.embedding.built:
+            self.embedding.build((None,))
+        if hasattr(self.distance_proj, "built") and not self.distance_proj.built:
+            self.distance_proj.build((None, self.num_rbf))
+        if hasattr(self.combine, "built") and not self.combine.built:
+            self.combine.build((None, self.hidden_channels * 2))
+        if hasattr(self.cutoff, "built") and not self.cutoff.built:
+            self.cutoff.build()
         self.built = True
 
     def call(self, z, x, edge_index, edge_weight, edge_attr):
@@ -233,9 +260,13 @@ class NeighborEmbedding(keras.layers.Layer):
 class EdgeEmbedding(keras.layers.Layer):
     def __init__(self, num_rbf: int, hidden_channels: int, **kwargs):
         super().__init__(**kwargs)
+        self.num_rbf = num_rbf
+        self.hidden_channels = hidden_channels
         self.edge_proj = keras.layers.Dense(hidden_channels)
 
     def build(self, input_shape=None):
+        if hasattr(self.edge_proj, "built") and not self.edge_proj.built:
+            self.edge_proj.build((None, self.num_rbf))
         self.built = True
 
     def call(self, edge_index, edge_attr, x):
@@ -295,6 +326,39 @@ class ViS_MP(keras.layers.Layer):
         self.sum_aggr = SumAggregation()
 
     def build(self, input_shape=None):
+        if hasattr(self.layernorm, "built") and not self.layernorm.built:
+            self.layernorm.build((None, self.hidden_channels))
+        if hasattr(self.vec_layernorm, "built") and not self.vec_layernorm.built:
+            self.vec_layernorm.build((None, None, self.hidden_channels))
+        if hasattr(self.cutoff, "built") and not self.cutoff.built:
+            self.cutoff.build()
+        if hasattr(self.vec_proj, "built") and not self.vec_proj.built:
+            self.vec_proj.build((None, self.hidden_channels))
+        if hasattr(self.q_proj, "built") and not self.q_proj.built:
+            self.q_proj.build((None, self.hidden_channels))
+        if hasattr(self.k_proj, "built") and not self.k_proj.built:
+            self.k_proj.build((None, self.hidden_channels))
+        if hasattr(self.v_proj, "built") and not self.v_proj.built:
+            self.v_proj.build((None, self.hidden_channels))
+        if hasattr(self.dk_proj, "built") and not self.dk_proj.built:
+            self.dk_proj.build((None, self.hidden_channels))
+        if hasattr(self.dv_proj, "built") and not self.dv_proj.built:
+            self.dv_proj.build((None, self.hidden_channels))
+        if hasattr(self.s_proj, "built") and not self.s_proj.built:
+            self.s_proj.build((None, self.hidden_channels))
+        if not self.last_layer:
+            if hasattr(self, "f_proj") and hasattr(self.f_proj, "built") and not self.f_proj.built:
+                self.f_proj.build((None, self.hidden_channels))
+            if hasattr(self, "w_src_proj") and hasattr(self.w_src_proj, "built") and not self.w_src_proj.built:
+                self.w_src_proj.build((None, self.hidden_channels))
+            if hasattr(self, "w_trg_proj") and hasattr(self.w_trg_proj, "built") and not self.w_trg_proj.built:
+                self.w_trg_proj.build((None, self.hidden_channels))
+            if hasattr(self, "t_src_proj") and hasattr(self.t_src_proj, "built") and not self.t_src_proj.built:
+                self.t_src_proj.build((None, self.hidden_channels))
+            if hasattr(self, "t_trg_proj") and hasattr(self.t_trg_proj, "built") and not self.t_trg_proj.built:
+                self.t_trg_proj.build((None, self.hidden_channels))
+        if hasattr(self.o_proj, "built") and not self.o_proj.built:
+            self.o_proj.build((None, self.hidden_channels))
         self.built = True
 
     @staticmethod
@@ -422,18 +486,28 @@ class GatedEquivariantBlock(keras.layers.Layer):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.hidden_channels = hidden_channels
         self.out_channels = out_channels
-        intermediate_channels = intermediate_channels or hidden_channels
+        self.intermediate_channels = intermediate_channels or hidden_channels
 
         self.vec1_proj = keras.layers.Dense(hidden_channels, use_bias=False)
         self.vec2_proj = keras.layers.Dense(out_channels, use_bias=False)
 
         self.update_net = keras.Sequential([
-            keras.layers.Dense(intermediate_channels),
+            keras.layers.Dense(self.intermediate_channels),
             keras.layers.Activation("silu"),
             keras.layers.Dense(out_channels * 2),
         ])
         self.scalar_activation = scalar_activation
+
+    def build(self, input_shape=None):
+        if hasattr(self.vec1_proj, "built") and not self.vec1_proj.built:
+            self.vec1_proj.build((None, self.hidden_channels))
+        if hasattr(self.vec2_proj, "built") and not self.vec2_proj.built:
+            self.vec2_proj.build((None, self.hidden_channels))
+        if hasattr(self.update_net, "built") and not self.update_net.built:
+            self.update_net.build((None, self.hidden_channels * 2))
+        self.built = True
 
     def call(self, x, v):
         vec1 = ops.sqrt(ops.sum(ops.power(self.vec1_proj(v), 2), axis=-2) + 1e-12)
@@ -457,6 +531,13 @@ class EquivariantScalar(keras.layers.Layer):
         self.block1 = GatedEquivariantBlock(hidden_channels, hidden_channels // 2, scalar_activation=True)
         self.block2 = GatedEquivariantBlock(hidden_channels // 2, 1, scalar_activation=False)
 
+    def build(self, input_shape=None):
+        if hasattr(self.block1, "built") and not self.block1.built:
+            self.block1.build()
+        if hasattr(self.block2, "built") and not self.block2.built:
+            self.block2.build()
+        self.built = True
+
     def pre_reduce(self, x, v):
         x, v = self.block1(x, v)
         x, v = self.block2(x, v)
@@ -478,6 +559,11 @@ class Atomref(keras.layers.Layer):
             1,
             embeddings_initializer=keras.initializers.Constant(atomref),
         )
+
+    def build(self, input_shape=None):
+        if hasattr(self.atomref, "built") and not self.atomref.built:
+            self.atomref.build((None,))
+        self.built = True
 
     def call(self, x, z):
         z = ops.cast(z, "int32")
@@ -531,6 +617,26 @@ class ViSNetBlock(keras.layers.Layer):
             trainable=trainable_vecnorm,
             norm_type=vecnorm_type,
         )
+
+    def build(self, input_shape=None):
+        if hasattr(self.distance, "built") and not self.distance.built:
+            self.distance.build((None, 3))
+        if hasattr(self.distance_expansion, "built") and not self.distance_expansion.built:
+            self.distance_expansion.build((None,))
+        if hasattr(self.sphere, "built") and not self.sphere.built:
+            self.sphere.build((None, 3))
+        if hasattr(self.neighbor_embedding, "built") and not self.neighbor_embedding.built:
+            self.neighbor_embedding.build((None, self.hidden_channels))
+        if hasattr(self.edge_embedding, "built") and not self.edge_embedding.built:
+            self.edge_embedding.build()
+        for layer in self.vis_mp_layers:
+            if hasattr(layer, "built") and not layer.built:
+                layer.build()
+        if hasattr(self.out_norm, "built") and not self.out_norm.built:
+            self.out_norm.build((None, self.hidden_channels))
+        if hasattr(self.vec_out_norm, "built") and not self.vec_out_norm.built:
+            self.vec_out_norm.build((None, None, self.hidden_channels))
+        self.built = True
 
     def call(self, z, pos, batch=None):
         edge_index, edge_weight, edge_vec = self.distance(pos, batch=batch)
@@ -606,6 +712,15 @@ class ViSNet(keras.layers.Layer):
         self.mean = mean
         self.std = std
         self.derivative = derivative
+
+    def build(self, input_shape=None):
+        if hasattr(self.representation_model, "built") and not self.representation_model.built:
+            self.representation_model.build(input_shape)
+        if hasattr(self.output_model, "built") and not self.output_model.built:
+            self.output_model.build()
+        if self.prior_model is not None and hasattr(self.prior_model, "built") and not self.prior_model.built:
+            self.prior_model.build()
+        self.built = True
 
     def call(self, z, pos, batch=None):
         if batch is None:

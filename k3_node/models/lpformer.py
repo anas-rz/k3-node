@@ -34,6 +34,9 @@ class MLP(keras.layers.Layer):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.in_channels = in_channels
+        self.hid_channels = hid_channels
+        self.out_channels = out_channels
         self.layers_list = []
         for i in range(num_layers):
             d_out = out_channels if i == num_layers - 1 else hid_channels
@@ -44,6 +47,16 @@ class MLP(keras.layers.Layer):
                 self.layers_list.append(keras.layers.ReLU())
                 if drop > 0:
                     self.layers_list.append(keras.layers.Dropout(drop))
+
+    def build(self, input_shape=None):
+        shape = input_shape or (None, self.in_channels)
+        curr_dim = shape[-1] if shape is not None and shape[-1] is not None else self.in_channels
+        for layer in self.layers_list:
+            if hasattr(layer, "build") and not layer.built:
+                layer.build((None, curr_dim))
+            if isinstance(layer, keras.layers.Dense):
+                curr_dim = layer.units
+        self.built = True
 
     def call(self, x, training=False):
         for layer in self.layers_list:
@@ -82,6 +95,14 @@ class LPAttLayer(keras.layers.Layer):
         self.drop = keras.layers.Dropout(dropout) if dropout > 0 else None
 
     def build(self, input_shape=None):
+        if hasattr(self.lin_l, "build") and not self.lin_l.built:
+            self.lin_l.build((None, self.in_channels))
+        if hasattr(self.lin_r, "build") and not self.lin_r.built:
+            self.lin_r.build((None, self.in_channels))
+        if hasattr(self.post_att_norm, "build") and not self.post_att_norm.built:
+            self.post_att_norm.build((None, self.heads * self.out_channels))
+        if self.drop is not None and hasattr(self.drop, "build") and not self.drop.built:
+            self.drop.build((None, self.heads * self.out_channels))
         self.built = True
 
     def call(self, edge_feats, node_feats, ppr_rpes=None, training=False):
@@ -158,6 +179,28 @@ class LPFormer(keras.layers.Layer):
         pairwise_dim = hidden_channels * num_heads + 4
         self.pairwise_lin = MLP(pairwise_dim, pairwise_dim, hidden_channels)
         self.score_func = MLP(hidden_channels * 2, hidden_channels * 2, 1, norm=None)
+
+    def build(self, input_shape=None):
+        if hasattr(self.gnn, "built") and not self.gnn.built:
+            self.gnn.build((None, self.in_channels))
+        if hasattr(self.gnn_norm, "built") and not self.gnn_norm.built:
+            self.gnn_norm.build((None, self.hidden_channels))
+        for layer in self.att_layers:
+            if hasattr(layer, "built") and not layer.built:
+                layer.build((None, layer.in_channels))
+        if hasattr(self.elementwise_lin, "built") and not self.elementwise_lin.built:
+            self.elementwise_lin.build((None, self.hidden_channels))
+        if hasattr(self.ppr_encoder_cn, "built") and not self.ppr_encoder_cn.built:
+            self.ppr_encoder_cn.build((None, 2))
+        if hasattr(self.ppr_encoder_onehop, "built") and not self.ppr_encoder_onehop.built:
+            self.ppr_encoder_onehop.build((None, 2))
+        if hasattr(self.ppr_encoder_non1hop, "built") and not self.ppr_encoder_non1hop.built:
+            self.ppr_encoder_non1hop.build((None, 2))
+        if hasattr(self.pairwise_lin, "built") and not self.pairwise_lin.built:
+            self.pairwise_lin.build((None, self.pairwise_lin.in_channels))
+        if hasattr(self.score_func, "built") and not self.score_func.built:
+            self.score_func.build((None, self.hidden_channels * 2))
+        self.built = True
 
     def propagate(self, x, edge_index, training=False):
         h = self.gnn(x, edge_index, training=training)

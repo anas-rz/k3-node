@@ -92,6 +92,11 @@ class SelectTopK(Select):
         init = initializers.RandomUniform(minval=-limit, maxval=limit)
         self.weight.assign(init(self.weight.shape, dtype=self.weight.dtype))
 
+    def build(self, input_shape=None):
+        if hasattr(self.act_fn, "built") and not self.act_fn.built:
+            self.act_fn.build(input_shape)
+        self.built = True
+
     def call(self, x, batch=None) -> SelectOutput:
         num_nodes = ops.shape(x)[0]
         if batch is None:

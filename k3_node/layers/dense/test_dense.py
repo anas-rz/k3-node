@@ -127,7 +127,7 @@ def test_dense_gcn_conv():
 
     out = conv(x, adj, mask)
     assert ops.shape(out) == (2, 3, channels)
-    assert float(ops.sum(ops.abs(out[1, 2]))) == 0.0
+    assert float(ops.convert_to_numpy(ops.sum(ops.abs(out[1, 2])))) == 0.0
 
 
 def test_dense_gcn_conv_with_broadcasting():
@@ -172,7 +172,7 @@ def test_dense_gin_conv():
 
     out = dense_conv(x, adj, mask)
     assert ops.shape(out) == (2, 3, channels)
-    assert float(ops.sum(ops.abs(out[1, 2]))) == 0.0
+    assert float(ops.convert_to_numpy(ops.sum(ops.abs(out[1, 2])))) == 0.0
 
 
 def test_dense_gin_conv_with_broadcasting():
@@ -218,7 +218,7 @@ def test_dense_graph_conv(aggr):
 
     out = conv(x, adj, mask)
     assert ops.shape(out) == (2, 3, channels)
-    assert float(ops.sum(ops.abs(out[1, 2]))) == 0.0
+    assert float(ops.convert_to_numpy(ops.sum(ops.abs(out[1, 2])))) == 0.0
 
 
 @pytest.mark.parametrize('aggr', ['add', 'mean', 'max'])
@@ -261,7 +261,7 @@ def test_dense_sage_conv(normalize):
 
     out = conv(x, adj, mask)
     assert ops.shape(out) == (2, 3, channels)
-    assert float(ops.sum(ops.abs(out[1, 2]))) == 0.0
+    assert float(ops.convert_to_numpy(ops.sum(ops.abs(out[1, 2])))) == 0.0
 
 
 def test_dense_sage_conv_with_broadcasting():
@@ -305,7 +305,7 @@ def test_dense_gat_conv(heads, concat):
     out = conv(x, adj, mask)
     out_dim = heads * channels if concat else channels
     assert ops.shape(out) == (2, 3, out_dim)
-    assert float(ops.sum(ops.abs(out[1, 2]))) == 0.0
+    assert float(ops.convert_to_numpy(ops.sum(ops.abs(out[1, 2])))) == 0.0
 
 
 def test_dense_gat_conv_with_broadcasting():
@@ -334,8 +334,8 @@ def test_dense_diff_pool():
     x_out, adj_out, link_loss, ent_loss = dense_diff_pool(x, adj, s, mask)
     assert ops.shape(x_out) == (2, 10, 16)
     assert ops.shape(adj_out) == (2, 10, 10)
-    assert float(link_loss) >= 0
-    assert float(ent_loss) >= 0
+    assert float(ops.convert_to_numpy(link_loss)) >= 0
+    assert float(ops.convert_to_numpy(ent_loss)) >= 0
 
 
 def test_dense_mincut_pool():
@@ -348,8 +348,8 @@ def test_dense_mincut_pool():
     x_out, adj_out, mincut_loss, ortho_loss = dense_mincut_pool(x, adj, s, mask)
     assert ops.shape(x_out) == (2, 10, 16)
     assert ops.shape(adj_out) == (2, 10, 10)
-    assert -1.0 <= float(mincut_loss) <= 0.0
-    assert 0.0 <= float(ortho_loss) <= 2.0
+    assert -1.0 <= float(ops.convert_to_numpy(mincut_loss)) <= 0.0
+    assert 0.0 <= float(ops.convert_to_numpy(ortho_loss)) <= 2.0
 
 
 def test_dmon_pooling():
@@ -365,7 +365,7 @@ def test_dmon_pooling():
     assert ops.shape(s) == (2, 20, 10)
     assert ops.shape(x_out) == (2, 10, 16)
     assert ops.shape(adj_out) == (2, 10, 10)
-    assert -1.0 <= float(spectral_loss) <= 0.5
-    assert 0.0 <= float(ortho_loss) <= math.sqrt(2) + 1e-4
-    assert 0.0 <= float(cluster_loss) <= math.sqrt(num_clusters) - 1 + 1e-4
+    assert -1.0 <= float(ops.convert_to_numpy(spectral_loss)) <= 0.5
+    assert 0.0 <= float(ops.convert_to_numpy(ortho_loss)) <= math.sqrt(2) + 1e-4
+    assert 0.0 <= float(ops.convert_to_numpy(cluster_loss)) <= math.sqrt(num_clusters) - 1 + 1e-4
 

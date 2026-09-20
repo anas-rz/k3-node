@@ -31,7 +31,7 @@ def test_lightgcn(embedding_dim):
         neg_edge_rank=pred[2:],
         lambda_reg=1e-4,
     )
-    assert float(loss) > 0.0
+    assert float(ops.convert_to_numpy(loss)) > 0.0
 
     recs = model.recommend(edge_index, k=2)
     assert ops.shape(recs) == (num_nodes, 2)

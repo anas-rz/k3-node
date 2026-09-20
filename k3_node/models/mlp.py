@@ -78,7 +78,7 @@ class MLP(keras.layers.Layer):
     def __init__(
         self,
         channel_list: Optional[Union[List[int], int]] = None,
-        *,
+        *args,
         in_channels: Optional[int] = None,
         hidden_channels: Optional[int] = None,
         out_channels: Optional[int] = None,
@@ -93,6 +93,12 @@ class MLP(keras.layers.Layer):
         **kwargs,
     ):
         super().__init__(**kwargs)
+
+        if len(args) > 0:
+            if isinstance(channel_list, int):
+                channel_list = [channel_list] + list(args)
+            elif isinstance(channel_list, (list, tuple)):
+                channel_list = list(channel_list) + list(args)
 
         if isinstance(channel_list, int):
             in_channels = channel_list
@@ -114,6 +120,8 @@ class MLP(keras.layers.Layer):
         assert isinstance(channel_list, (tuple, list))
         assert len(channel_list) >= 2
         self.channel_list = list(channel_list)
+        self.in_channels = self.channel_list[0]
+        self.out_channels = self.channel_list[-1]
 
         self.act = keras.activations.get(act) if act is not None else None
         self.act_first = act_first
@@ -148,6 +156,8 @@ class MLP(keras.layers.Layer):
         iterator = channel_list[1:-1] if plain_last else channel_list[1:]
         for hc in iterator:
             norm_layer = _normalization_resolver(norm, hc, **(norm_kwargs or {}))
+            if norm_layer is not None and hasattr(norm_layer, "build") and not norm_layer.built:
+                norm_layer.build((None, hc))
             self.norms.append(norm_layer)
 
         self.dropouts = [keras.layers.Dropout(p) if p > 0.0 else None for p in self.dropout_rate]
@@ -158,19 +168,22 @@ class MLP(keras.layers.Layer):
             self.supports_norm_batch = "batch" in norm_params
 
     @property
-    def in_channels(self) -> int:
-        r"""Size of each input sample."""
-        return self.channel_list[0]
-
-    @property
-    def out_channels(self) -> int:
-        r"""Size of each output sample."""
-        return self.channel_list[-1]
-
-    @property
     def num_layers(self) -> int:
         r"""The number of layers."""
         return len(self.channel_list) - 1
+
+    def build(self, input_shape=None):
+        for lin in self.lins:
+            if hasattr(lin, "built") and not lin.built:
+                lin.build(input_shape)
+        norm_iter = self.channel_list[1:-1] if self.plain_last else self.channel_list[1:]
+        for norm, hc in zip(self.norms, norm_iter):
+            if norm is not None and hasattr(norm, "built") and not norm.built:
+                norm.build((None, hc))
+        for drop in self.dropouts:
+            if drop is not None and hasattr(drop, "built") and not drop.built:
+                drop.build(input_shape)
+        self.built = True
 
     def reset_parameters(self):
         r"""Resets all learnable parameters of the module."""

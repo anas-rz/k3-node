@@ -30,7 +30,7 @@ def test_gae():
     )
     z2 = ops.convert_to_tensor(np.random.randn(11, 16).astype("float32"))
     loss = model.recon_loss(z2, pos_edge_index)
-    assert float(loss) > 0
+    assert float(ops.convert_to_numpy(loss)) > 0
 
     auc, ap = model.test(z2, pos_edge_index, pos_edge_index)
     assert 0 <= auc <= 1 and 0 <= ap <= 1
@@ -41,7 +41,7 @@ def test_vgae():
 
     x = ops.convert_to_tensor([[1.0, -1.0], [1.0, 2.0], [2.0, 1.0]], dtype="float32")
     model.encode(x)
-    assert float(model.kl_loss()) > 0
+    assert float(ops.convert_to_numpy(model.kl_loss())) > 0
 
     model.eval()
     model.encode(x)
@@ -54,8 +54,8 @@ def test_arga():
     x = ops.convert_to_tensor([[1.0, -1.0], [1.0, 2.0], [2.0, 1.0]], dtype="float32")
     z = model.encode(x)
 
-    assert float(model.reg_loss(z)) > 0
-    assert float(model.discriminator_loss(z)) > 0
+    assert float(ops.convert_to_numpy(model.reg_loss(z))) > 0
+    assert float(ops.convert_to_numpy(model.discriminator_loss(z))) > 0
 
 
 def test_argva():
@@ -64,7 +64,7 @@ def test_argva():
     x = ops.convert_to_tensor([[1.0, -1.0], [1.0, 2.0], [2.0, 1.0]], dtype="float32")
     model.encode(x)
     model.reparametrize(model._mu, model._logstd)
-    assert float(model.kl_loss()) > 0
+    assert float(ops.convert_to_numpy(model.kl_loss())) > 0
 
 
 def test_init():

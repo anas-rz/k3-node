@@ -26,6 +26,13 @@ class GraphConv(layers.Layer):
     def reset_parameters(self):
         pass
 
+    def build(self, input_shape=None):
+        if hasattr(self.lin_rel, "built") and not self.lin_rel.built:
+            self.lin_rel.build((None, self.in_channels))
+        if hasattr(self.lin_root, "built") and not self.lin_root.built:
+            self.lin_root.build((None, self.in_channels))
+        self.built = True
+
     def call(self, x, edge_index, edge_weight: Optional[any] = None):
         row = ops.cast(edge_index[0], dtype="int32")
         col = ops.cast(edge_index[1], dtype="int32")
@@ -88,6 +95,15 @@ class SAGPooling(layers.Layer):
         if hasattr(self.gnn, "reset_parameters"):
             self.gnn.reset_parameters()
         self.select.reset_parameters()
+
+    def build(self, input_shape=None):
+        if hasattr(self.gnn, "built") and not self.gnn.built:
+            self.gnn.build(input_shape)
+        if hasattr(self.select, "built") and not self.select.built:
+            self.select.build(None)
+        if hasattr(self.connect, "built") and not self.connect.built:
+            self.connect.build(None)
+        self.built = True
 
     def call(
         self,

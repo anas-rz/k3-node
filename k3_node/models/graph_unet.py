@@ -70,6 +70,15 @@ class GraphUNet(keras.layers.Layer):
         self.up_convs.append(GCNConv(in_channels_up, out_channels, improved=True))
 
     def build(self, input_shape=None):
+        for conv in self.down_convs:
+            if hasattr(conv, "built") and not conv.built:
+                conv.build((None, conv.in_channels))
+        for pool in self.pools:
+            if hasattr(pool, "built") and not pool.built:
+                pool.build((None, pool.in_channels))
+        for conv in self.up_convs:
+            if hasattr(conv, "built") and not conv.built:
+                conv.build((None, conv.in_channels))
         self.built = True
 
     def reset_parameters(self):

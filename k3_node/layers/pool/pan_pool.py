@@ -48,6 +48,13 @@ class PANPooling(layers.Layer):
         self.beta.assign(ops.full(self.beta.shape, 0.5, dtype=self.beta.dtype))
         self.select.reset_parameters()
 
+    def build(self, input_shape=None):
+        if hasattr(self.select, "built") and not self.select.built:
+            self.select.build(None)
+        if hasattr(self.connect, "built") and not self.connect.built:
+            self.connect.build(None)
+        self.built = True
+
     def call(
         self,
         x,
