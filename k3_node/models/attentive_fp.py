@@ -1,3 +1,4 @@
+from typing import Optional
 import keras
 from keras import ops
 
@@ -60,7 +61,7 @@ class GATEConv(MessagePassing):
         return out + self.bias
 
 
-class AttentiveFP(keras.layers.Layer):
+class AttentiveFP(keras.Model):
     r"""The Attentive FP model for molecular representation learning from the
     `"Pushing the Boundaries of Molecular Representation for Drug Discovery
     with the Graph Attention Mechanism"
@@ -76,6 +77,8 @@ class AttentiveFP(keras.layers.Layer):
         num_timesteps (int): Number of iterative refinement steps for global
             readout.
         dropout (float, optional): Dropout probability. (default: `0.0`)
+        batch_size (int, optional): Fixed batch size (number of graphs) for JAX/XLA
+            static shape compatibility. (default: `None`)
     """
     def __init__(
         self,
@@ -86,6 +89,7 @@ class AttentiveFP(keras.layers.Layer):
         num_layers: int,
         num_timesteps: int,
         dropout: float = 0.0,
+        batch_size: Optional[int] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -97,6 +101,7 @@ class AttentiveFP(keras.layers.Layer):
         self.num_layers = num_layers
         self.num_timesteps = num_timesteps
         self.dropout_rate = dropout
+        self.batch_size = batch_size
 
         self.lin1 = keras.layers.Dense(hidden_channels)
         self.lin1.build((None, in_channels))
@@ -126,10 +131,25 @@ class AttentiveFP(keras.layers.Layer):
         self.lin2.build((None, hidden_channels))
 
         self.dropout = keras.layers.Dropout(dropout) if dropout > 0.0 else None
+        self.built = True
 
-    def call(self, x, edge_index, edge_attr, batch, training=None):
+    def call(self, x, edge_index=None, edge_attr=None, batch=None, batch_size=None, training=None):
+        if isinstance(x, dict):
+            edge_index = x.get("edge_index")
+            edge_attr = x.get("edge_attr")
+            batch = x.get("batch")
+            batch_size = x.get("batch_size", batch_size)
+            x = x.get("x")
+        elif isinstance(x, (tuple, list)) and edge_index is None:
+            if len(x) >= 4:
+                x, edge_index, edge_attr, batch = x[0], x[1], x[2], x[3]
+            elif len(x) == 3:
+                x, edge_index, edge_attr = x[0], x[1], x[2]
+
+        bs = batch_size if batch_size is not None else self.batch_size
         x = ops.cast(x, "float32")
-        edge_attr = ops.cast(edge_attr, "float32")
+        if edge_attr is not None:
+            edge_attr = ops.cast(edge_attr, "float32")
         # Atom Embedding:
         x = ops.leaky_relu(self.lin1(x), negative_slope=0.01)
 
@@ -146,12 +166,15 @@ class AttentiveFP(keras.layers.Layer):
             x = ops.relu(_gru_step(gru, h, x))
 
         # Molecule Embedding:
-        batch = ops.cast(batch, "int32")
+        if batch is None:
+            batch = ops.zeros((ops.shape(x)[0],), dtype="int32")
+        else:
+            batch = ops.cast(batch, "int32")
         num_nodes = ops.shape(batch)[0]
         row = ops.arange(num_nodes, dtype="int32")
         mol_edge_index = ops.stack([row, batch], axis=0)
 
-        out = ops.relu(global_add_pool(x, batch))
+        out = ops.relu(global_add_pool(x, batch, size=bs))
         for _ in range(self.num_timesteps):
             h = ops.elu(self.mol_conv((x, out), mol_edge_index))
             if self.dropout is not None:
