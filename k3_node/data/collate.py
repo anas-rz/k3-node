@@ -86,6 +86,17 @@ def collate(
                     values = [ops.expand_dims(v, axis=0) for v in values]
                 elif cat_dim < 0:
                     cat_dim = len(elem_shape) + cat_dim
+                target_rank = len(elem_shape)
+                normalized_values = []
+                for v in values:
+                    v_shape = get_shape(v)
+                    if len(v_shape) != target_rank:
+                        if key in ("edge_index", "adj_t") and (len(v_shape) == 0 or v_shape == (0,)):
+                            v = ops.zeros((2, 0), dtype="int64")
+                        elif len(v_shape) == 1 and v_shape[0] == 0:
+                            v = ops.zeros((0,) + elem_shape[1:], dtype="float32")
+                    normalized_values.append(v)
+                values = normalized_values
 
                 sizes = [get_shape(v)[cat_dim] for v in values]
                 slices = np.cumsum([0] + sizes)

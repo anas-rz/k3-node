@@ -15,8 +15,14 @@ def global_add_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
         return out
 
     batch = ops.cast(batch, dtype="int32")
+    if ops.shape(batch)[0] == 0:
+        num_seg = size if size is not None else 0
+        return ops.zeros((num_seg,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
     if size is None:
-        size = int(ops.max(batch)) + 1 if ops.shape(batch)[0] > 0 else 0
+        try:
+            size = int(ops.convert_to_numpy(batch[-1])) + 1
+        except Exception:
+            size = None
     return ops.segment_sum(x, batch, num_segments=size)
 
 
@@ -33,8 +39,14 @@ def global_mean_pool(x, batch: Optional[any] = None, size: Optional[int] = None)
         return out
 
     batch = ops.cast(batch, dtype="int32")
+    if ops.shape(batch)[0] == 0:
+        num_seg = size if size is not None else 0
+        return ops.zeros((num_seg,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
     if size is None:
-        size = int(ops.max(batch)) + 1 if ops.shape(batch)[0] > 0 else 0
+        try:
+            size = int(ops.convert_to_numpy(batch[-1])) + 1
+        except Exception:
+            size = None
     sum_val = ops.segment_sum(x, batch, num_segments=size)
     ones = ops.ones_like(x)
     count = ops.segment_sum(ones, batch, num_segments=size)
@@ -54,6 +66,12 @@ def global_max_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
         return out
 
     batch = ops.cast(batch, dtype="int32")
+    if ops.shape(batch)[0] == 0:
+        num_seg = size if size is not None else 0
+        return ops.zeros((num_seg,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
     if size is None:
-        size = int(ops.max(batch)) + 1 if ops.shape(batch)[0] > 0 else 0
+        try:
+            size = int(ops.convert_to_numpy(batch[-1])) + 1
+        except Exception:
+            size = None
     return ops.segment_max(x, batch, num_segments=size)
