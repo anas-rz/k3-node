@@ -43,12 +43,7 @@ class TUDataset(InMemoryDataset):
         self.cleaned = cleaned
         super().__init__(root, transform, pre_transform, pre_filter, force_reload=force_reload)
 
-        with open(self.processed_paths[0], "rb") as f:
-            obj = pickle.load(f)
-        if isinstance(obj, tuple) and len(obj) >= 3:
-            self._data, self.slices, self.sizes = obj[:3]
-        else:
-            raise RuntimeError("Invalid processed data format.")
+        self.load(self.processed_paths[0])
 
         if self._data.x is not None and not use_node_attr:
             num_node_attributes = self.num_node_attributes
@@ -118,8 +113,18 @@ class TUDataset(InMemoryDataset):
             self._data_list = None
 
         os.makedirs(osp.dirname(self.processed_paths[0]), exist_ok=True)
-        with open(self.processed_paths[0], "wb") as f:
-            pickle.dump((self._data, self.slices, sizes), f)
+        saved = False
+        if self.processed_paths[0].endswith((".pt", ".pth")):
+            try:
+                import torch
+                data_dict = self._data.to_dict() if hasattr(self._data, "to_dict") else dict(self._data)
+                torch.save((data_dict, self.slices, sizes), self.processed_paths[0])
+                saved = True
+            except Exception:
+                pass
+        if not saved:
+            with open(self.processed_paths[0], "wb") as f:
+                pickle.dump((self._data, self.slices, sizes), f)
 
     def __repr__(self) -> str:
         return f"{self.name}({len(self)})"

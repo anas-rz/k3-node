@@ -25,6 +25,7 @@ class InMemoryDataset(Dataset):
         super().__init__(root, transform, pre_transform, pre_filter, log, force_reload)
         self._data: Optional[BaseData] = None
         self.slices: Optional[Dict[str, Any]] = None
+        self.sizes: Dict[str, Any] = {}
         self._data_list: Optional[List[BaseData]] = None
 
     @property
@@ -74,16 +75,82 @@ class InMemoryDataset(Dataset):
     def save(self, data_list: List[BaseData], path: str):
         os.makedirs(osp.dirname(path), exist_ok=True)
         data, slices = self.collate(data_list)
+        if path.endswith((".pt", ".pth")):
+            try:
+                import torch
+                data_dict = data.to_dict() if hasattr(data, "to_dict") else dict(data)
+                torch.save((data_dict, slices), path)
+                return
+            except Exception:
+                pass
         with open(path, "wb") as f:
             pickle.dump((data, slices), f)
 
     def load(self, path: str):
-        with open(path, "rb") as f:
-            obj = pickle.load(f)
-        if isinstance(obj, tuple) and len(obj) == 2:
-            self._data, self.slices = obj
+        obj = None
+        if path.endswith((".pt", ".pth")):
+            try:
+                import torch
+                obj = torch.load(path, map_location="cpu", weights_only=False)
+            except Exception:
+                pass
+
+        if obj is None:
+            try:
+                with open(path, "rb") as f:
+                    obj = pickle.load(f)
+            except Exception:
+                try:
+                    import torch
+                    obj = torch.load(path, map_location="cpu", weights_only=False)
+                except Exception:
+                    pass
+
+        if obj is None:
+            if hasattr(self, "process") and callable(self.process):
+                self.process()
+                try:
+                    with open(path, "rb") as f:
+                        obj = pickle.load(f)
+                except Exception:
+                    try:
+                        import torch
+                        obj = torch.load(path, map_location="cpu", weights_only=False)
+                    except Exception:
+                        pass
+            if obj is None:
+                raise RuntimeError(f"Cannot load dataset from {path}")
+
+        if isinstance(obj, tuple):
+            if len(obj) == 2:
+                data, self.slices = obj
+            elif len(obj) == 3:
+                data, self.slices, extra = obj
+                if isinstance(extra, dict):
+                    self.sizes = extra
+            elif len(obj) >= 4:
+                data, self.slices = obj[0], obj[1]
+                if isinstance(obj[2], dict):
+                    self.sizes = obj[2]
+            else:
+                data = obj[0]
+            if isinstance(data, dict):
+                data = Data(**data)
+            self._data = data
         elif isinstance(obj, list):
             self._data_list = obj
+        elif isinstance(obj, dict):
+            self._data = Data(**obj)
         else:
             self._data = obj
+
+        if self._data is not None and hasattr(self._data, "to_backend"):
+            try:
+                self._data.to_backend()
+            except Exception:
+                pass
+
+        if isinstance(self.slices, dict):
+            from k3_node.data.storage import is_tensor_like, to_numpy
+            self.slices = {k: to_numpy(v) if is_tensor_like(v) else v for k, v in self.slices.items()}
 

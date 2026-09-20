@@ -26,10 +26,17 @@ def to_numpy(x: Any) -> Any:
         return None
     if hasattr(x, "detach"):
         x = x.detach()
+    if hasattr(x, "numpy"):
+        try:
+            return x.numpy()
+        except TypeError:
+            if hasattr(x, "cpu"):
+                return x.cpu().numpy()
+            raise
     if hasattr(x, "cpu"):
         x = x.cpu()
-    if hasattr(x, "numpy"):
-        return x.numpy()
+        if hasattr(x, "numpy"):
+            return x.numpy()
     if hasattr(x, "_numpy"):
         return x._numpy()
     return np.asarray(x)
