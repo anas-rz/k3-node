@@ -12,3 +12,4 @@ site/
 dist/
 build/
 .cache/
+data/
