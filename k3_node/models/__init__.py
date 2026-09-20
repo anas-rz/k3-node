@@ -108,6 +108,13 @@ from .grover import (
     load_grover_weights,
     download_grover_checkpoint,
 )
+from .mole_bert import (
+    MoleBERT,
+    MoleBERTGNN,
+    MoleBERTGINConv,
+    load_mole_bert_weights,
+    download_mole_bert_checkpoint,
+)
 
 __all__ = [
     "MLP",
@@ -214,4 +221,9 @@ __all__ = [
     "Readout",
     "load_grover_weights",
     "download_grover_checkpoint",
+    "MoleBERT",
+    "MoleBERTGNN",
+    "MoleBERTGINConv",
+    "load_mole_bert_weights",
+    "download_mole_bert_checkpoint",
 ]

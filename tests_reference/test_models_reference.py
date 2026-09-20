@@ -1475,6 +1475,81 @@ def test_reference_grover():
         np.testing.assert_allclose(k3_arr, pt_arr, rtol=1e-4, atol=1e-4)
 
 
+def test_reference_mole_bert():
+    import sys
+    import os
+    import os.path as osp
+    from unittest.mock import MagicMock
+
+    if "torch_scatter" not in sys.modules:
+        sys.modules["torch_scatter"] = MagicMock()
+
+    mole_bert_path = osp.join(osp.dirname(osp.dirname(__file__)), "Mole-BERT")
+    if mole_bert_path not in sys.path:
+        sys.path.insert(0, mole_bert_path)
+
+    from model import GNN as PyTGNN
+    from k3_node.models.mole_bert import MoleBERTGNN, load_mole_bert_weights, download_mole_bert_checkpoint
+
+    ckpt_path = osp.join(mole_bert_path, "model_gin", "Mole-BERT.pth")
+    if not os.path.exists(ckpt_path):
+        ckpt_path = download_mole_bert_checkpoint()
+
+    ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+
+    # 1. PyTorch reference model
+    pt_model = PyTGNN(num_layer=5, emb_dim=300, JK="last", drop_ratio=0.0, gnn_type="gin")
+    pt_model.load_state_dict(ckpt)
+    pt_model.eval()
+
+    # 2. Keras 3 MoleBERTGNN
+    k3_model = MoleBERTGNN(num_layer=5, emb_dim=300, JK="last", drop_ratio=0.0)
+    k3_model.build(None)
+    load_mole_bert_weights(k3_model, ckpt_path)
+
+    # 3. Create test graph
+    torch.manual_seed(42)
+    np.random.seed(42)
+
+    num_nodes = 6
+    num_edges = 10
+    x_np = np.stack(
+        [
+            np.random.randint(0, 119, size=num_nodes),
+            np.random.randint(0, 3, size=num_nodes),
+        ],
+        axis=1,
+    ).astype(np.int64)
+    src = np.array([0, 1, 1, 2, 2, 3, 3, 4, 4, 5], dtype=np.int64)
+    dst = np.array([1, 0, 2, 1, 3, 2, 4, 3, 5, 4], dtype=np.int64)
+    edge_index_np = np.stack([src, dst], axis=0)
+    edge_attr_np = np.stack(
+        [
+            np.random.randint(0, 5, size=num_edges),
+            np.random.randint(0, 3, size=num_edges),
+        ],
+        axis=1,
+    ).astype(np.int64)
+
+    with torch.no_grad():
+        pt_out = pt_model(
+            torch.from_numpy(x_np),
+            torch.from_numpy(edge_index_np),
+            torch.from_numpy(edge_attr_np),
+        ).numpy()
+
+    k3_out = ops.convert_to_numpy(
+        k3_model(
+            ops.convert_to_tensor(x_np),
+            ops.convert_to_tensor(edge_index_np),
+            ops.convert_to_tensor(edge_attr_np),
+            training=False,
+        )
+    )
+
+    np.testing.assert_allclose(k3_out, pt_out, rtol=1e-4, atol=1e-4)
+
+
 
 
 
