@@ -181,7 +181,9 @@ class AttentiveFP(keras.Model):
         row = ops.arange(num_nodes, dtype="int32")
         mol_edge_index = ops.stack([row, batch], axis=0)
 
-        if bs is not None or in_symbolic_scope():
+        if keras.config.backend() == "jax":
+            size = bs
+        elif in_symbolic_scope():
             size = bs
         else:
             size = _infer_size(batch)
