@@ -6,8 +6,8 @@ edit_uri: ""
 
 theme:
   name: material
-  logo: images/logo.svg
-  favicon: images/logo.svg
+  logo: images/logo.png
+  favicon: images/logo.png
   features:
     - navigation.sections
     - navigation.expand

@@ -1,7 +1,7 @@
 # K3-Node: Multi-Backend Graph Neural Networks
 
 <p align="center">
-  <img src=".assets/logo.png" alt="K3-Node Logo" width="180"/>
+  <img src="docs/images/logo.png" alt="K3-Node Logo" width="180"/>
 </p>
 
 <p align="center">
