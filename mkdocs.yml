@@ -52,7 +52,10 @@ nav:
       - Overview: index.md
       - Quickstart: quickstart.md
       - Multi-Backend Guide: backends.md
-  - Examples: examples.md
+  - Examples:
+      - Code Examples: examples/index.md
+      - OGBN-Arxiv (TensorFlow): examples/ogb_arxiv_spektral_dataset.md
+      - Cora (PyTorch): examples/planetoid_PyTorch_Geometric.md
   - API Reference:
       - Convolution Layers: api/conv.md
       - Aggregation Layers: api/aggr.md
@@ -68,6 +71,7 @@ nav:
   - Porting Checklist: checklist.md
 
 markdown_extensions:
+  - md_in_html
   - admonition
   - attr_list
   - tables

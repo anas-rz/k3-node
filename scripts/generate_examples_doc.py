@@ -1,10 +1,13 @@
 """
-Script to scan examples/**/*.ipynb and generate docs/examples.md
-linking all interactive notebooks and embedding their complete runnable code.
+Script to scan examples/**/*.ipynb and generate:
+1. docs/examples/index.md: List / gallery of examples with links to Colab and GitHub source.
+2. docs/examples/<slug>.md: Dedicated page for each example in keras.io/examples style with
+   'View in Colab' and 'GitHub source' action buttons, parsed markdown and code cells.
 """
 import glob
 import json
 import os
+import re
 
 REPO_URL = "https://github.com/anas-rz/k3-node/blob/main"
 COLAB_URL = "https://colab.research.google.com/github/anas-rz/k3-node/blob/main"
@@ -21,109 +24,215 @@ def get_backend(path: str) -> str:
     return "Multi-Backend"
 
 
-def get_task_description(path: str) -> str:
+def get_example_meta(path: str) -> dict:
     filename = os.path.basename(path)
+    stem = os.path.splitext(filename)[0]
+    backend = get_backend(path)
+
     if "arxiv" in filename.lower():
-        return "Node Classification on OGBN-Arxiv using ARMAConv"
+        title = "Node Classification on OGBN-Arxiv with ARMAConv"
+        description = (
+            "Large-scale node classification on the `ogbn-arxiv` citation benchmark "
+            "using K3-Node's `ARMAConv` layer, Spektral graph preprocessing, and a custom TensorFlow training loop."
+        )
+        dataset = "ogbn-arxiv"
+        layer = "ARMAConv"
+        icon = ":material-google:"
     elif "planetoid" in filename.lower() or "cora" in filename.lower():
-        return "Node Classification on Cora using GatedGraphConv"
+        title = "Node Classification on Cora with GatedGraphConv"
+        description = (
+            "Node classification on the standard `Planetoid Cora` citation graph "
+            "using K3-Node's `GatedGraphConv` layer, PyTorch Geometric dataset loading, and PyTorch backend optimization."
+        )
+        dataset = "Cora (Planetoid)"
+        layer = "GatedGraphConv"
+        icon = ":material-fire:"
     else:
-        name = os.path.splitext(filename)[0].replace("_", " ").title()
-        return f"Graph Model Training: {name}"
+        clean_name = stem.replace("_", " ").title()
+        title = f"{clean_name} ({backend})"
+        description = f"Graph Neural Network example demonstrating {clean_name} with K3-Node."
+        dataset = "Graph Benchmark"
+        layer = "GNN"
+        icon = ":material-cube-outline:"
+
+    return {
+        "title": title,
+        "description": description,
+        "backend": backend,
+        "dataset": dataset,
+        "layer": layer,
+        "icon": icon,
+        "filename": filename,
+        "stem": stem,
+        "rel_path": path,
+        "doc_file": f"{stem}.md",
+        "github_url": f"{REPO_URL}/{path}",
+        "colab_url": f"{COLAB_URL}/{path}",
+    }
 
 
-def generate_examples_page():
+def parse_cell_output(cell: dict) -> str:
+    outputs = cell.get("outputs", [])
+    text_chunks = []
+    for out in outputs:
+        otype = out.get("output_type")
+        if otype == "stream":
+            text = "".join(out.get("text", []))
+            text_chunks.append(text)
+        elif otype == "execute_result" or otype == "display_data":
+            data = out.get("data", {})
+            if "text/plain" in data:
+                text_chunks.append("".join(data["text/plain"]))
+    return "\n".join(text_chunks).strip()
+
+
+def generate_single_example_page(nb_path: str, meta: dict) -> str:
+    with open(nb_path, "r", encoding="utf-8") as f:
+        nb = json.load(f)
+
+    lines = []
+    lines.append(f"# {meta['title']}")
+    lines.append("")
+    lines.append(f"**Author:** K3-Node Team<br>")
+    lines.append(f"**Backend:** {meta['backend']}<br>")
+    lines.append(f"**Dataset:** `{meta['dataset']}`<br>")
+    lines.append(f"**Description:** {meta['description']}")
+    lines.append("")
+    lines.append(
+        f'[:simple-googlecolab: **View in Colab**]({meta["colab_url"]}){{ .md-button .md-button--primary }} &nbsp; '
+        f'[:octicons-mark-github-16: **GitHub source**]({meta["github_url"]}){{ .md-button }}'
+    )
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    cells = nb.get("cells", [])
+    for idx, cell in enumerate(cells):
+        ctype = cell.get("cell_type")
+        src = "".join(cell.get("source", [])).strip()
+        if not src:
+            continue
+
+        if ctype == "markdown":
+            lines.append(src)
+            lines.append("")
+        elif ctype == "code":
+            # Handle pip installation commands
+            if src.startswith("!"):
+                lines.append("## Setup & Installation")
+                lines.append("")
+                lines.append("```bash")
+                for line in src.splitlines():
+                    if line.startswith("!"):
+                        lines.append(line.lstrip("!"))
+                    else:
+                        lines.append(line)
+                lines.append("```")
+                lines.append("")
+                continue
+
+            # Check if cell begins with a section comment like # Load data
+            first_line = src.splitlines()[0]
+            code_body = src
+            if first_line.startswith("# ") and not first_line.startswith("#!"):
+                heading = first_line.lstrip("# ").strip()
+                lines.append(f"## {heading}")
+                lines.append("")
+                # Keep remaining code or full code
+                code_lines = src.splitlines()[1:]
+                code_body = "\n".join(code_lines).strip()
+                if not code_body:
+                    continue
+
+            lines.append("```python")
+            lines.append(code_body)
+            lines.append("```")
+            lines.append("")
+
+            # Render output if present
+            output_text = parse_cell_output(cell)
+            if output_text:
+                lines.append('??? example "View Output"')
+                lines.append("    ```text")
+                for oline in output_text.splitlines():
+                    lines.append(f"    {oline}")
+                lines.append("    ```")
+                lines.append("")
+
+    return "\n".join(lines)
+
+
+def generate_all():
+    os.makedirs("docs/examples", exist_ok=True)
     notebook_paths = sorted(glob.glob("examples/**/*.ipynb", recursive=True))
 
-    lines = [
-        "# Interactive Examples & Complete Code",
+    examples_list = []
+    for nb_path in notebook_paths:
+        meta = get_example_meta(nb_path)
+        examples_list.append(meta)
+
+        # Generate individual example page
+        page_content = generate_single_example_page(nb_path, meta)
+        target_path = os.path.join("docs/examples", meta["doc_file"])
+        with open(target_path, "w", encoding="utf-8") as f:
+            f.write(page_content)
+        print(f"Generated example page: {target_path}")
+
+    # Generate main docs/examples/index.md (ONLY list of examples)
+    index_lines = [
+        "# Code Examples",
         "",
-        "This page automatically indexes all interactive notebooks from the [`examples/`](https://github.com/anas-rz/k3-node/tree/main/examples) directory.",
-        "You can run any notebook directly in **Google Colab**, inspect the notebook on GitHub, or copy the complete, self-contained Python code below.",
+        "Welcome to the **K3-Node Code Examples**. This page indexes end-to-end runnable tutorials demonstrating how to build, train, and evaluate Graph Neural Networks with K3-Node across multiple frameworks and backends.",
         "",
         "---",
         "",
-        "## Summary of Examples",
+        "## Available Examples",
         "",
-        "| Backend | Task / Dataset | Layer / Model | Notebook | Colab |",
-        "| :--- | :--- | :--- | :--- | :--- |",
+        '<div class="grid cards" markdown>',
+        "",
     ]
 
-    examples_meta = []
-    for nb_path in notebook_paths:
-        backend = get_backend(nb_path)
-        task = get_task_description(nb_path)
-        filename = os.path.basename(nb_path)
-        github_link = f"{REPO_URL}/{nb_path}"
-        colab_link = f"{COLAB_URL}/{nb_path}"
-        colab_badge = f"[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]({colab_link})"
+    for ex in examples_list:
+        index_lines.append(f"-   {ex['icon']} __{ex['title']}__")
+        index_lines.append("")
+        index_lines.append("    ---")
+        index_lines.append("")
+        index_lines.append(f"    {ex['description']}")
+        index_lines.append("")
+        index_lines.append(f"    - **Backend**: {ex['backend']}")
+        index_lines.append(f"    - **Dataset**: `{ex['dataset']}`")
+        index_lines.append(f"    - **Key Layer**: `{ex['layer']}`")
+        index_lines.append("")
+        index_lines.append(
+            f"    [:octicons-arrow-right-24: Read Tutorial]({ex['doc_file']}){{ .md-button .md-button--primary }} &nbsp; "
+            f"[:simple-googlecolab: View in Colab]({ex['colab_url']}){{ .md-button }} &nbsp; "
+            f"[:octicons-mark-github-16: GitHub source]({ex['github_url']}){{ .md-button }}"
+        )
+        index_lines.append("")
 
-        with open(nb_path, "r", encoding="utf-8") as f:
-            nb = json.load(f)
+    index_lines.extend([
+        "</div>",
+        "",
+        "---",
+        "",
+        "## Summary Table",
+        "",
+        "| Backend | Example | Dataset | Key Layer | Colab | Source |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- |",
+    ])
 
-        code_blocks = []
-        for cell in nb.get("cells", []):
-            if cell.get("cell_type") == "code":
-                code_lines = [
-                    l for l in cell.get("source", []) if not l.strip().startswith("!")
-                ]
-                if any(l.strip() for l in code_lines):
-                    code_blocks.append("".join(code_lines).strip())
-
-        full_code = "\n\n".join(code_blocks)
-
-        layer_info = "ARMAConv" if "arxiv" in nb_path else "GatedGraphConv"
-
-        lines.append(
-            f"| **{backend}** | {task} | `{layer_info}` | [`{filename}`]({github_link}) | {colab_badge} |"
+    for ex in examples_list:
+        index_lines.append(
+            f"| **{ex['backend']}** | [{ex['title']}]({ex['doc_file']}) | `{ex['dataset']}` | `{ex['layer']}` | "
+            f"[Open in Colab]({ex['colab_url']}) | [GitHub source]({ex['github_url']}) |"
         )
 
-        examples_meta.append({
-            "backend": backend,
-            "task": task,
-            "filename": filename,
-            "rel_path": nb_path,
-            "github_link": github_link,
-            "colab_link": colab_link,
-            "colab_badge": colab_badge,
-            "layer_info": layer_info,
-            "full_code": full_code,
-        })
+    index_lines.append("")
 
-    lines.extend(["", "---", ""])
-
-    for ex in examples_meta:
-        b = ex["backend"]
-        t = ex["task"]
-        f = ex["filename"]
-        rp = ex["rel_path"]
-        gh = ex["github_link"]
-        badge = ex["colab_badge"]
-
-        lines.append(f"## {t} ({b})")
-        lines.append("")
-        lines.append(
-            f"{badge} &nbsp; [View on GitHub]({gh})"
-        )
-        lines.append("")
-        lines.append(f"**File Location**: [`{rp}`]({gh})")
-        lines.append("")
-        lines.append("### Complete Runnable Code")
-        lines.append("")
-        lines.append("```python")
-        lines.append(ex["full_code"])
-        lines.append("```")
-        lines.append("")
-        lines.append("---")
-        lines.append("")
-
-    content = "\n".join(lines)
-    os.makedirs("docs", exist_ok=True)
-    with open("docs/examples.md", "w", encoding="utf-8") as f:
-        f.write(content)
-
-    print(f"Generated docs/examples.md from {len(notebook_paths)} notebooks.")
+    with open("docs/examples/index.md", "w", encoding="utf-8") as f:
+        f.write("\n".join(index_lines))
+    print("Generated docs/examples/index.md (gallery of examples).")
 
 
 if __name__ == "__main__":
-    generate_examples_page()
+    generate_all()
