@@ -52,6 +52,7 @@ class GCNConv(MessagePassing):
         self.use_bias = bias
 
         self.lin = layers.Dense(out_channels, use_bias=False)
+        self.bias = None
         self._cached_edge_index = None
         self._cached_norm = None
 
@@ -76,11 +77,16 @@ class GCNConv(MessagePassing):
         if edge_index is None and isinstance(x, (tuple, list)):
             x, edge_index = x[0], x[1]
 
+        if not self.built:
+            feat_shape = x.shape if hasattr(x, "shape") and x.shape is not None else (None, self.in_channels)
+            self.build(feat_shape)
+
         # Handle dense adjacency [N, N]
-        if len(ops.shape(edge_index)) == 2 and ops.shape(edge_index)[0] > 2 and ops.shape(edge_index)[0] == ops.shape(edge_index)[1]:
+        e_shape = getattr(edge_index, "shape", None)
+        if e_shape is not None and len(e_shape) == 2 and e_shape[0] is not None and e_shape[1] is not None and e_shape[0] > 2 and e_shape[0] == e_shape[1]:
             where_adj = ops.where(edge_index != 0)
             where_adj = where_adj if not isinstance(where_adj, list) else where_adj
-            edge_weight = ops.take(edge_index, where_adj[0] * ops.shape(edge_index)[1] + where_adj[1]) if edge_weight is None else edge_weight
+            edge_weight = ops.take(edge_index, where_adj[0] * e_shape[1] + where_adj[1]) if edge_weight is None else edge_weight
             edge_index = ops.stack([where_adj[0], where_adj[1]], axis=0)
 
         if self.normalize:
@@ -88,7 +94,7 @@ class GCNConv(MessagePassing):
                 edge_index = self._cached_edge_index
                 edge_weight = self._cached_norm
             else:
-                num_nodes = int(ops.shape(x)[self.node_dim])
+                num_nodes = x.shape[self.node_dim] if hasattr(x, "shape") and x.shape[self.node_dim] is not None else ops.shape(x)[self.node_dim]
                 edge_index, edge_weight = gcn_norm(
                     edge_index,
                     edge_weight,

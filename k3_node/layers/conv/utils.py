@@ -1,5 +1,29 @@
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 from keras import ops
+
+
+def is_tracing(x: Any) -> bool:
+    if x is None:
+        return False
+    name = type(x).__name__
+    if "Tracer" in name or "KerasTensor" in name or "SymbolicTensor" in name:
+        return True
+    if hasattr(x, "_trace"):
+        return True
+    try:
+        import jax
+        if isinstance(x, jax.core.Tracer):
+            return True
+    except Exception:
+        pass
+    try:
+        import tensorflow as tf
+        if hasattr(x, "graph") and getattr(x, "graph", None) is not None:
+            if not tf.executing_eagerly():
+                return True
+    except Exception:
+        pass
+    return False
 
 
 def degree(index, num_nodes: Optional[int] = None, dtype=None):
@@ -12,8 +36,14 @@ def degree(index, num_nodes: Optional[int] = None, dtype=None):
     """
     index = ops.cast(index, "int32")
     if num_nodes is None:
-        num_nodes = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
-    num_nodes = int(num_nodes)
+        if is_tracing(index):
+            num_nodes = ops.shape(index)[0]
+        else:
+            num_nodes = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
+    try:
+        num_nodes = int(num_nodes)
+    except (TypeError, ValueError):
+        pass
     deg = ops.bincount(index, minlength=num_nodes)
     if dtype is not None:
         deg = ops.cast(deg, dtype)
@@ -25,6 +55,8 @@ def remove_self_loops(
     edge_attr=None,
 ) -> Tuple:
     """Removes self-loops from `edge_index` and optional `edge_attr`."""
+    if is_tracing(edge_index):
+        return edge_index, edge_attr
     edge_index = ops.convert_to_tensor(edge_index)
     if edge_attr is not None:
         edge_attr = ops.convert_to_tensor(edge_attr)
@@ -45,10 +77,17 @@ def add_self_loops(
     num_nodes: Optional[int] = None,
 ) -> Tuple:
     """Adds self-loops to `edge_index` and optional `edge_attr`."""
+    if is_tracing(edge_index) or is_tracing(num_nodes):
+        if num_nodes is None:
+            return edge_index, edge_attr
     edge_index = ops.convert_to_tensor(edge_index)
     if num_nodes is None:
         num_nodes = int(ops.max(edge_index)) + 1 if ops.shape(edge_index)[1] > 0 else 0
-    num_nodes = int(num_nodes)
+    else:
+        try:
+            num_nodes = int(num_nodes)
+        except (TypeError, ValueError):
+            pass
 
     loop_index = ops.arange(0, num_nodes, dtype=edge_index.dtype)
     loop_index = ops.stack([loop_index, loop_index], axis=0)
@@ -56,7 +95,7 @@ def add_self_loops(
 
     if edge_attr is not None:
         edge_attr = ops.convert_to_tensor(edge_attr)
-        attr_shape = (num_nodes,) + tuple(ops.shape(edge_attr)[1:])
+        attr_shape = (num_nodes,) + tuple(edge_attr.shape[1:]) if hasattr(edge_attr, "shape") else (num_nodes,)
         if fill_value is None:
             loop_attr = ops.zeros(attr_shape, dtype=edge_attr.dtype)
         elif isinstance(fill_value, (int, float)):
@@ -86,11 +125,18 @@ def gcn_norm(
         edge_weight = ops.convert_to_tensor(edge_weight)
 
     if num_nodes is None:
-        num_nodes = int(ops.max(edge_index)) + 1 if ops.shape(edge_index)[1] > 0 else 0
-    num_nodes = int(num_nodes)
+        if is_tracing(edge_index):
+            num_nodes = edge_index.shape[1] if hasattr(edge_index, "shape") and edge_index.shape[1] is not None else ops.shape(edge_index)[1]
+        else:
+            num_nodes = int(ops.max(edge_index)) + 1 if ops.shape(edge_index)[1] > 0 else 0
+    try:
+        num_nodes = int(num_nodes)
+    except (TypeError, ValueError):
+        pass
 
     if edge_weight is None:
-        edge_weight = ops.ones((ops.shape(edge_index)[1],), dtype=dtype or "float32")
+        num_edges = edge_index.shape[1] if hasattr(edge_index, "shape") and edge_index.shape[1] is not None else ops.shape(edge_index)[1]
+        edge_weight = ops.ones((num_edges,), dtype=dtype or "float32")
 
     if add_self_loops:
         edge_index, edge_weight = globals()["add_self_loops"](
@@ -126,11 +172,18 @@ def get_laplacian(
         edge_weight = ops.convert_to_tensor(edge_weight)
 
     if num_nodes is None:
-        num_nodes = int(ops.max(edge_index)) + 1 if ops.shape(edge_index)[1] > 0 else 0
-    num_nodes = int(num_nodes)
+        if is_tracing(edge_index):
+            num_nodes = edge_index.shape[1] if hasattr(edge_index, "shape") and edge_index.shape[1] is not None else ops.shape(edge_index)[1]
+        else:
+            num_nodes = int(ops.max(edge_index)) + 1 if ops.shape(edge_index)[1] > 0 else 0
+    try:
+        num_nodes = int(num_nodes)
+    except (TypeError, ValueError):
+        pass
 
     if edge_weight is None:
-        edge_weight = ops.ones((ops.shape(edge_index)[1],), dtype=dtype or "float32")
+        num_edges = edge_index.shape[1] if hasattr(edge_index, "shape") and edge_index.shape[1] is not None else ops.shape(edge_index)[1]
+        edge_weight = ops.ones((num_edges,), dtype=dtype or "float32")
 
     row, col = ops.cast(edge_index[0], "int32"), ops.cast(edge_index[1], "int32")
     deg = degree(row, num_nodes=num_nodes, dtype=edge_weight.dtype)
@@ -168,9 +221,16 @@ def get_laplacian(
 def softmax(src, index, num_nodes: Optional[int] = None, dim: int = -2):
     """Computes a sparsely evaluated softmax over index."""
     index = ops.cast(index, "int32")
-    if num_nodes is None:
-        num_nodes = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
-    num_nodes = int(num_nodes)
+    if is_tracing(index) or is_tracing(num_nodes):
+        if num_nodes is None:
+            num_nodes = src.shape[dim] if hasattr(src, "shape") and src.shape[dim] is not None else ops.shape(src)[dim]
+    else:
+        if num_nodes is None:
+            num_nodes = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
+        try:
+            num_nodes = int(num_nodes)
+        except (TypeError, ValueError):
+            pass
 
     max_val = ops.segment_max(src, index, num_segments=num_nodes)
     max_val = ops.take(max_val, index, axis=dim)
@@ -183,9 +243,16 @@ def softmax(src, index, num_nodes: Optional[int] = None, dim: int = -2):
 def scatter(src, index, dim=0, dim_size=None, reduce="sum"):
     """Computes scatter / segment reduction."""
     index = ops.cast(index, "int32")
-    if dim_size is None:
-        dim_size = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
-    dim_size = int(dim_size)
+    if is_tracing(index) or is_tracing(dim_size):
+        if dim_size is None:
+            dim_size = src.shape[dim] if hasattr(src, "shape") and src.shape[dim] is not None else ops.shape(src)[dim]
+    else:
+        if dim_size is None:
+            dim_size = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
+        try:
+            dim_size = int(dim_size)
+        except (TypeError, ValueError):
+            pass
 
     if reduce in ("add", "sum"):
         return ops.segment_sum(src, index, num_segments=dim_size)

@@ -21,6 +21,20 @@ def is_tensor_like(x: Any) -> bool:
     return hasattr(x, "shape") and hasattr(x, "dtype")
 
 
+def to_numpy(x: Any) -> Any:
+    if x is None:
+        return None
+    if hasattr(x, "detach"):
+        x = x.detach()
+    if hasattr(x, "cpu"):
+        x = x.cpu()
+    if hasattr(x, "numpy"):
+        return x.numpy()
+    if hasattr(x, "_numpy"):
+        return x._numpy()
+    return np.asarray(x)
+
+
 def get_shape(x: Any) -> Tuple[int, ...]:
     if hasattr(x, "shape"):
         return tuple(int(s) if s is not None else 0 for s in x.shape)
@@ -206,6 +220,21 @@ class BaseStorage(MutableMapping):
             return x
 
         return self.apply(_to)
+
+    def to_backend(self, backend: Optional[str] = None):
+        for key in list(self.keys()):
+            val = self[key]
+            if is_tensor_like(val):
+                v_np = to_numpy(val)
+                if v_np.dtype == np.bool_:
+                    self[key] = ops.convert_to_tensor(v_np, dtype="bool")
+                elif np.issubdtype(v_np.dtype, np.integer):
+                    self[key] = ops.convert_to_tensor(v_np, dtype="int64")
+                elif np.issubdtype(v_np.dtype, np.floating):
+                    self[key] = ops.convert_to_tensor(v_np, dtype="float32")
+                else:
+                    self[key] = ops.convert_to_tensor(v_np)
+        return self
 
     def cpu(self):
         return self.to("cpu")

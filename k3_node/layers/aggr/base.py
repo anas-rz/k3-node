@@ -59,6 +59,10 @@ class Aggregation(layers.Layer):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.built = True
+
+    def build(self, input_shape=None):
+        self.built = True
 
     def reset_parameters(self):
         r"""Resets all learnable parameters of the module."""
@@ -74,7 +78,7 @@ class Aggregation(layers.Layer):
         max_num_elements: Optional[int] = None,
         **kwargs,
     ):
-        dim_total = len(ops.shape(x))
+        dim_total = len(x.shape) if hasattr(x, "shape") and x.shape is not None else len(ops.shape(x))
         if dim >= dim_total or dim < -dim_total:
             raise ValueError(
                 f"Encountered invalid dimension '{dim}' of source tensor with "
@@ -82,14 +86,14 @@ class Aggregation(layers.Layer):
             )
 
         if index is None and ptr is None:
-            N = ops.shape(x)[dim]
+            N = x.shape[dim] if hasattr(x, "shape") and x.shape[dim] is not None else ops.shape(x)[dim]
             index = ops.zeros((N,), dtype="int32")
 
         if ptr is not None and index is None:
             index = ptr2index(ptr)
 
         if ptr is not None:
-            ptr_len = ops.shape(ptr)[0]
+            ptr_len = ptr.shape[0] if hasattr(ptr, "shape") and ptr.shape[0] is not None else ops.shape(ptr)[0]
             if dim_size is None:
                 dim_size = ptr_len - 1
             elif dim_size != ptr_len - 1:
@@ -99,7 +103,15 @@ class Aggregation(layers.Layer):
                 )
 
         if index is not None and dim_size is None:
-            dim_size = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
+            from k3_node.layers.conv.utils import is_tracing
+            if is_tracing(index):
+                dim_size = x.shape[dim] if hasattr(x, "shape") and x.shape[dim] is not None else ops.shape(x)[dim]
+            else:
+                dim_size = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
+            try:
+                dim_size = int(dim_size)
+            except (TypeError, ValueError):
+                pass
 
         # Handle positional / keyword call to call()
         return self.call(

@@ -7,7 +7,7 @@ import numpy as np
 from keras import ops
 
 from k3_node.data.data import BaseData
-from k3_node.data.storage import is_tensor_like
+from k3_node.data.storage import is_tensor_like, to_numpy
 
 
 class Dataset:
@@ -107,6 +107,8 @@ class Dataset:
     def __getitem__(self, idx: Any) -> Any:
         if isinstance(idx, (int, np.integer)):
             data = self.get(self.indices()[idx])
+            if hasattr(data, "to_backend"):
+                data = data.to_backend()
             data = data if self.transform is None else self.transform(data)
             return data
         else:
@@ -117,7 +119,7 @@ class Dataset:
         if isinstance(idx, slice):
             indices = indices[idx]
         elif is_tensor_like(idx):
-            idx_np = ops.convert_to_numpy(idx)
+            idx_np = to_numpy(idx)
             if idx_np.dtype == bool:
                 indices = [indices[i] for i in np.where(idx_np)[0]]
             else:
@@ -154,7 +156,8 @@ class Dataset:
         y_list = [d.y for d in self if hasattr(d, "y") and d.y is not None]
         if len(y_list) == 0:
             return 0
-        y = ops.convert_to_numpy(ops.concatenate(y_list, axis=0)) if len(y_list) > 1 else ops.convert_to_numpy(y_list[0])
+        y_np_list = [to_numpy(y) for y in y_list]
+        y = np.concatenate(y_np_list, axis=0) if len(y_np_list) > 1 else y_np_list[0]
         if np.issubdtype(y.dtype, np.integer):
             return int(np.max(y)) + 1
         return len(np.unique(y))

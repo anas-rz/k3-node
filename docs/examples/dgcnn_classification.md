@@ -203,7 +203,6 @@ os.environ['KERAS_BACKEND'] = 'torch'
 
 import keras
 from keras import layers, ops
-import torch
 
 import k3_node
 from k3_node import layers as k3_layers
@@ -221,10 +220,9 @@ try:
     num_features = dataset_k3.num_features
     num_classes = dataset_k3.num_classes
 except Exception:
-    import torch
     from k3_node.data import Data
     num_features, num_classes = 16, 7
-    data_k3 = Data(x=torch.randn(100, num_features), edge_index=torch.randint(0, 100, (2, 400)), y=torch.randint(0, num_classes, (100,)))
+    data_k3 = Data(x=ops.random.normal((100, num_features)), edge_index=ops.convert_to_tensor([[0, 1], [1, 0]], dtype='int64'), y=ops.zeros((100,), dtype='int64'))
 
 class K3Net(keras.Model):
     def __init__(self, in_channels, hidden_channels, out_channels):
@@ -247,8 +245,8 @@ class K3Net(keras.Model):
 k3_model = K3Net(num_features, 64, num_classes)
 
 # Build model weights with a sample forward pass
-dummy_x = data_k3.x if hasattr(data_k3, 'x') and data_k3.x is not None else torch.randn(10, num_features)
-dummy_edge_index = data_k3.edge_index if hasattr(data_k3, 'edge_index') else torch.tensor([[0, 1], [1, 0]])
+dummy_x = data_k3.x if hasattr(data_k3, 'x') and data_k3.x is not None else ops.random.normal((10, num_features))
+dummy_edge_index = data_k3.edge_index if hasattr(data_k3, 'edge_index') else ops.convert_to_tensor([[0, 1], [1, 0]], dtype='int64')
 try:
     _ = k3_model((dummy_x, dummy_edge_index))
     print(f"Model built successfully with {len(k3_model.trainable_variables)} trainable weight tensors!")
@@ -266,8 +264,8 @@ k3_model.compile(
 def graph_data_generator():
     while True:
         mask = getattr(data_k3, 'train_mask', None)
-        if mask is not None and hasattr(mask, 'to'):
-            mask = mask.to(torch.float32)
+        if mask is not None:
+            mask = ops.cast(mask, 'float32')
         y = getattr(data_k3, 'y', None)
         yield (dummy_x, dummy_edge_index), y, mask
 
@@ -284,7 +282,8 @@ history = k3_model.fit(
 out = k3_model((dummy_x, dummy_edge_index))
 pred = ops.argmax(out, axis=-1)
 if hasattr(data_k3, 'test_mask') and hasattr(data_k3, 'y'):
-    test_acc = ops.mean(ops.cast(pred[data_k3.test_mask] == data_k3.y[data_k3.test_mask], "float32"))
+    test_mask = data_k3.test_mask
+    test_acc = ops.mean(ops.cast(ops.cast(pred[test_mask], "int64") == ops.cast(data_k3.y[test_mask], "int64"), "float32"))
     print(f"Test Accuracy: {float(test_acc):.4f}")
 
 print("\n✓ K3-Node model.fit execution and verification completed successfully!")

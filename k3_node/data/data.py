@@ -94,6 +94,11 @@ class BaseData:
     def to_namedtuple(self) -> NamedTuple:
         raise NotImplementedError
 
+    def to_backend(self, backend: Optional[str] = None) -> "BaseData":
+        for store in self.stores:
+            store.to_backend(backend)
+        return self
+
     def update(self, data: "BaseData") -> "BaseData":
         for store, other_store in zip(self.stores, data.stores):
             for key, value in other_store.items():
@@ -333,6 +338,10 @@ class Data(BaseData):
 
     def to(self, *args, **kwargs) -> "Data":
         self._store.to(*args, **kwargs)
+        return self
+
+    def to_backend(self, backend: Optional[str] = None) -> "Data":
+        self._store.to_backend(backend)
         return self
 
     def cpu(self) -> "Data":

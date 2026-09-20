@@ -54,7 +54,12 @@ class AGNNConv(MessagePassing):
         # Check for legacy 2D matrix
         is_legacy = False
         if hasattr(edge_index, "shape") and len(edge_index.shape) == 2:
-            if edge_index.shape[0] != 2 and edge_index.shape[0] == edge_index.shape[1]:
+            if (
+                edge_index.shape[0] is not None
+                and edge_index.shape[1] is not None
+                and edge_index.shape[0] != 2
+                and edge_index.shape[0] == edge_index.shape[1]
+            ):
                 is_legacy = True
         elif not hasattr(edge_index, "shape"):
             is_legacy = True
@@ -64,7 +69,7 @@ class AGNNConv(MessagePassing):
         if is_legacy:
             out = self.propagate(x, edge_index, x_norm=x_norm)
         else:
-            num_nodes = ops.shape(x)[0]
+            num_nodes = x.shape[0] if hasattr(x, "shape") and x.shape[0] is not None else ops.shape(x)[0]
             if self.add_self_loops:
                 edge_index, _ = remove_self_loops(edge_index)
                 edge_index, _ = add_self_loops(edge_index, num_nodes=num_nodes)

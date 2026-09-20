@@ -87,11 +87,15 @@ class MessagePassing(layers.Layer):
         self.agg_signature = inspect.signature(self.aggregate).parameters
         self.upd_signature = inspect.signature(self.update).parameters
 
+    def build(self, input_shape=None):
+        self.built = True
+
     @staticmethod
     def get_inputs(inputs):
         if len(inputs) == 3:
             x, a, e = inputs
-            assert len(ops.shape(e)) in (2, 3), "E must have rank 2 or 3"
+            if hasattr(e, "shape") and e.shape is not None:
+                assert len(e.shape) in (2, 3), "E must have rank 2 or 3"
         elif len(inputs) == 2:
             x, a = inputs
             e = None
@@ -99,7 +103,8 @@ class MessagePassing(layers.Layer):
             raise ValueError(
                 "Expected 2 or 3 inputs tensors (X, A, E), got {}.".format(len(inputs))
             )
-        assert len(ops.shape(a)) == 2, "A must have rank 2"
+        if hasattr(a, "shape") and a.shape is not None:
+            assert len(a.shape) == 2, "A must have rank 2"
         return x, a, e
 
     def get_targets(self, x):
@@ -129,22 +134,36 @@ class MessagePassing(layers.Layer):
 
     def _get_dim_size(self, kwargs, i, size=None):
         if size is not None and size[1] is not None:
-            return int(size[1])
+            return size[1]
         x = kwargs.get("x", None)
         if x is not None:
             if isinstance(x, (tuple, list)):
                 target_x = x[1] if x[1] is not None else x[0]
                 if target_x is not None:
-                    return int(ops.shape(target_x)[self.node_dim])
+                    if hasattr(target_x, "shape") and target_x.shape[self.node_dim] is not None:
+                        return int(target_x.shape[self.node_dim])
+                    return ops.shape(target_x)[self.node_dim]
             else:
-                return int(ops.shape(x)[self.node_dim])
+                if hasattr(x, "shape") and x.shape[self.node_dim] is not None:
+                    return int(x.shape[self.node_dim])
+                return ops.shape(x)[self.node_dim]
         for k, val in kwargs.items():
             if k in ("edge_index", "edge_attr", "edge_weight", "ptr"):
                 continue
-            if hasattr(val, "shape") and len(ops.shape(val)) >= 2:
-                return int(ops.shape(val)[self.node_dim])
-        if i is not None and ops.shape(i)[0] > 0:
-            return int(ops.max(i)) + 1
+            if hasattr(val, "shape") and len(val.shape) >= 2:
+                if val.shape[self.node_dim] is not None:
+                    return int(val.shape[self.node_dim])
+                return ops.shape(val)[self.node_dim]
+        if i is not None:
+            from k3_node.layers.conv.utils import is_tracing
+            if is_tracing(i):
+                return 0
+            if hasattr(i, "shape") and len(i.shape) > 0 and i.shape[0] == 0:
+                return 0
+            try:
+                return int(ops.max(i)) + 1
+            except Exception:
+                return 0
         return 0
 
     def propagate(self, *args, **kwargs: Any):
@@ -153,18 +172,18 @@ class MessagePassing(layers.Layer):
         is_spektral = False
         if len(args) >= 2:
             arg0, arg1 = args[0], args[1]
-            shape0 = ops.shape(arg0) if hasattr(arg0, "shape") else ()
-            shape1 = ops.shape(arg1) if hasattr(arg1, "shape") else ()
-            if len(shape1) == 2 and shape1[0] == shape1[1]:
+            shape0 = arg0.shape if hasattr(arg0, "shape") and arg0.shape is not None else ()
+            shape1 = arg1.shape if hasattr(arg1, "shape") and arg1.shape is not None else ()
+            if len(shape1) == 2 and shape1[0] is not None and shape1[0] == shape1[1]:
                 is_spektral = True
-            elif len(shape0) >= 2 and shape0[0] != 2 and not isinstance(arg1, (tuple, list, type(None))):
-                if len(shape1) == 2 and shape1[0] != 2:
+            elif len(shape0) >= 2 and shape0[0] is not None and shape0[0] != 2 and not isinstance(arg1, (tuple, list, type(None))):
+                if len(shape1) == 2 and shape1[0] is not None and shape1[0] != 2:
                     is_spektral = True
 
         if is_spektral:
             x, a = args[0], args[1]
             e = args[2] if len(args) >= 3 else kwargs.get("e", None)
-            self.n_nodes = ops.shape(x)[-2]
+            self.n_nodes = x.shape[-2] if hasattr(x, "shape") and x.shape[-2] is not None else ops.shape(x)[-2]
             self.index_sources, self.index_targets = get_source_target(a)
 
             # Call legacy message
@@ -191,7 +210,8 @@ class MessagePassing(layers.Layer):
         edge_index = ops.convert_to_tensor(edge_index)
 
         # Handle dense adjacency [N, N] passed as edge_index
-        if len(ops.shape(edge_index)) == 2 and ops.shape(edge_index)[0] > 2 and ops.shape(edge_index)[0] == ops.shape(edge_index)[1]:
+        e_shape = getattr(edge_index, "shape", None)
+        if e_shape is not None and len(e_shape) == 2 and e_shape[0] is not None and e_shape[1] is not None and e_shape[0] > 2 and e_shape[0] == e_shape[1]:
             where_adj = ops.where(edge_index != 0)
             where_adj = where_adj if not isinstance(where_adj, list) else where_adj
             edge_index = ops.stack([where_adj[0], where_adj[1]], axis=0)
@@ -208,7 +228,7 @@ class MessagePassing(layers.Layer):
         self.index_targets = i
         self.index_sources = j
 
-        dim_size = self._get_dim_size(kwargs, i, size)
+        dim_size = size[1] if size is not None and size[1] is not None else self._get_dim_size(kwargs, i, size)
         self.n_nodes = dim_size
 
         # Construct message arguments
@@ -230,8 +250,10 @@ class MessagePassing(layers.Layer):
                     msg_kwargs[param_name] = ops.take(val, j, axis=self.node_dim) if val is not None else None
             elif param_name == "index":
                 msg_kwargs["index"] = i
-            elif param_name == "dim_size":
-                msg_kwargs["dim_size"] = dim_size
+            elif param_name in ("dim_size", "size_i"):
+                msg_kwargs[param_name] = dim_size
+            elif param_name == "size_j":
+                msg_kwargs["size_j"] = size[0] if size is not None and size[0] is not None else dim_size
             elif param_name == "edge_index":
                 msg_kwargs["edge_index"] = edge_index
 
