@@ -75,8 +75,8 @@ from k3_node.data import Data
 class GCN(keras.Model):
     def __init__(self, in_channels, hidden_channels, out_channels):
         super().__init__()
-        self.conv1 = gnn_layers.GCNConv(hidden_channels)
-        self.conv2 = gnn_layers.GCNConv(out_channels)
+        self.conv1 = gnn_layers.GCNConv(in_channels, hidden_channels)
+        self.conv2 = gnn_layers.GCNConv(hidden_channels, out_channels)
 
     def call(self, x, edge_index):
         x = self.conv1(x, edge_index)
