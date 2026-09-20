@@ -2,7 +2,6 @@ mkdocs>=1.5
 mkdocs-material>=9.5
 mkdocstrings[python]>=0.25
 mkdocs-autorefs
-mknotebooks
 pymdown-extensions
 mkdocs-jupyter
 pygments
