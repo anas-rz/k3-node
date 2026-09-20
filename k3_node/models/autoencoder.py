@@ -67,6 +67,17 @@ class GAE:
         r"""Runs the decoder and computes edge probabilities."""
         return self.decoder(*args, **kwargs)
 
+    def eval(self):
+        self.training = False
+        return self
+
+    def train(self):
+        self.training = True
+        return self
+
+    def to(self, *args, **kwargs):
+        return self
+
     def recon_loss(self, z, pos_edge_index, neg_edge_index=None):
         r"""Given latent variables `z`, computes the binary cross entropy
         loss for positive edges `pos_edge_index` and negative sampled
@@ -206,3 +217,13 @@ class ARGVA(ARGA):
 
     def kl_loss(self, mu=None, logstd=None):
         return self.vgae.kl_loss(mu, logstd)
+
+    def eval(self):
+        self.training = False
+        self.vgae.eval()
+        return self
+
+    def train(self):
+        self.training = True
+        self.vgae.train()
+        return self

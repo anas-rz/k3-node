@@ -225,29 +225,72 @@ class RandomLinkSplit(BaseTransform):
         if isinstance(data, Data):
             edge_index = to_numpy(data.edge_index)
             num_edges = edge_index.shape[1]
-            perm = np.random.permutation(num_edges)
+            if self.is_undirected:
+                mask = edge_index[0] <= edge_index[1]
+                perm = np.where(mask)[0]
+                perm = perm[np.random.permutation(len(perm))]
+            else:
+                perm = np.random.permutation(num_edges)
 
-            n_val = int(self.num_val * num_edges)
-            n_test = int(self.num_test * num_edges)
-            n_train = num_edges - n_val - n_test
+            num_total = len(perm)
+            n_val = int(self.num_val * num_total)
+            n_test = int(self.num_test * num_total)
+            n_train = num_total - n_val - n_test
 
             train_idx = perm[:n_train]
             val_idx = perm[n_train : n_train + n_val]
             test_idx = perm[n_train + n_val :]
+            train_val_idx = perm[: n_train + n_val]
 
-            train_data.edge_index = match_tensor(edge_index[:, train_idx], data.edge_index)
-            train_data.edge_label_index = train_data.edge_index
-            train_data.edge_label = match_tensor(np.ones(train_idx.shape[0], dtype=np.float32), data.edge_index)
+            def to_edges(idx, undirected=False):
+                edges = edge_index[:, idx]
+                if undirected:
+                    edges = np.concatenate([edges, edges[::-1]], axis=1)
+                return edges
 
+            train_data.edge_index = match_tensor(to_edges(train_idx, self.is_undirected), data.edge_index)
             val_data.edge_index = train_data.edge_index
-            val_data.edge_label_index = match_tensor(edge_index[:, val_idx], data.edge_index)
-            val_data.edge_label = match_tensor(np.ones(val_idx.shape[0], dtype=np.float32), data.edge_index)
+            test_data.edge_index = match_tensor(to_edges(train_val_idx, self.is_undirected), data.edge_index)
 
-            test_data.edge_index = match_tensor(
-                np.concatenate([edge_index[:, train_idx], edge_index[:, val_idx]], axis=1), data.edge_index
-            )
-            test_data.edge_label_index = match_tensor(edge_index[:, test_idx], data.edge_index)
-            test_data.edge_label = match_tensor(np.ones(test_idx.shape[0], dtype=np.float32), data.edge_index)
+            from k3_node.models.utils import negative_sampling
+            num_nodes = data.num_nodes or (int(np.max(edge_index)) + 1 if edge_index.size > 0 else 0)
+            num_neg_val = n_val
+            num_neg_test = n_test
+            num_neg_train = n_train if self.add_negative_train_samples else 0
+            total_neg = max(num_neg_val + num_neg_test + num_neg_train, 1)
+            neg_all = negative_sampling(data.edge_index, num_nodes=num_nodes, num_neg_samples=total_neg)
+            neg_all_np = to_numpy(neg_all)
+
+            neg_val = neg_all_np[:, :num_neg_val]
+            neg_test = neg_all_np[:, num_neg_val : num_neg_val + num_neg_test]
+            neg_train = neg_all_np[:, num_neg_val + num_neg_test :] if num_neg_train > 0 else None
+
+            if self.split_labels:
+                train_data.pos_edge_label_index = match_tensor(edge_index[:, train_idx], data.edge_index)
+                train_data.pos_edge_label = match_tensor(np.ones(train_idx.shape[0], dtype=np.float32), data.edge_index)
+
+                val_data.pos_edge_label_index = match_tensor(edge_index[:, val_idx], data.edge_index)
+                val_data.pos_edge_label = match_tensor(np.ones(val_idx.shape[0], dtype=np.float32), data.edge_index)
+                val_data.neg_edge_label_index = match_tensor(neg_val, data.edge_index)
+                val_data.neg_edge_label = match_tensor(np.zeros(neg_val.shape[1], dtype=np.float32), data.edge_index)
+
+                test_data.pos_edge_label_index = match_tensor(edge_index[:, test_idx], data.edge_index)
+                test_data.pos_edge_label = match_tensor(np.ones(test_idx.shape[0], dtype=np.float32), data.edge_index)
+                test_data.neg_edge_label_index = match_tensor(neg_test, data.edge_index)
+                test_data.neg_edge_label = match_tensor(np.zeros(neg_test.shape[1], dtype=np.float32), data.edge_index)
+
+                if self.add_negative_train_samples and neg_train is not None:
+                    train_data.neg_edge_label_index = match_tensor(neg_train, data.edge_index)
+                    train_data.neg_edge_label = match_tensor(np.zeros(neg_train.shape[1], dtype=np.float32), data.edge_index)
+            else:
+                train_data.edge_label_index = match_tensor(edge_index[:, train_idx], data.edge_index)
+                train_data.edge_label = match_tensor(np.ones(train_idx.shape[0], dtype=np.float32), data.edge_index)
+
+                val_data.edge_label_index = match_tensor(edge_index[:, val_idx], data.edge_index)
+                val_data.edge_label = match_tensor(np.ones(val_idx.shape[0], dtype=np.float32), data.edge_index)
+
+                test_data.edge_label_index = match_tensor(edge_index[:, test_idx], data.edge_index)
+                test_data.edge_label = match_tensor(np.ones(test_idx.shape[0], dtype=np.float32), data.edge_index)
 
         return train_data, val_data, test_data
 
