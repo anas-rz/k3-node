@@ -13,7 +13,7 @@
 
 ```bash
 pip install torch_geometric
-pip install git+http://github.com/anas-rz/k3-node/
+pip install git+http://github.com/anas-rz/k3-node/@examples-check
 ```
 
 ```python

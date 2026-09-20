@@ -26,7 +26,7 @@ This Google Colab notebook provides an end-to-end tutorial comparing:
 
 ```python
 !pip install -q torch_geometric
-!pip install git+http://github.com/anas-rz/k3-node/
+!pip install git+http://github.com/anas-rz/k3-node/@examples-check
 
 print('Dependencies installed and environment ready!')
 ```
@@ -137,25 +137,29 @@ data_k3 = dataset_k3[0]
 num_features = dataset_k3.num_features
 num_classes = dataset_k3.num_classes
 
-class K3Net(keras.Model):
+class K3AGNN(keras.Model):
     def __init__(self, in_channels, hidden_channels, out_channels):
         super().__init__()
-        self.conv1 = k3_layers.GCNConv(in_channels, hidden_channels)
-        self.conv2 = k3_layers.GCNConv(hidden_channels, out_channels)
+        self.lin1 = layers.Dense(hidden_channels)
+        self.prop1 = k3_layers.AGNNConv(requires_grad=False)
+        self.prop2 = k3_layers.AGNNConv(requires_grad=True)
+        self.lin2 = layers.Dense(out_channels)
         self.dropout = layers.Dropout(0.5)
 
-    def call(self, inputs, edge_index=None, edge_weight=None, training=False):
+    def call(self, inputs, edge_index=None, training=False):
         if isinstance(inputs, (tuple, list)):
             x, edge_index = inputs[0], inputs[1]
         else:
             x = inputs
         x = self.dropout(x, training=training)
-        x = ops.relu(self.conv1(x, edge_index, edge_weight))
+        x = ops.relu(self.lin1(x))
+        x = self.prop1(x, edge_index)
+        x = self.prop2(x, edge_index)
         x = self.dropout(x, training=training)
-        x = self.conv2(x, edge_index, edge_weight)
+        x = self.lin2(x)
         return x
 
-k3_model = K3Net(num_features, 64, num_classes)
+k3_model = K3AGNN(num_features, 16, num_classes)
 
 # Build model weights with a sample forward pass
 dummy_x = data_k3.x if hasattr(data_k3, 'x') and data_k3.x is not None else torch.randn(10, num_features)

@@ -956,6 +956,32 @@ def build_k3node_port(stem: str, pyg_code: str, meta: dict) -> str:
             "    hidden_channels=50,",
             ")",
         ])
+    elif stem == "agnn":
+        port_lines.extend([
+            "class K3AGNN(keras.Model):",
+            "    def __init__(self, in_channels, hidden_channels, out_channels):",
+            "        super().__init__()",
+            "        self.lin1 = layers.Dense(hidden_channels)",
+            "        self.prop1 = k3_layers.AGNNConv(requires_grad=False)",
+            "        self.prop2 = k3_layers.AGNNConv(requires_grad=True)",
+            "        self.lin2 = layers.Dense(out_channels)",
+            "        self.dropout = layers.Dropout(0.5)",
+            "",
+            "    def call(self, inputs, edge_index=None, training=False):",
+            "        if isinstance(inputs, (tuple, list)):",
+            "            x, edge_index = inputs[0], inputs[1]",
+            "        else:",
+            "            x = inputs",
+            "        x = self.dropout(x, training=training)",
+            "        x = ops.relu(self.lin1(x))",
+            "        x = self.prop1(x, edge_index)",
+            "        x = self.prop2(x, edge_index)",
+            "        x = self.dropout(x, training=training)",
+            "        x = self.lin2(x)",
+            "        return x",
+            "",
+            f"k3_model = K3AGNN(num_features, 16, num_classes)",
+        ])
     elif "mutag_gin" in stem or "gin" in stem:
         port_lines.extend([
             "class K3GIN(keras.Model):",
@@ -1168,7 +1194,7 @@ def create_colab_notebook(stem: str, pyg_code: str) -> dict:
     setup_code = (
         "# Setup environment and install dependencies\n"
         "!pip install -q torch_geometric\n"
-        "!pip install git+http://github.com/anas-rz/k3-node/\n\n"
+        "!pip install git+http://github.com/anas-rz/k3-node/@examples-check\n\n"
         "print('Dependencies installed and environment ready!')"
     )
 

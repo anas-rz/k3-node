@@ -14,7 +14,7 @@
 ```bash
 pip install spektral -qq
 pip install ogb -qq
-pip install git+http://github.com/anas-rz/k3-node/
+pip install git+http://github.com/anas-rz/k3-node/@examples-check
 ```
 
 ```python

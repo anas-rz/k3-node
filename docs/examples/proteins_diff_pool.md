@@ -26,7 +26,7 @@ This Google Colab notebook provides an end-to-end tutorial comparing:
 
 ```python
 !pip install -q torch_geometric
-!pip install git+http://github.com/anas-rz/k3-node/
+!pip install git+http://github.com/anas-rz/k3-node/@examples-check
 
 print('Dependencies installed and environment ready!')
 ```
