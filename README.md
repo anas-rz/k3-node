@@ -40,9 +40,8 @@ K3-Node achieves **100% public API parity** with [PyTorch Geometric (PyG)](https
 ## Installation
 
 ```bash
-git clone https://github.com/anas-rz/k3-node.git
-cd k3-node
-pip install -e .
+# git should be installed
+pip install git+http://github.com/anas-rz/k3-node/
 ```
 
 ### Selecting your Backend
