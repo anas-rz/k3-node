@@ -13,6 +13,15 @@ REPO_URL = "https://github.com/anas-rz/k3-node/blob/main"
 COLAB_URL = "https://colab.research.google.com/github/anas-rz/k3-node/blob/main"
 
 
+try:
+    from scripts.convert_all_pyg_examples import METADATA
+except ImportError:
+    try:
+        from convert_all_pyg_examples import METADATA
+    except ImportError:
+        METADATA = {}
+
+
 def get_backend(path: str) -> str:
     path_lower = path.lower()
     if "tensorflow" in path_lower:
@@ -29,7 +38,14 @@ def get_example_meta(path: str) -> dict:
     stem = os.path.splitext(filename)[0]
     backend = get_backend(path)
 
-    if "arxiv" in filename.lower():
+    if stem in METADATA:
+        m = METADATA[stem]
+        title = m["title"]
+        description = m["desc"]
+        dataset = m["dataset"]
+        layer = m["layer"]
+        icon = m["icon"]
+    elif "arxiv" in filename.lower():
         title = "Node Classification on OGBN-Arxiv with ARMAConv"
         description = (
             "Large-scale node classification on the `ogbn-arxiv` citation benchmark "

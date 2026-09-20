@@ -13,14 +13,12 @@
 
 ```bash
 pip install torch_geometric
-pip install --upgrade keras -qq
-git clone https://github.com/anas-rz/k3-node.git
+pip install git+http://github.com/anas-rz/k3-node/
 ```
 
 ```python
-import os, sys
-sys.path.append('./k3-node')
-os.environ['KERAS_BACKEND'] = 'torch'
+import os
+os.environ["KERAS_BACKEND"] = "torch"
 ```
 
 ```python

@@ -13,15 +13,13 @@
 
 ```bash
 pip install spektral -qq
-pip install --upgrade keras -qq
 pip install ogb -qq
-git clone https://github.com/anas-rz/k3-node.git
+pip install git+http://github.com/anas-rz/k3-node/
 ```
 
 ```python
-import os, sys
-os.environ['KERAS_BACKEND'] = 'tensorflow'
-sys.path.append('/content/k3-node')
+import os
+os.environ["KERAS_BACKEND"] = "tensorflow"
 ```
 
 ```python
