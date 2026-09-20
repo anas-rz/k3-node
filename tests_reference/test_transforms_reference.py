@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 import torch
 import torch_geometric.data as pyg_data
 import torch_geometric.transforms as PyGT

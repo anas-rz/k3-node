@@ -3,7 +3,12 @@ import pytest
 import numpy as np
 from keras import ops
 
-from k3_node.models import GraphMAE2, sce_loss, load_graphmae2_weights
+from k3_node.models import (
+    GraphMAE2,
+    sce_loss,
+    load_graphmae2_weights,
+    download_graphmae2_checkpoint,
+)
 
 
 def test_sce_loss():
@@ -161,3 +166,61 @@ def test_load_graphmae2_checkpoint_products():
 
     out = model(x, edge_index)
     assert ops.shape(out) == (num_nodes, 1024)
+
+
+def test_download_graphmae2_checkpoint(monkeypatch, tmp_path):
+    # Test invalid dataset
+    with pytest.raises(ValueError, match="Unknown dataset"):
+        download_graphmae2_checkpoint("unknown_dataset")
+
+    # Test existing file returns path directly without download
+    local_dir = "GraphMAE2-main/GraphMAE2_checkpoints"
+    if os.path.exists(local_dir):
+        path = download_graphmae2_checkpoint("ogbn-arxiv", folder=local_dir)
+        assert os.path.exists(path)
+        assert "ogbn-arxiv" in path
+
+    # Test download invocation using monkeypatched download_google_url
+    called = {}
+
+    def mock_download(id, folder, filename, log=True):
+        called["id"] = id
+        called["folder"] = folder
+        called["filename"] = filename
+        os.makedirs(folder, exist_ok=True)
+        target = os.path.join(folder, filename)
+        with open(target, "wb") as f:
+            f.write(b"mock_content")
+        return target
+
+    monkeypatch.setattr("k3_node.models.graphmae2.download_google_url", mock_download)
+
+    fake_folder = str(tmp_path / "ckpts")
+    res_path = download_graphmae2_checkpoint("mag-scholar-f", folder=fake_folder)
+    assert os.path.exists(res_path)
+    assert called["id"] == "1KpQk_OKbbo4qTLQYZ84pAJDy1sh4oZv2"
+    assert "mag-scholar-f" in called["filename"]
+
+
+def test_graphmae2_from_pretrained():
+    local_dir = "GraphMAE2-main/GraphMAE2_checkpoints"
+    if not os.path.exists(local_dir):
+        pytest.skip(f"Checkpoints directory {local_dir} not found")
+
+    model = GraphMAE2.from_pretrained("ogbn-arxiv", folder=local_dir)
+    assert model.in_dim == 128
+    assert model.num_hidden == 1024
+    assert model.nhead == 8
+
+    num_nodes = 3
+    x = ops.convert_to_tensor(np.random.randn(num_nodes, 128).astype("float32"))
+    edge_index = ops.convert_to_tensor([[0, 1, 2], [1, 2, 0]], dtype="int32")
+    out = model(x, edge_index)
+    assert ops.shape(out) == (num_nodes, 1024)
+
+    # Test products config
+    model_prod = GraphMAE2.from_pretrained("ogbn-products", folder=local_dir)
+    assert model_prod.in_dim == 100
+    assert model_prod.num_hidden == 1024
+    assert model_prod.nhead == 4
+

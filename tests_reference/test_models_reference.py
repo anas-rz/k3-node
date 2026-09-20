@@ -637,7 +637,7 @@ def test_reference_group_add_rev():
 
 def test_reference_metapath2vec():
     torch.manual_seed(42)
-    edge_index_dict = {create a new pre-trained li
+    edge_index_dict = {
         ("a", "w", "p"): torch.tensor([[0, 1], [0, 1]]),
         ("p", "b", "a"): torch.tensor([[0, 1], [0, 1]]),
     }

@@ -6,6 +6,7 @@ import keras
 from keras import layers, ops
 
 from k3_node.layers.conv.utils import softmax
+from k3_node.data.download import download_google_url
 
 
 def sce_loss(x, y, alpha: float = 3.0):
@@ -627,9 +628,55 @@ class GraphMAE2(layers.Layer):
         r"""Forward pass: returns node embeddings by default."""
         return self.embed(x, edge_index)
 
-    def load_weights_from_checkpoint(self, checkpoint_path: str):
-        r"""Loads weights from a PyTorch state dict checkpoint."""
-        return load_graphmae2_weights(self, checkpoint_path)
+    def load_weights_from_checkpoint(
+        self,
+        checkpoint_path: Optional[str] = None,
+        dataset: Optional[str] = None,
+        folder: str = "checkpoints",
+        download: bool = True,
+    ):
+        r"""Loads weights from a PyTorch state dict checkpoint or Google Drive."""
+        return load_graphmae2_weights(
+            self,
+            checkpoint_path=checkpoint_path,
+            dataset=dataset,
+            folder=folder,
+            download=download,
+        )
+
+    @classmethod
+    def from_pretrained(
+        cls,
+        dataset: str = "ogbn-arxiv",
+        folder: str = "checkpoints",
+        download: bool = True,
+        **kwargs,
+    ) -> "GraphMAE2":
+        r"""Instantiates a GraphMAE2 model with pre-trained weights downloaded from Google Drive.
+
+        Args:
+            dataset (str): Dataset name (``"ogbn-arxiv"``, ``"ogbn-products"``,
+                ``"mag-scholar-f"``, or ``"ogbn-papers100M"``).
+            folder (str, optional): Directory to store/find checkpoints. (default: ``"checkpoints"``)
+            download (bool, optional): Whether to download checkpoint if missing locally. (default: ``True``)
+            **kwargs: Overrides for model hyperparameters.
+
+        Returns:
+            GraphMAE2: Model instance loaded with pre-trained weights.
+        """
+        key = _canonical_dataset_name(dataset)
+        if key not in GRAPHMAE2_PRETRAINED:
+            raise ValueError(
+                f"Unknown dataset '{dataset}'. Available pre-trained models: {list(GRAPHMAE2_PRETRAINED.keys())}"
+            )
+        cfg = dict(GRAPHMAE2_PRETRAINED[key])
+        cfg.pop("id")
+        cfg.pop("filename")
+        cfg.update(kwargs)
+
+        model = cls(**cfg)
+        load_graphmae2_weights(model, dataset=key, folder=folder, download=download)
+        return model
 
     def __repr__(self) -> str:
         return (
@@ -639,11 +686,182 @@ class GraphMAE2(layers.Layer):
         )
 
 
-def load_graphmae2_weights(model: GraphMAE2, checkpoint_path: str):
-    r"""Loads pre-trained weights from a GraphMAE2 PyTorch checkpoint (.pt)."""
+GRAPHMAE2_PRETRAINED = {
+    "ogbn-arxiv": {
+        "id": "1KdU5TbAg0lQwruO7SKenoFiC2MbaZQRr",
+        "filename": "gat_gat_1024_4_ogbn-arxiv_0.5_1024_checkpoint.pt",
+        "in_dim": 128,
+        "num_hidden": 1024,
+        "num_layers": 4,
+        "num_dec_layers": 1,
+        "nhead": 8,
+        "nhead_out": 1,
+        "activation": "prelu",
+        "norm": "layernorm",
+        "residual": True,
+    },
+    "ogbn-products": {
+        "id": "1Qk3bgK8H3bee3qmagH_hRJOfQmUD8PCW",
+        "filename": "gat_gat_1024_4_ogbn-products_0.5_1024_checkpoint.pt",
+        "in_dim": 100,
+        "num_hidden": 1024,
+        "num_layers": 4,
+        "num_dec_layers": 1,
+        "nhead": 4,
+        "nhead_out": 1,
+        "activation": "prelu",
+        "norm": "layernorm",
+        "residual": True,
+    },
+    "mag-scholar-f": {
+        "id": "1KpQk_OKbbo4qTLQYZ84pAJDy1sh4oZv2",
+        "filename": "gat_gat_1024_4_mag-scholar-f_0.5_1024_checkpoint.pt",
+        "in_dim": 128,
+        "num_hidden": 1024,
+        "num_layers": 4,
+        "num_dec_layers": 1,
+        "nhead": 8,
+        "nhead_out": 1,
+        "activation": "prelu",
+        "norm": "layernorm",
+        "residual": True,
+    },
+    "ogbn-papers100M": {
+        "id": "1zCD_vOckLfOXD1dWRY025A30QeuHsA_0",
+        "filename": "gat_gat_1024_4_ogbn-papers100M_0.5_1024_checkpoint.pt",
+        "in_dim": 128,
+        "num_hidden": 1024,
+        "num_layers": 4,
+        "num_dec_layers": 1,
+        "nhead": 8,
+        "nhead_out": 1,
+        "activation": "prelu",
+        "norm": "layernorm",
+        "residual": True,
+    },
+}
+
+DATASET_ALIASES = {
+    "arxiv": "ogbn-arxiv",
+    "products": "ogbn-products",
+    "mag": "mag-scholar-f",
+    "mag-scholar": "mag-scholar-f",
+    "papers100m": "ogbn-papers100M",
+    "ogbn-papers100m": "ogbn-papers100M",
+    "papers": "ogbn-papers100M",
+}
+
+
+def _canonical_dataset_name(name: Optional[str]) -> str:
+    if not name:
+        return ""
+    name_clean = name.strip()
+    if name_clean in GRAPHMAE2_PRETRAINED:
+        return name_clean
+    name_lower = name_clean.lower()
+    if name_lower in DATASET_ALIASES:
+        return DATASET_ALIASES[name_lower]
+    for k in GRAPHMAE2_PRETRAINED:
+        if k.lower() == name_lower:
+            return k
+    for k, v in GRAPHMAE2_PRETRAINED.items():
+        if v["filename"] == name_clean:
+            return k
+    return name_clean
+
+
+def download_graphmae2_checkpoint(
+    dataset: str,
+    folder: str = "checkpoints",
+    log: bool = True,
+) -> str:
+    r"""Downloads a pre-trained GraphMAE2 checkpoint from Google Drive using download_google_url.
+
+    Google Drive folder: https://drive.google.com/drive/folders/1GiuP0PtIZaYlJWIrjvu73ZQCJGr6kGkh
+
+    Args:
+        dataset (str): Name of dataset (``"ogbn-arxiv"``, ``"ogbn-products"``,
+            ``"mag-scholar-f"``, or ``"ogbn-papers100M"``).
+        folder (str, optional): Target directory to save the checkpoint. (default: ``"checkpoints"``)
+        log (bool, optional): Whether to print download progress. (default: ``True``)
+
+    Returns:
+        str: Absolute path to the downloaded checkpoint file.
+    """
+    key = _canonical_dataset_name(dataset)
+    if key not in GRAPHMAE2_PRETRAINED:
+        raise ValueError(
+            f"Unknown dataset '{dataset}'. Available pre-trained checkpoints: {list(GRAPHMAE2_PRETRAINED.keys())}"
+        )
+    info = GRAPHMAE2_PRETRAINED[key]
+
+    target = os.path.join(folder, info["filename"])
+    if os.path.exists(target):
+        return target
+
+    # Check if local file exists in GraphMAE2-main/GraphMAE2_checkpoints when using default folder
+    if folder == "checkpoints":
+        local_alt = os.path.join("GraphMAE2-main", "GraphMAE2_checkpoints", info["filename"])
+        if os.path.exists(local_alt):
+            return local_alt
+
+    return download_google_url(
+        id=info["id"],
+        folder=folder,
+        filename=info["filename"],
+        log=log,
+    )
+
+
+def load_graphmae2_weights(
+    model: GraphMAE2,
+    checkpoint_path: Optional[str] = None,
+    dataset: Optional[str] = None,
+    folder: str = "checkpoints",
+    download: bool = True,
+):
+    r"""Loads pre-trained weights from a GraphMAE2 PyTorch checkpoint (.pt).
+
+    If the checkpoint does not exist locally and download=True, it will be automatically
+    downloaded from the official Google Drive folder using download_google_url.
+
+    Args:
+        model (GraphMAE2): The target GraphMAE2 model instance.
+        checkpoint_path (str, optional): Local path to .pt file or dataset name.
+        dataset (str, optional): Dataset name if downloading from Google Drive.
+        folder (str, optional): Directory to store downloaded checkpoints. (default: ``"checkpoints"``)
+        download (bool, optional): Whether to download checkpoint if missing locally. (default: ``True``)
+    """
+    if checkpoint_path is None and dataset is None:
+        raise ValueError("Either checkpoint_path or dataset must be specified.")
+
+    path_to_load = checkpoint_path
+
+    candidate_dataset = dataset or (_canonical_dataset_name(checkpoint_path) if checkpoint_path else None)
+    if candidate_dataset in GRAPHMAE2_PRETRAINED:
+        if checkpoint_path and os.path.isfile(checkpoint_path):
+            path_to_load = checkpoint_path
+        else:
+            filename = GRAPHMAE2_PRETRAINED[candidate_dataset]["filename"]
+            alt_local = os.path.join("GraphMAE2-main", "GraphMAE2_checkpoints", filename)
+            default_local = os.path.join(folder, filename)
+            if os.path.isfile(alt_local):
+                path_to_load = alt_local
+            elif os.path.isfile(default_local):
+                path_to_load = default_local
+            elif download:
+                path_to_load = download_graphmae2_checkpoint(candidate_dataset, folder=folder)
+            else:
+                raise FileNotFoundError(f"Checkpoint for '{candidate_dataset}' not found at '{checkpoint_path}'.")
+    elif checkpoint_path and not os.path.isfile(checkpoint_path):
+        if download and dataset:
+            path_to_load = download_graphmae2_checkpoint(dataset, folder=folder)
+        else:
+            raise FileNotFoundError(f"Checkpoint file '{checkpoint_path}' not found.")
+
     import torch
 
-    state_dict = torch.load(checkpoint_path, map_location="cpu")
+    state_dict = torch.load(path_to_load, map_location="cpu")
     if not isinstance(state_dict, dict):
         raise ValueError(f"Expected a dict/state_dict in checkpoint, got {type(state_dict)}")
 
