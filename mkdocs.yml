@@ -32,6 +32,9 @@ theme:
     text: Roboto
     code: Roboto Mono
 
+hooks:
+  - scripts/mkdocs_hooks.py
+
 plugins:
   - search
   - autorefs
@@ -49,6 +52,7 @@ nav:
       - Overview: index.md
       - Quickstart: quickstart.md
       - Multi-Backend Guide: backends.md
+  - Examples: examples.md
   - API Reference:
       - Convolution Layers: api/conv.md
       - Aggregation Layers: api/aggr.md
