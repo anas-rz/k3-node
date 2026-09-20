@@ -22,7 +22,7 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | `torch_geometric.data` | `k3_node.data` | ✅ 19/19 |
 | `torch_geometric.loader` | `k3_node.loader` | ✅ 26/26 |
 | `torch_geometric.transforms` | `k3_node.transforms` | ✅ 62/62 |
-| `torch_geometric.datasets` | `k3_node.datasets` | ✅ 30/30 |
+| `torch_geometric.datasets` | `k3_node.datasets` | ✅ 31/31 |
 
 `conv`, `pool`, `unpool`, `kge`, `functional`, `norm`, `aggr`, `dense`, `models`, `data`,
 `loader`, `transforms`, and `datasets` are at full parity with PyG's public API (see each package's `__all__`).
@@ -175,6 +175,7 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | `DBLP` | ✅ | `k3_node.datasets.DBLP` | Heterogeneous author-paper-term-conference graph |
 | `IMDB` | ✅ | `k3_node.datasets.IMDB` | Heterogeneous movie-director-actor graph |
 | `QM7b` | ✅ | `k3_node.datasets.QM7b` | 7,211 molecular graphs with 14 Coulomb matrix targets |
+| `MoleculeNet` | ✅ | `k3_node.datasets.MoleculeNet` | Molecular benchmark suite (ESOL, FreeSolv, Lipo, PCBA, MUV, HIV, BACE, BBBP, Tox21, ToxCast, SIDER, ClinTox) |
 
 
 ## Notes on non-goals / caveats

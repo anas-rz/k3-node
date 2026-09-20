@@ -381,3 +381,49 @@ def test_reference_explainer_dataset_parity():
         assert d.edge_index.shape[0] == 2
         assert d.node_mask.shape[0] == d.num_nodes
         assert d.edge_mask.shape[0] == d.edge_index.shape[1]
+
+
+# ---------------------------------------------------------------------------
+# 9. SMILES Parity Test
+# ---------------------------------------------------------------------------
+def test_reference_smiles_parity():
+    import torch_geometric.utils as pyg_utils
+    import k3_node.utils as k3_utils
+
+    smiles = "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"  # caffeine
+    pyg_d = pyg_utils.from_smiles(smiles)
+    k3_d = k3_utils.from_smiles(smiles)
+
+    assert pyg_d.num_nodes == k3_d.num_nodes
+    assert pyg_d.num_edges == k3_d.num_edges
+    assert np.array_equal(to_np(pyg_d.x), to_np(k3_d.x))
+    assert np.array_equal(to_np(pyg_d.edge_index), to_np(k3_d.edge_index))
+    assert np.array_equal(to_np(pyg_d.edge_attr), to_np(k3_d.edge_attr))
+    assert k3_utils.to_smiles(k3_d) == pyg_utils.to_smiles(pyg_d)
+
+
+# ---------------------------------------------------------------------------
+# 10. MoleculeNet Parity Test
+# ---------------------------------------------------------------------------
+def test_reference_molecule_net_parity():
+    # Use existing downloaded data in ./data/MoleculeNet
+    data_dir = osp.join(".", "data", "MoleculeNet")
+    if not osp.exists(data_dir):
+        pytest.skip("MoleculeNet raw files not cached locally")
+
+    k3_dataset = k3_datasets.MoleculeNet(root=data_dir, name="ESOL")
+    pyg_dataset = pyg_datasets.MoleculeNet(root=data_dir, name="ESOL")
+
+    assert len(k3_dataset) == len(pyg_dataset)
+    assert k3_dataset.num_features == pyg_dataset.num_features
+    assert k3_dataset.num_edge_features == pyg_dataset.num_edge_features
+
+    k3_d0 = k3_dataset[0]
+    pyg_d0 = pyg_dataset[0]
+
+    assert k3_d0.num_nodes == pyg_d0.num_nodes
+    assert k3_d0.num_edges == pyg_d0.num_edges
+    assert np.array_equal(to_np(k3_d0.x), to_np(pyg_d0.x))
+    assert np.array_equal(to_np(k3_d0.edge_index), to_np(pyg_d0.edge_index))
+    assert np.array_equal(to_np(k3_d0.edge_attr), to_np(pyg_d0.edge_attr))
+    assert np.allclose(to_np(k3_d0.y), to_np(pyg_d0.y))

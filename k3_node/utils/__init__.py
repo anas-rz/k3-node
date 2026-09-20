@@ -2,3 +2,4 @@ from .keras import *
 from .backend_import import *  # noqa
 from .graph import *
 from .random import *
+from .smiles import *

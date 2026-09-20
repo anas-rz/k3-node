@@ -25,6 +25,7 @@ from .freebase import FB15k_237
 from .dblp import DBLP
 from .imdb import IMDB
 from .qm7 import QM7b
+from .molecule_net import MoleculeNet
 
 __all__ = [
     "KarateClub",
@@ -58,5 +59,6 @@ __all__ = [
     "DBLP",
     "IMDB",
     "QM7b",
+    "MoleculeNet",
 ]
 

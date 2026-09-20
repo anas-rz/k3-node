@@ -44,6 +44,7 @@ class GATEConv(MessagePassing):
         x_j = ops.take(x, row, axis=0)
         x_i = ops.take(x, col, axis=0)
 
+        edge_attr = ops.cast(edge_attr, x.dtype)
         h = ops.leaky_relu(self.lin1(ops.concatenate([x_j, edge_attr], axis=-1)), negative_slope=0.01)
         alpha_j = ops.sum(h * self.att_l, axis=-1)
         alpha_i = ops.sum(x_i * self.att_r, axis=-1)
@@ -127,6 +128,8 @@ class AttentiveFP(keras.layers.Layer):
         self.dropout = keras.layers.Dropout(dropout) if dropout > 0.0 else None
 
     def call(self, x, edge_index, edge_attr, batch, training=None):
+        x = ops.cast(x, "float32")
+        edge_attr = ops.cast(edge_attr, "float32")
         # Atom Embedding:
         x = ops.leaky_relu(self.lin1(x), negative_slope=0.01)
 
