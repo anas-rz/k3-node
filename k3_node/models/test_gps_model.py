@@ -226,6 +226,7 @@ def test_gps_model_load_weights_synthetic():
 
 
 def test_gps_model_pretrained_checkpoint_if_available():
+    torch = pytest.importorskip("torch")
     ckpt_path = download_gps_checkpoint("pcqm4m-GPS+RWSE.deep")
     if os.path.exists(ckpt_path):
         model = GPSModel(

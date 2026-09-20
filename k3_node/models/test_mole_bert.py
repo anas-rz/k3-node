@@ -148,6 +148,7 @@ def test_mole_bert_synthetic_checkpoint_load(tmp_path):
 
 
 def test_mole_bert_official_checkpoint_load():
+    torch = pytest.importorskip("torch")
     ckpt_path = "Mole-BERT/model_gin/Mole-BERT.pth"
     if not os.path.exists(ckpt_path):
         ckpt_path = download_mole_bert_checkpoint()
