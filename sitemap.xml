@@ -13,10 +13,6 @@
          <lastmod>2026-09-20</lastmod>
     </url>
     <url>
-         <loc>https://anas-rz.github.io/k3-node/examples/</loc>
-         <lastmod>2026-09-20</lastmod>
-    </url>
-    <url>
          <loc>https://anas-rz.github.io/k3-node/quickstart/</loc>
          <lastmod>2026-09-20</lastmod>
     </url>
@@ -62,6 +58,18 @@
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/transforms/</loc>
+         <lastmod>2026-09-20</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/</loc>
+         <lastmod>2026-09-20</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/ogb_arxiv_spektral_dataset/</loc>
+         <lastmod>2026-09-20</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/planetoid_PyTorch_Geometric/</loc>
          <lastmod>2026-09-20</lastmod>
     </url>
 </urlset>
