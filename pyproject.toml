@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "k3-node"
+version = "0.1.0"
+description = "Multi-Backend Graph Neural Networks on Keras 3"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "Muhammad Anas Raza" }
+]
+dependencies = [
+    "keras>=3.0",
+    "scipy",
+    "pynndescent",
+    "sympy",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-cov",
+    "torch>=2.0.0",
+    "torch-geometric>=2.5.0",
+    "networkx",
+    "scikit-learn",
+    "tqdm",
+    "fsspec",
+    "requests",
+]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.25",
+    "mkdocs-autorefs",
+    "pymdown-extensions",
+    "mkdocs-jupyter",
+    "pygments",
+]
+
+[tool.setuptools.packages.find]
+include = ["k3_node*"]
+

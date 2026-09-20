@@ -8,3 +8,6 @@ GraphGPS
 grover
 Mole-BERT
 site/
+*.egg-info/
+dist/
+build/
