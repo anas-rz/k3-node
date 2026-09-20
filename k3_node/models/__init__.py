@@ -90,6 +90,17 @@ from .graphormer_3d import (
     download_graphormer3d_checkpoint,
 )
 from .captum import to_captum_model, to_captum_input, captum_output_to_dicts
+from .gps_model import (
+    GPSModel,
+    GPSLayer,
+    CustomGatedGCN,
+    AtomEncoder,
+    BondEncoder,
+    RWSEEncoder,
+    SANGraphHead,
+    load_gps_weights,
+    download_gps_checkpoint,
+)
 
 __all__ = [
     "MLP",
@@ -182,4 +193,13 @@ __all__ = [
     "to_captum_model",
     "to_captum_input",
     "captum_output_to_dicts",
+    "GPSModel",
+    "GPSLayer",
+    "CustomGatedGCN",
+    "AtomEncoder",
+    "BondEncoder",
+    "RWSEEncoder",
+    "SANGraphHead",
+    "load_gps_weights",
+    "download_gps_checkpoint",
 ]

@@ -1243,6 +1243,129 @@ def test_reference_graphormer3d_full():
     assert not np.isnan(forces_np).any()
 
 
+def test_reference_gps_model():
+    import sys
+    import os
+    import torch_geometric.utils
+
+    class TorchScatterShim:
+        @staticmethod
+        def scatter(src, index, dim=0, out=None, dim_size=None, reduce='sum'):
+            return torch_geometric.utils.scatter(src, index, dim=dim, dim_size=dim_size, reduce=reduce)
+        @staticmethod
+        def scatter_add(src, index, dim=0, out=None, dim_size=None):
+            return torch_geometric.utils.scatter(src, index, dim=dim, dim_size=dim_size, reduce='sum')
+        @staticmethod
+        def scatter_max(src, index, dim=0, out=None, dim_size=None):
+            return torch_geometric.utils.scatter(src, index, dim=dim, dim_size=dim_size, reduce='max')
+    sys.modules['torch_scatter'] = TorchScatterShim
+
+    import ogb.utils.features
+    ogb.utils.features.get_atom_feature_dims = lambda: [119, 4, 12, 12, 10, 6, 6, 2, 2]
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    graphgps_dir = os.path.join(base_dir, "GraphGPS")
+    sys.path.insert(0, graphgps_dir)
+
+    from torch_geometric.data import Batch
+    from torch_geometric.graphgym.config import cfg, set_cfg
+    from graphgps.network.gps_model import GPSModel as PyTGPSModel
+    from k3_node.models.gps_model import GPSModel as K3GPSModel, load_gps_weights, download_gps_checkpoint
+
+    ckpt_path = download_gps_checkpoint("pcqm4m-GPS+RWSE.deep")
+    if not os.path.exists(ckpt_path):
+        return
+
+    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(ckpt_path))), "config.yaml")
+    if not os.path.exists(config_path):
+        config_path = os.path.join(os.path.dirname(os.path.dirname(ckpt_path)), "config.yaml")
+
+    set_cfg(cfg)
+    cfg.set_new_allowed(True)
+    cfg.merge_from_file(config_path)
+    cfg.dataset.node_encoder = True
+    cfg.dataset.node_encoder_name = 'Atom+RWSE'
+    cfg.dataset.edge_encoder = True
+    cfg.dataset.edge_encoder_name = 'Bond'
+    cfg.posenc_RWSE.kernel.times = list(range(1, 17))
+
+    pyt_model = PyTGPSModel(dim_in=1, dim_out=1)
+    pyt_model.eval()
+
+    ckpt = torch.load(ckpt_path, map_location="cpu")
+    pyt_model.load_state_dict(ckpt["model_state"])
+
+    k3_model = K3GPSModel(
+        dim_in=256,
+        dim_out=1,
+        num_layers=16,
+        dim_hidden=256,
+        num_heads=8,
+        local_gnn_type="CustomGatedGCN",
+        act="gelu",
+        dropout=0.0,
+        attn_dropout=0.0,
+        batch_norm=True,
+        layer_norm=False,
+        node_encoder_type="Atom+RWSE",
+        edge_encoder_type="Bond",
+        rwse_num_steps=16,
+        rwse_dim_pe=20,
+        graph_pooling="mean",
+        head_layers=2,
+    )
+
+    x = torch.tensor([[6, 0, 4, 4, 3, 2, 2, 0, 0],
+                      [8, 0, 2, 2, 2, 1, 1, 0, 0],
+                      [6, 0, 3, 3, 3, 2, 2, 0, 0]], dtype=torch.long)
+    edge_index = torch.tensor([[0, 1, 1, 2],
+                               [1, 0, 2, 1]], dtype=torch.long)
+    edge_attr = torch.tensor([[0, 0, 0],
+                              [0, 0, 0],
+                              [1, 0, 0],
+                              [1, 0, 0]], dtype=torch.long)
+    pestat_RWSE = torch.ones((3, 16), dtype=torch.float)
+    batch_idx = torch.tensor([0, 0, 0], dtype=torch.long)
+
+    # Build and load K3 model
+    _ = k3_model(
+        ops.convert_to_tensor(x.numpy()),
+        ops.convert_to_tensor(edge_index.numpy()),
+        edge_attr=ops.convert_to_tensor(edge_attr.numpy()),
+        pestat_RWSE=ops.convert_to_tensor(pestat_RWSE.numpy()),
+        batch=ops.convert_to_tensor(batch_idx.numpy()),
+        training=False,
+    )
+    load_gps_weights(k3_model, ckpt_path)
+
+    # PyTorch reference forward pass
+    pyt_data = Batch(
+        x=x.clone(),
+        edge_index=edge_index.clone(),
+        edge_attr=edge_attr.clone(),
+        pestat_RWSE=pestat_RWSE.clone(),
+        batch=batch_idx.clone(),
+        y=torch.zeros((1, 1)),
+    )
+    with torch.no_grad():
+        pyt_pred, _ = pyt_model(pyt_data)
+        pyt_val = pyt_pred.item()
+
+    # Keras 3 forward pass
+    k3_pred = k3_model(
+        ops.convert_to_tensor(x.numpy()),
+        ops.convert_to_tensor(edge_index.numpy()),
+        edge_attr=ops.convert_to_tensor(edge_attr.numpy()),
+        pestat_RWSE=ops.convert_to_tensor(pestat_RWSE.numpy()),
+        batch=ops.convert_to_tensor(batch_idx.numpy()),
+        training=False,
+    )
+    k3_val = float(ops.convert_to_numpy(k3_pred)[0, 0])
+
+    np.testing.assert_allclose(k3_val, pyt_val, rtol=1e-3, atol=1e-3)
+
+
+
 
 
 
