@@ -1,13 +1,46 @@
 from typing import Any, Callable
 
 try:
+    import torch
+    BaseDataLoader = torch.utils.data.DataLoader
+except ImportError:
+    class BaseDataLoader:
+        r"""Fallback BaseDataLoader when PyTorch is not installed."""
+        def __init__(self, dataset=None, batch_size=1, shuffle=False, **kwargs):
+            self.dataset = dataset
+            self.batch_size = batch_size
+            self.shuffle = shuffle
+
+        def __iter__(self):
+            collate_fn = getattr(self, 'collate_fn', None) or (lambda x: x)
+            dataset = getattr(self, 'dataset', [])
+            batch_size = getattr(self, 'batch_size', 1)
+            shuffle = getattr(self, 'shuffle', False)
+            indices = list(range(len(dataset)))
+            if shuffle:
+                import random
+                random.shuffle(indices)
+            for i in range(0, len(indices), batch_size):
+                batch_indices = indices[i:i + batch_size]
+                batch = [dataset[idx] for idx in batch_indices]
+                yield collate_fn(batch)
+
+        def __len__(self):
+            dataset = getattr(self, 'dataset', [])
+            batch_size = getattr(self, 'batch_size', 1)
+            return (len(dataset) + batch_size - 1) // batch_size if len(dataset) > 0 else 0
+
+try:
     from torch.utils.data.dataloader import (
         _BaseDataLoaderIter,
         _MultiProcessingDataLoaderIter,
     )
 except ImportError:
-    _BaseDataLoaderIter = object
-    _MultiProcessingDataLoaderIter = object
+    class _BaseDataLoaderIter:
+        pass
+
+    class _MultiProcessingDataLoaderIter:
+        pass
 
 
 class DataLoaderIterator:
@@ -34,4 +67,3 @@ class DataLoaderIterator:
     def __del__(self) -> Any:
         if isinstance(self.iterator, _MultiProcessingDataLoaderIter):
             self.iterator.__del__()
-

@@ -1,7 +1,11 @@
 import os
 import numpy as np
+import pytest
 import keras.ops as ops
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None
 
 from k3_node.models.mole_bert import (
     MoleBERT,
@@ -109,6 +113,8 @@ def test_mole_bert_pooling_and_prediction():
 
 
 def test_mole_bert_synthetic_checkpoint_load(tmp_path):
+    if torch is None:
+        pytest.skip("PyTorch is required for checkpoint loading test")
     emb_dim = 16
     num_layer = 3
     model = MoleBERT(num_layer=num_layer, emb_dim=emb_dim, num_tasks=1)

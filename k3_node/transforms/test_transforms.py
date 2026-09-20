@@ -1,7 +1,14 @@
 import math
 import numpy as np
 import pytest
-import torch
+
+try:
+    import torch
+except ImportError:
+    torch = None
+
+if torch is None:
+    pytest.skip("PyTorch is required for transforms unit tests", allow_module_level=True)
 
 import k3_node.transforms as T
 from k3_node.data import Data, HeteroData

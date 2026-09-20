@@ -4,14 +4,12 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 try:
     import torch
     from torch import Tensor
-    BaseDataLoader = torch.utils.data.DataLoader
 except ImportError:
     torch = None
     Tensor = type(None)
-    BaseDataLoader = object
 
 from k3_node.data import Data, HeteroData
-from k3_node.loader.base import DataLoaderIterator
+from k3_node.loader.base import BaseDataLoader, DataLoaderIterator
 from k3_node.loader.mixin import AffinityMixin, LogMemoryMixin, MultithreadingMixin
 from k3_node.loader.utils import (
     filter_data,

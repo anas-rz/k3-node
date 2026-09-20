@@ -3,7 +3,10 @@ import pytest
 import numpy as np
 import keras
 from keras import ops
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None
 
 from k3_node.models.grover import (
     GROVER,
@@ -193,6 +196,8 @@ def test_grover_model_and_fingerprint():
 
 
 def test_load_grover_weights_synthetic(tmp_path):
+    if torch is None:
+        pytest.skip("PyTorch is required for checkpoint loading test")
     hidden_size = 16
     num_attn_head = 2
     depth = 2

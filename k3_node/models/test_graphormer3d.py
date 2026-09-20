@@ -1,7 +1,10 @@
 import os
 import pytest
 import numpy as np
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None
 from keras import ops
 
 from k3_node.models import (
@@ -115,6 +118,9 @@ def test_graphormer3d_checkpoint_download_and_load(monkeypatch, tmp_path):
     assert "oc20is2re" in called["filename"]
 
     # Test loading synthetic checkpoint
+    if torch is None:
+        return
+
     model = Graphormer3D(
         layers=1,
         blocks=1,

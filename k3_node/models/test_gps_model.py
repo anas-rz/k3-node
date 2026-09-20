@@ -133,7 +133,7 @@ def test_gps_model_forward():
 
 
 def test_gps_model_load_weights_synthetic():
-    import torch
+    torch = pytest.importorskip("torch")
 
     dim_h = 32
     rwse_pe = 8

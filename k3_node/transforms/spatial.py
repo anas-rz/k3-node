@@ -5,9 +5,14 @@ from itertools import repeat
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
-import torch
-import torch.nn.functional as F
-from torch import Tensor
+try:
+    import torch
+    import torch.nn.functional as F
+    from torch import Tensor
+except ImportError:
+    torch = None
+    F = None
+    Tensor = Any
 
 from k3_node.data import Data, HeteroData
 from k3_node.transforms.base_transform import BaseTransform, functional_transform
