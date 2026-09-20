@@ -5,16 +5,19 @@ from keras import ops
 def _infer_size(batch, size=None):
     if size is not None:
         return size
+    if hasattr(batch, "is_meta") and batch.is_meta:
+        return None
     try:
-        if hasattr(batch, "numpy"):
-            return int(batch[-1].numpy()) + 1
-        elif hasattr(batch, "item"):
-            return int(batch[-1].item()) + 1
-        elif hasattr(batch, "__getitem__"):
+        if hasattr(batch, "numpy") and not hasattr(batch, "_has_symbolic_representation"):
+            import torch
+            if not isinstance(batch, torch.Tensor):
+                return int(batch[-1]) + 1
+        if hasattr(batch, "__getitem__"):
             val = batch[-1]
             if hasattr(val, "item"):
                 return int(val.item()) + 1
             return int(val) + 1
+        return int(ops.convert_to_numpy(batch[-1])) + 1
     except Exception:
         pass
     try:

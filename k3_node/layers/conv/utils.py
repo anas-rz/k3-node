@@ -219,22 +219,35 @@ def get_laplacian(
     return edge_index, edge_weight
 
 
+def _infer_dim_size(index, dim_size=None):
+    if dim_size is not None:
+        return dim_size
+    if hasattr(index, "is_meta") and index.is_meta:
+        return None
+    try:
+        if hasattr(index, "numpy") and not hasattr(index, "_has_symbolic_representation"):
+            # NumPy array or eager tensor with numpy()
+            import torch
+            if not isinstance(index, torch.Tensor):
+                return int(index.numpy().max()) + 1 if index.shape[0] > 0 else 0
+        if hasattr(index, "max"):
+            max_val = index.max()
+            if hasattr(max_val, "item"):
+                return int(max_val.item()) + 1
+            return int(max_val) + 1
+        return int(ops.convert_to_numpy(ops.max(index))) + 1 if ops.shape(index)[0] > 0 else 0
+    except Exception:
+        pass
+    try:
+        return ops.cast(ops.max(index), "int32") + 1
+    except Exception:
+        return None
+
+
 def softmax(src, index, num_nodes: Optional[int] = None, dim: int = -2):
     """Computes a sparsely evaluated softmax over index."""
     index = ops.cast(index, "int32")
-    if num_nodes is None:
-        try:
-            if hasattr(index, "numpy"):
-                num_nodes = int(index[-1].numpy()) + 1
-            elif hasattr(index, "item"):
-                num_nodes = int(index[-1].item()) + 1
-            else:
-                num_nodes = int(index[-1]) + 1
-        except Exception:
-            try:
-                num_nodes = ops.cast(index[-1], "int32") + 1
-            except Exception:
-                num_nodes = None
+    num_nodes = _infer_dim_size(index, num_nodes)
 
     max_val = ops.segment_max(src, index, num_segments=num_nodes)
     max_val = ops.take(max_val, index, axis=dim)
@@ -247,19 +260,7 @@ def softmax(src, index, num_nodes: Optional[int] = None, dim: int = -2):
 def scatter(src, index, dim=0, dim_size=None, reduce="sum"):
     """Computes scatter / segment reduction."""
     index = ops.cast(index, "int32")
-    if dim_size is None:
-        try:
-            if hasattr(index, "numpy"):
-                dim_size = int(index[-1].numpy()) + 1
-            elif hasattr(index, "item"):
-                dim_size = int(index[-1].item()) + 1
-            else:
-                dim_size = int(index[-1]) + 1
-        except Exception:
-            try:
-                dim_size = ops.cast(index[-1], "int32") + 1
-            except Exception:
-                dim_size = None
+    dim_size = _infer_dim_size(index, dim_size)
 
     if reduce in ("add", "sum"):
         return ops.segment_sum(src, index, num_segments=dim_size)

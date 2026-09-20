@@ -6,6 +6,13 @@ from k3_node.layers.conv import GATConv
 from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.conv.utils import softmax
 from k3_node.layers.pool import global_add_pool
+from k3_node.layers.pool.glob import _infer_size
+
+try:
+    from keras.src.backend.common.symbolic_scope import in_symbolic_scope
+except ImportError:
+    def in_symbolic_scope():
+        return False
 
 
 def _gru_step(cell, x, h):
@@ -174,7 +181,14 @@ class AttentiveFP(keras.Model):
         row = ops.arange(num_nodes, dtype="int32")
         mol_edge_index = ops.stack([row, batch], axis=0)
 
-        out = ops.relu(global_add_pool(x, batch, size=bs))
+        if in_symbolic_scope():
+            size = bs
+        else:
+            size = _infer_size(batch)
+            if size is None:
+                size = bs
+
+        out = ops.relu(global_add_pool(x, batch, size=size))
         for _ in range(self.num_timesteps):
             h = ops.elu(self.mol_conv((x, out), mol_edge_index))
             if self.dropout is not None:
