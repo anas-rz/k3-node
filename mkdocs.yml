@@ -66,6 +66,7 @@ nav:
       - Models: api/models.md
       - Pretrained Foundation Models: api/pretrained.md
       - Graph Data Structures: api/data.md
+      - Graph Datasets: api/datasets.md
       - Data Loaders & Samplers: api/loader.md
       - Graph Transforms: api/transforms.md
   - Porting Checklist: checklist.md

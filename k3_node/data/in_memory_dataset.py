@@ -1,3 +1,4 @@
+import copy
 import os
 import os.path as osp
 import pickle
@@ -26,6 +27,14 @@ class InMemoryDataset(Dataset):
         self.slices: Optional[Dict[str, Any]] = None
         self._data_list: Optional[List[BaseData]] = None
 
+    @property
+    def data(self) -> Optional[BaseData]:
+        return self._data
+
+    @data.setter
+    def data(self, value: Optional[BaseData]):
+        self._data = value
+
     def len(self) -> int:
         if self._data_list is not None:
             return len(self._data_list)
@@ -41,14 +50,25 @@ class InMemoryDataset(Dataset):
     def get(self, idx: int) -> BaseData:
         if self._data_list is not None:
             return self._data_list[idx]
-        if self._data is None or self.slices is None:
+        if self._data is None:
             raise RuntimeError("Dataset does not contain data. Call 'load' first.")
+        if self.slices is None:
+            if idx == 0:
+                return copy.copy(self._data)
+            raise IndexError(f"Index {idx} out of bounds for single graph dataset.")
         return separate(self._data.__class__, self._data, idx, self.slices)
 
     @classmethod
-    def collate(cls, data_list: List[BaseData]) -> Tuple[BaseData, Dict[str, Any]]:
+    def collate(cls, data_list: List[BaseData]) -> Tuple[BaseData, Optional[Dict[str, Any]]]:
+        if len(data_list) == 1:
+            return data_list[0], None
         base_cls = data_list[0].__class__
-        data, slices, _ = collate(base_cls, data_list)
+        data, slices, _ = collate(
+            base_cls,
+            data_list,
+            increment=False,
+            add_batch=False,
+        )
         return data, slices
 
     def save(self, data_list: List[BaseData], path: str):

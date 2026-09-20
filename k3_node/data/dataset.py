@@ -68,11 +68,11 @@ class Dataset:
 
     @property
     def has_download(self) -> bool:
-        return "download" in self.__class__.__dict__
+        return any("download" in cls.__dict__ for cls in self.__class__.__mro__ if cls is not Dataset)
 
     @property
     def has_process(self) -> bool:
-        return "process" in self.__class__.__dict__
+        return any("process" in cls.__dict__ for cls in self.__class__.__mro__ if cls is not Dataset)
 
     def download(self):
         pass
@@ -158,4 +158,8 @@ class Dataset:
         if np.issubdtype(y.dtype, np.integer):
             return int(np.max(y)) + 1
         return len(np.unique(y))
+
+    def __repr__(self) -> str:
+        arg_repr = str(len(self)) if len(self) > 1 else ""
+        return f"{self.__class__.__name__}({arg_repr})"
 

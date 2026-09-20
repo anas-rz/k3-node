@@ -246,7 +246,7 @@ class NodeStorage(BaseStorage):
                 cat_dim = parent.__cat_dim__(key, value, self) if parent is not None else 0
                 return get_shape(value)[cat_dim]
         for key, value in self.items():
-            if is_tensor_like(value) and ("node" in key or "x" in key):
+            if is_tensor_like(value) and "node" in key:
                 cat_dim = parent.__cat_dim__(key, value, self) if parent is not None else 0
                 return get_shape(value)[cat_dim]
         return 0

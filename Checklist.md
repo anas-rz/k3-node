@@ -22,9 +22,10 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | `torch_geometric.data` | `k3_node.data` | ✅ 19/19 |
 | `torch_geometric.loader` | `k3_node.loader` | ✅ 26/26 |
 | `torch_geometric.transforms` | `k3_node.transforms` | ✅ 62/62 |
+| `torch_geometric.datasets` | `k3_node.datasets` | ✅ 30/30 |
 
 `conv`, `pool`, `unpool`, `kge`, `functional`, `norm`, `aggr`, `dense`, `models`, `data`,
-`loader`, and `transforms` are at full parity with PyG's public API (see each package's `__all__`).
+`loader`, `transforms`, and `datasets` are at full parity with PyG's public API (see each package's `__all__`).
 
 ## `torch_geometric.nn.models` (parity status)
 
@@ -139,6 +140,41 @@ Legend: ✅ ported · 🟡 partially ported · ⬜ not ported
 | General (15) | `BaseTransform`, `Compose`, `ComposeFilters`, `ToDevice`, `ToSparseTensor`, `Constant`, `NormalizeFeatures`, `SVDFeatureReduction`, `RemoveTrainingClasses`, `RandomNodeSplit`, `RandomLinkSplit`, `NodePropertySplit`, `IndexToMask`, `MaskToIndex`, `Pad` | ✅ 15/15 | `k3_node.transforms.general` | Multi-backend support (`torch.Tensor`, numpy arrays, Keras tensors) |
 | Graph (26) | `ToUndirected`, `OneHotDegree`, `TargetIndegree`, `LocalDegreeProfile`, `AddSelfLoops`, `AddRemainingSelfLoops`, `RemoveSelfLoops`, `RemoveIsolatedNodes`, `RemoveDuplicatedEdges`, `KNNGraph`, `RadiusGraph`, `ToDense`, `TwoHop`, `LineGraph`, `LaplacianLambdaMax`, `GDC`, `SIGN`, `GCNNorm`, `AddMetaPaths`, `AddRandomMetaPaths`, `RootedEgoNets`, `RootedRWSubgraph`, `LargestConnectedComponents`, `VirtualNode`, `AddLaplacianEigenvectorPE`, `AddRandomWalkPE`, `AddGPSE`, `FeaturePropagation`, `HalfHop` | ✅ 26/26 | `k3_node.transforms.graph` | Self-contained graph transformations with sparse matrix computations |
 | Vision / Spatial (21) | `Distance`, `Cartesian`, `LocalCartesian`, `Polar`, `Spherical`, `PointPairFeatures`, `Center`, `NormalizeRotation`, `NormalizeScale`, `RandomJitter`, `RandomFlip`, `LinearTransformation`, `RandomScale`, `RandomRotate`, `RandomShear`, `FaceToEdge`, `SamplePoints`, `FixedPoints`, `GenerateMeshNormals`, `Delaunay`, `ToSLIC`, `GridSampling`, `RandomTranslate` | ✅ 21/21 | `k3_node.transforms.spatial` | 3D mesh and point cloud geometric processing with Delaunay & grid clustering |
+
+
+## `torch_geometric.datasets` (parity status)
+
+| PyG class | Status | k3-node location | Notes |
+|---|---|---|---|
+| `KarateClub` | ✅ | `k3_node.datasets.KarateClub` | Zachary's Karate Club network (34 nodes, 156 edges) |
+| `FakeDataset` | ✅ | `k3_node.datasets.FakeDataset` | Synthetic homogeneous random graph generator |
+| `FakeHeteroDataset` | ✅ | `k3_node.datasets.FakeHeteroDataset` | Synthetic heterogeneous random graph generator |
+| `Planetoid` | ✅ | `k3_node.datasets.Planetoid` | Cora, CiteSeer, PubMed with public, full, geom-gcn, and random splits |
+| `TUDataset` | ✅ | `k3_node.datasets.TUDataset` | TU Dortmund benchmark graph classification collection (MUTAG, PROTEINS, etc.) |
+| `CitationFull` / `CoraFull` | ✅ | `k3_node.datasets.CitationFull` / `CoraFull` | Full citation networks (Cora, Cora_ML, CiteSeer, DBLP, PubMed) |
+| `Amazon` | ✅ | `k3_node.datasets.Amazon` | Amazon Computers & Photo co-purchase networks |
+| `Coauthor` | ✅ | `k3_node.datasets.Coauthor` | Coauthor CS & Physics networks |
+| `WikiCS` | ✅ | `k3_node.datasets.WikiCS` | Semi-supervised Wikipedia computer science article network |
+| `WebKB` | ✅ | `k3_node.datasets.WebKB` | Cornell, Texas, Wisconsin webpage hyperlink graphs |
+| `Actor` | ✅ | `k3_node.datasets.Actor` | Actor co-occurrence network from film Wikipedia pages |
+| `PolBlogs` | ✅ | `k3_node.datasets.PolBlogs` | Political blogs web graph |
+| `Airports` | ✅ | `k3_node.datasets.Airports` | USA, Brazil, Europe flight route networks |
+| `EmailEUCore` | ✅ | `k3_node.datasets.EmailEUCore` | European institution email communication network |
+| `GitHub` | ✅ | `k3_node.datasets.GitHub` | GitHub developer follower network |
+| `FacebookPagePage` | ✅ | `k3_node.datasets.FacebookPagePage` | Facebook verified page-page network |
+| `LastFMAsia` | ✅ | `k3_node.datasets.LastFMAsia` | LastFM Asian user social network |
+| `Twitch` | ✅ | `k3_node.datasets.Twitch` | Twitch gamer networks (DE, EN, ES, FR, PT, RU) |
+| `BAShapes` | ✅ | `k3_node.datasets.BAShapes` | Barabasi-Albert graph attached with house motifs |
+| `BA2MotifDataset` | ✅ | `k3_node.datasets.BA2MotifDataset` | 1000 Barabasi-Albert graphs with house and cycle motifs |
+| `StochasticBlockModelDataset` | ✅ | `k3_node.datasets.StochasticBlockModelDataset` | Synthetic stochastic block model graphs |
+| `RandomPartitionGraphDataset` | ✅ | `k3_node.datasets.RandomPartitionGraphDataset` | Community homophily random partition graphs |
+| `ExplainerDataset` | ✅ | `k3_node.datasets.ExplainerDataset` | Procedural graph & motif generator for explainability evaluation |
+| `Entities` | ✅ | `k3_node.datasets.Entities` | Relational knowledge graphs (AIFB, MUTAG, BGS, AM) |
+| `WordNet18` / `WordNet18RR` | ✅ | `k3_node.datasets.WordNet18` / `WordNet18RR` | WordNet relation link prediction benchmarks |
+| `FB15k_237` | ✅ | `k3_node.datasets.FB15k_237` | Freebase relation link prediction benchmark |
+| `DBLP` | ✅ | `k3_node.datasets.DBLP` | Heterogeneous author-paper-term-conference graph |
+| `IMDB` | ✅ | `k3_node.datasets.IMDB` | Heterogeneous movie-director-actor graph |
+| `QM7b` | ✅ | `k3_node.datasets.QM7b` | 7,211 molecular graphs with 14 Coulomb matrix targets |
 
 
 ## Notes on non-goals / caveats
