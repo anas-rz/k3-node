@@ -1,0 +1,1683 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://anas-rz.github.io/k3-node/checklist/">
+      
+      
+        <link rel="prev" href="../api/transforms/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../images/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Porting Checklist - K3Node</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#k3-node-porting-checklist" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="K3Node" class="md-header__button md-logo" aria-label="K3Node" data-md-component="logo">
+      
+  <img src="../images/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            K3Node
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Porting Checklist
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/anas-rz/k3-node" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    anas-rz/k3-node
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="K3Node" class="md-nav__button md-logo" aria-label="K3Node" data-md-component="logo">
+      
+  <img src="../images/logo.svg" alt="logo">
+
+    </a>
+    K3Node
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/anas-rz/k3-node" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    anas-rz/k3-node
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Backend Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/conv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Convolution Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/aggr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Aggregation Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/norm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Normalization Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/pool/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pooling Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/dense/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dense Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/kge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge Graph Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/pretrained/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pretrained Foundation Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Data Structures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/loader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Loaders & Samplers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/transforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Transforms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Porting Checklist
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Porting Checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#torch_geometricnnmodels-parity-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        torch_geometric.nn.models (parity status)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#torch_geometricdata-parity-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        torch_geometric.data (parity status)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#torch_geometricloader-parity-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        torch_geometric.loader (parity status)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#torch_geometrictransforms-parity-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        torch_geometric.transforms (parity status)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes-on-non-goals-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes on non-goals / caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="k3-node-porting-checklist">k3-node Porting Checklist</h1>
+<p>Tracks parity between <code>torch_geometric.nn</code> and <code>k3_node.layers</code> / <code>k3_node.models</code>.
+Generated by diffing <code>torch_geometric.nn.&lt;submodule&gt;.__all__</code> against the
+equivalent k3-node package. Update this file whenever new API is ported.</p>
+<p>Legend: ✅ ported · 🟡 partially ported · ⬜ not ported</p>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Submodule</th>
+<th>k3-node location</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>torch_geometric.nn.conv</code></td>
+<td><code>k3_node.layers.conv</code></td>
+<td>✅ 65/65</td>
+</tr>
+<tr>
+<td><code>torch_geometric.nn.pool</code></td>
+<td><code>k3_node.layers.pool</code></td>
+<td>✅ 31/31</td>
+</tr>
+<tr>
+<td><code>torch_geometric.nn.unpool</code></td>
+<td><code>k3_node.layers.unpool</code></td>
+<td>✅ 1/1</td>
+</tr>
+<tr>
+<td><code>torch_geometric.nn.kge</code></td>
+<td><code>k3_node.layers.kge</code></td>
+<td>✅ 5/5</td>
+</tr>
+<tr>
+<td><code>torch_geometric.nn.functional</code></td>
+<td><code>k3_node.layers.functional</code></td>
+<td>✅ 2/2</td>
+</tr>
+<tr>
+<td><code>torch_geometric.nn.norm</code></td>
+<td><code>k3_node.layers.norm</code></td>
+<td>✅ 11/11</td>
+</tr>
+<tr>
+<td><code>torch_geometric.nn.aggr</code></td>
+<td><code>k3_node.layers.aggr</code></td>
+<td>✅ 26/26</td>
+</tr>
+<tr>
+<td><code>torch_geometric.nn.dense</code></td>
+<td><code>k3_node.layers.dense</code></td>
+<td>✅ 11/11</td>
+</tr>
+<tr>
+<td><code>torch_geometric.nn.models</code></td>
+<td><code>k3_node.models</code></td>
+<td>✅ 46/46</td>
+</tr>
+<tr>
+<td><code>torch_geometric.data</code></td>
+<td><code>k3_node.data</code></td>
+<td>✅ 19/19</td>
+</tr>
+<tr>
+<td><code>torch_geometric.loader</code></td>
+<td><code>k3_node.loader</code></td>
+<td>✅ 26/26</td>
+</tr>
+<tr>
+<td><code>torch_geometric.transforms</code></td>
+<td><code>k3_node.transforms</code></td>
+<td>✅ 62/62</td>
+</tr>
+</tbody>
+</table>
+<p><code>conv</code>, <code>pool</code>, <code>unpool</code>, <code>kge</code>, <code>functional</code>, <code>norm</code>, <code>aggr</code>, <code>dense</code>, <code>models</code>, <code>data</code>,
+<code>loader</code>, and <code>transforms</code> are at full parity with PyG's public API (see each package's <code>__all__</code>).</p>
+<h2 id="torch_geometricnnmodels-parity-status"><code>torch_geometric.nn.models</code> (parity status)</h2>
+<table>
+<thead>
+<tr>
+<th>PyG class</th>
+<th>Status</th>
+<th>k3-node location</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MLP</code></td>
+<td>✅</td>
+<td><code>k3_node.models.MLP</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>ARLinkPredictor</code></td>
+<td>✅</td>
+<td><code>k3_node.models.ARLinkPredictor</code></td>
+<td>Attract-Repel link predictor</td>
+</tr>
+<tr>
+<td><code>InnerProductDecoder</code></td>
+<td>✅</td>
+<td><code>k3_node.models.InnerProductDecoder</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>GAE</code></td>
+<td>✅</td>
+<td><code>k3_node.models.GAE</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>VGAE</code></td>
+<td>✅</td>
+<td><code>k3_node.models.VGAE</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>ARGA</code></td>
+<td>✅</td>
+<td><code>k3_node.models.ARGA</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>ARGVA</code></td>
+<td>✅</td>
+<td><code>k3_node.models.ARGVA</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>DeepGraphInfomax</code></td>
+<td>✅</td>
+<td><code>k3_node.models.DeepGraphInfomax</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>DeepGCNLayer</code></td>
+<td>✅</td>
+<td><code>k3_node.models.DeepGCNLayer</code></td>
+<td><code>ckpt_grad</code> accepted but a no-op (no uniform gradient-checkpoint API across Keras backends)</td>
+</tr>
+<tr>
+<td><code>AttentiveFP</code></td>
+<td>✅</td>
+<td><code>k3_node.models.AttentiveFP</code></td>
+<td>Molecular graph attention model</td>
+</tr>
+<tr>
+<td><code>GCN</code></td>
+<td>✅</td>
+<td><code>k3_node.models.GCN</code></td>
+<td><code>BasicGNN</code> with GCNConv layers</td>
+</tr>
+<tr>
+<td><code>GraphSAGE</code></td>
+<td>✅</td>
+<td><code>k3_node.models.GraphSAGE</code></td>
+<td><code>BasicGNN</code> with SAGEConv layers</td>
+</tr>
+<tr>
+<td><code>GIN</code></td>
+<td>✅</td>
+<td><code>k3_node.models.GIN</code></td>
+<td><code>BasicGNN</code> with GINConv layers + MLP</td>
+</tr>
+<tr>
+<td><code>GAT</code></td>
+<td>✅</td>
+<td><code>k3_node.models.GAT</code></td>
+<td><code>BasicGNN</code> with GATConv/GATv2Conv layers</td>
+</tr>
+<tr>
+<td><code>PNA</code></td>
+<td>✅</td>
+<td><code>k3_node.models.PNA</code></td>
+<td><code>BasicGNN</code> with PNAConv layers</td>
+</tr>
+<tr>
+<td><code>EdgeCNN</code></td>
+<td>✅</td>
+<td><code>k3_node.models.EdgeCNN</code></td>
+<td><code>BasicGNN</code> with EdgeConv layers + MLP</td>
+</tr>
+<tr>
+<td><code>JumpingKnowledge</code></td>
+<td>✅</td>
+<td><code>k3_node.models.JumpingKnowledge</code></td>
+<td>Supports cat, max, and lstm modes</td>
+</tr>
+<tr>
+<td><code>HeteroJumpingKnowledge</code></td>
+<td>✅</td>
+<td><code>k3_node.models.HeteroJumpingKnowledge</code></td>
+<td>Heterogeneous graph jumping knowledge</td>
+</tr>
+<tr>
+<td><code>MetaLayer</code></td>
+<td>✅</td>
+<td><code>k3_node.models.MetaLayer</code></td>
+<td>Edge, node, and global network modules</td>
+</tr>
+<tr>
+<td><code>Node2Vec</code></td>
+<td>✅</td>
+<td><code>k3_node.models.Node2Vec</code></td>
+<td>Random-walk + skip-gram embedding without pyg-lib C++ dependency</td>
+</tr>
+<tr>
+<td><code>SignedGCN</code></td>
+<td>✅</td>
+<td><code>k3_node.models.SignedGCN</code></td>
+<td>Signed graph convolutional network with balanced losses</td>
+</tr>
+<tr>
+<td><code>RENet</code></td>
+<td>✅</td>
+<td><code>k3_node.models.RENet</code></td>
+<td>Temporal knowledge graph reasoning with GRU and mean aggregation</td>
+</tr>
+<tr>
+<td><code>GraphUNet</code></td>
+<td>✅</td>
+<td><code>k3_node.models.GraphUNet</code></td>
+<td>U-Net-style pooling/unpooling GNN</td>
+</tr>
+<tr>
+<td><code>SchNet</code></td>
+<td>✅</td>
+<td><code>k3_node.models.SchNet</code></td>
+<td>Molecular continuous-filter convs with GaussianSmearing &amp; ShiftedSoftplus</td>
+</tr>
+<tr>
+<td><code>DimeNet</code> / <code>DimeNetPlusPlus</code></td>
+<td>✅</td>
+<td><code>k3_node.models.DimeNet</code> / <code>DimeNetPlusPlus</code></td>
+<td>Directional message passing with BesselBasis, SphericalBasis, and triplets</td>
+</tr>
+<tr>
+<td><code>GPSE</code> / <code>GPSENodeEncoder</code></td>
+<td>✅</td>
+<td><code>k3_node.models.GPSE</code> / <code>GPSENodeEncoder</code></td>
+<td>Graph Positional &amp; Structural Encoder with multi-head predictions &amp; node encoder</td>
+</tr>
+<tr>
+<td><code>to_captum_model</code> / <code>to_captum_input</code> / <code>captum_output_to_dicts</code></td>
+<td>✅</td>
+<td><code>k3_node.models.captum</code></td>
+<td>PyTorch-exclusive interpretability stubs with documentation</td>
+</tr>
+<tr>
+<td><code>MetaPath2Vec</code></td>
+<td>✅</td>
+<td><code>k3_node.models.MetaPath2Vec</code></td>
+<td>Heterogeneous network embedding with metapath random walks</td>
+</tr>
+<tr>
+<td><code>TGNMemory</code></td>
+<td>✅</td>
+<td><code>k3_node.models.TGNMemory</code></td>
+<td>Temporal Graph Network memory model with TimeEncoder &amp; aggregators</td>
+</tr>
+<tr>
+<td><code>LabelPropagation</code></td>
+<td>✅</td>
+<td><code>k3_node.models.LabelPropagation</code></td>
+<td>Label propagation via symmetric normalized Laplacian</td>
+</tr>
+<tr>
+<td><code>CorrectAndSmooth</code></td>
+<td>✅</td>
+<td><code>k3_node.models.CorrectAndSmooth</code></td>
+<td>Residual error correction + label smoothing</td>
+</tr>
+<tr>
+<td><code>RECT_L</code></td>
+<td>✅</td>
+<td><code>k3_node.models.RECT_L</code></td>
+<td>Supervised class-reconstruction model</td>
+</tr>
+<tr>
+<td><code>LINKX</code></td>
+<td>✅</td>
+<td><code>k3_node.models.LINKX</code></td>
+<td>Non-homophilous graph learner with SparseLinear</td>
+</tr>
+<tr>
+<td><code>LightGCN</code></td>
+<td>✅</td>
+<td><code>k3_node.models.LightGCN</code></td>
+<td>Light graph convolution network for recommendation</td>
+</tr>
+<tr>
+<td><code>MaskLabel</code></td>
+<td>✅</td>
+<td><code>k3_node.models.MaskLabel</code></td>
+<td>Label embedding and masking layer (add and concat)</td>
+</tr>
+<tr>
+<td><code>GroupAddRev</code></td>
+<td>✅</td>
+<td><code>k3_node.models.GroupAddRev</code></td>
+<td>Reversible GNN block with inverse</td>
+</tr>
+<tr>
+<td><code>GNNFF</code></td>
+<td>✅</td>
+<td><code>k3_node.models.GNNFF</code></td>
+<td>Graph Neural Network Force Field with NodeBlock, EdgeBlock, and GaussianFilter</td>
+</tr>
+<tr>
+<td><code>PMLP</code></td>
+<td>✅</td>
+<td><code>k3_node.models.PMLP</code></td>
+<td>Propagational MLP with SimpleConv propagation at inference</td>
+</tr>
+<tr>
+<td><code>NeuralFingerprint</code></td>
+<td>✅</td>
+<td><code>k3_node.models.NeuralFingerprint</code></td>
+<td>Molecular neural fingerprint with MFConv and add pool</td>
+</tr>
+<tr>
+<td><code>ViSNet</code></td>
+<td>✅</td>
+<td><code>k3_node.models.ViSNet</code></td>
+<td>Equivariant vector-scalar interactive GNN with spherical harmonics &amp; CosineCutoff</td>
+</tr>
+<tr>
+<td><code>LPFormer</code></td>
+<td>✅</td>
+<td><code>k3_node.models.LPFormer</code></td>
+<td>Adaptive graph transformer for link prediction with PPR positional encodings</td>
+</tr>
+<tr>
+<td><code>SGFormer</code></td>
+<td>✅</td>
+<td><code>k3_node.models.SGFormer</code></td>
+<td>All-pair linear attention + GNN graph transformer</td>
+</tr>
+<tr>
+<td><code>Polynormer</code></td>
+<td>✅</td>
+<td><code>k3_node.models.Polynormer</code></td>
+<td>Full polynomial-expressive graph transformer (local + global)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="torch_geometricdata-parity-status"><code>torch_geometric.data</code> (parity status)</h2>
+<table>
+<thead>
+<tr>
+<th>PyG class / function</th>
+<th>Status</th>
+<th>k3-node location</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Data</code></td>
+<td>✅</td>
+<td><code>k3_node.data.Data</code></td>
+<td>Homogeneous graph container with multi-backend tensor support</td>
+</tr>
+<tr>
+<td><code>HeteroData</code></td>
+<td>✅</td>
+<td><code>k3_node.data.HeteroData</code></td>
+<td>Heterogeneous graph container with multi-backend tensor support</td>
+</tr>
+<tr>
+<td><code>Batch</code> / <code>HeteroBatch</code></td>
+<td>✅</td>
+<td><code>k3_node.data.Batch</code></td>
+<td>Disjoint graph batching &amp; separation for Data &amp; HeteroData</td>
+</tr>
+<tr>
+<td><code>TemporalData</code></td>
+<td>✅</td>
+<td><code>k3_node.data.TemporalData</code></td>
+<td>Continuous-time temporal event stream container</td>
+</tr>
+<tr>
+<td><code>HypergraphData</code></td>
+<td>✅</td>
+<td><code>k3_node.data.HypergraphData</code></td>
+<td>Hypergraph container with hyperedge indexing</td>
+</tr>
+<tr>
+<td><code>Dataset</code></td>
+<td>✅</td>
+<td><code>k3_node.data.Dataset</code></td>
+<td>Base graph dataset abstraction</td>
+</tr>
+<tr>
+<td><code>InMemoryDataset</code></td>
+<td>✅</td>
+<td><code>k3_node.data.InMemoryDataset</code></td>
+<td>In-memory graph dataset with serialization</td>
+</tr>
+<tr>
+<td><code>OnDiskDataset</code></td>
+<td>✅</td>
+<td><code>k3_node.data.OnDiskDataset</code></td>
+<td>Out-of-core graph dataset with database backend</td>
+</tr>
+<tr>
+<td><code>FeatureStore</code></td>
+<td>✅</td>
+<td><code>k3_node.data.FeatureStore</code></td>
+<td>Multi-backend feature store interface</td>
+</tr>
+<tr>
+<td><code>GraphStore</code></td>
+<td>✅</td>
+<td><code>k3_node.data.GraphStore</code></td>
+<td>Graph edge store interface</td>
+</tr>
+<tr>
+<td><code>TensorAttr</code></td>
+<td>✅</td>
+<td><code>k3_node.data.TensorAttr</code></td>
+<td>Feature store tensor metadata attribute</td>
+</tr>
+<tr>
+<td><code>EdgeAttr</code> / <code>EdgeLayout</code></td>
+<td>✅</td>
+<td><code>k3_node.data.EdgeAttr</code></td>
+<td>Graph store edge layout and metadata</td>
+</tr>
+<tr>
+<td><code>Database</code></td>
+<td>✅</td>
+<td><code>k3_node.data.Database</code></td>
+<td>Abstract key-value database interface</td>
+</tr>
+<tr>
+<td><code>SQLiteDatabase</code></td>
+<td>✅</td>
+<td><code>k3_node.data.SQLiteDatabase</code></td>
+<td>SQLite3-backed persistent graph store</td>
+</tr>
+<tr>
+<td><code>RocksDatabase</code></td>
+<td>✅</td>
+<td><code>k3_node.data.RocksDatabase</code></td>
+<td>RocksDB-backed database stub</td>
+</tr>
+<tr>
+<td><code>makedirs</code></td>
+<td>✅</td>
+<td><code>k3_node.data.makedirs</code></td>
+<td>Recursive directory creation utility</td>
+</tr>
+<tr>
+<td><code>download_url</code></td>
+<td>✅</td>
+<td><code>k3_node.data.download_url</code></td>
+<td>HTTP file downloader with progress</td>
+</tr>
+<tr>
+<td><code>download_google_url</code></td>
+<td>✅</td>
+<td><code>k3_node.data.download_google_url</code></td>
+<td>Google Drive download helper</td>
+</tr>
+<tr>
+<td><code>extract_tar</code> / <code>extract_zip</code> / <code>extract_bz2</code> / <code>extract_gz</code></td>
+<td>✅</td>
+<td><code>k3_node.data.extract_*</code></td>
+<td>Archive extraction helpers</td>
+</tr>
+</tbody>
+</table>
+<h2 id="torch_geometricloader-parity-status"><code>torch_geometric.loader</code> (parity status)</h2>
+<table>
+<thead>
+<tr>
+<th>PyG class</th>
+<th>Status</th>
+<th>k3-node location</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DataLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.DataLoader</code></td>
+<td>Multi-backend graph batch loader with <code>follow_batch</code> &amp; <code>exclude_keys</code></td>
+</tr>
+<tr>
+<td><code>NodeLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.NodeLoader</code></td>
+<td>Mini-batch sampling from node information</td>
+</tr>
+<tr>
+<td><code>LinkLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.LinkLoader</code></td>
+<td>Mini-batch sampling from link/edge information</td>
+</tr>
+<tr>
+<td><code>NeighborLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.NeighborLoader</code></td>
+<td>Multi-hop neighbor sampling without external C++ binary dependency</td>
+</tr>
+<tr>
+<td><code>LinkNeighborLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.LinkNeighborLoader</code></td>
+<td>Link-centric neighbor sampling with positive &amp; negative link supervision</td>
+</tr>
+<tr>
+<td><code>HGTLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.HGTLoader</code></td>
+<td>Heterogeneous Graph Transformer balanced neighbor sampling</td>
+</tr>
+<tr>
+<td><code>ClusterData</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.ClusterData</code></td>
+<td>Graph partitioner with METIS and pure Python/BFS fallback</td>
+</tr>
+<tr>
+<td><code>ClusterLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.ClusterLoader</code></td>
+<td>Merges partitioned subgraphs into mini-batches</td>
+</tr>
+<tr>
+<td><code>GraphSAINTSampler</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.GraphSAINTSampler</code></td>
+<td>GraphSAINT random subgraph sampler base class</td>
+</tr>
+<tr>
+<td><code>GraphSAINTNodeSampler</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.GraphSAINTNodeSampler</code></td>
+<td>Node-based GraphSAINT sampler</td>
+</tr>
+<tr>
+<td><code>GraphSAINTEdgeSampler</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.GraphSAINTEdgeSampler</code></td>
+<td>Edge-probability GraphSAINT sampler</td>
+</tr>
+<tr>
+<td><code>GraphSAINTRandomWalkSampler</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.GraphSAINTRandomWalkSampler</code></td>
+<td>Random-walk-based GraphSAINT sampler</td>
+</tr>
+<tr>
+<td><code>ShaDowKHopSampler</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.ShaDowKHopSampler</code></td>
+<td>Decoupled shallow ego-network subgraph extractor</td>
+</tr>
+<tr>
+<td><code>RandomNodeLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.RandomNodeLoader</code></td>
+<td>Random node partition loader for large graphs</td>
+</tr>
+<tr>
+<td><code>ZipLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.ZipLoader</code></td>
+<td>Combines multiple loaders into synchronized tuples</td>
+</tr>
+<tr>
+<td><code>DataListLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.DataListLoader</code></td>
+<td>Yields lists of <code>Data</code> objects without batch merging</td>
+</tr>
+<tr>
+<td><code>DenseDataLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.DenseDataLoader</code></td>
+<td>Stacks graphs with dense adjacency matrices</td>
+</tr>
+<tr>
+<td><code>TemporalDataLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.TemporalDataLoader</code></td>
+<td>Successive temporal event window mini-batch loader</td>
+</tr>
+<tr>
+<td><code>NeighborSampler</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.NeighborSampler</code></td>
+<td>Legacy layer-by-layer bipartite neighbor sampler</td>
+</tr>
+<tr>
+<td><code>ImbalancedSampler</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.ImbalancedSampler</code></td>
+<td>Class-frequency weighted random sampler</td>
+</tr>
+<tr>
+<td><code>DynamicBatchSampler</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.DynamicBatchSampler</code></td>
+<td>Dynamic node/edge budget mini-batch sampler</td>
+</tr>
+<tr>
+<td><code>PrefetchLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.PrefetchLoader</code></td>
+<td>Asynchronous host-to-device memory prefetcher</td>
+</tr>
+<tr>
+<td><code>CachedLoader</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.CachedLoader</code></td>
+<td>In-memory mini-batch cache across epochs</td>
+</tr>
+<tr>
+<td><code>AffinityMixin</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.AffinityMixin</code></td>
+<td>CPU worker core affinitization context manager</td>
+</tr>
+<tr>
+<td><code>MultithreadingMixin</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.MultithreadingMixin</code></td>
+<td>Worker subprocess thread count configuration</td>
+</tr>
+<tr>
+<td><code>LogMemoryMixin</code></td>
+<td>✅</td>
+<td><code>k3_node.loader.LogMemoryMixin</code></td>
+<td>Worker RSS memory consumption logger</td>
+</tr>
+</tbody>
+</table>
+<h2 id="torch_geometrictransforms-parity-status"><code>torch_geometric.transforms</code> (parity status)</h2>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>PyG classes</th>
+<th>Status</th>
+<th>k3-node location</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>General (15)</td>
+<td><code>BaseTransform</code>, <code>Compose</code>, <code>ComposeFilters</code>, <code>ToDevice</code>, <code>ToSparseTensor</code>, <code>Constant</code>, <code>NormalizeFeatures</code>, <code>SVDFeatureReduction</code>, <code>RemoveTrainingClasses</code>, <code>RandomNodeSplit</code>, <code>RandomLinkSplit</code>, <code>NodePropertySplit</code>, <code>IndexToMask</code>, <code>MaskToIndex</code>, <code>Pad</code></td>
+<td>✅ 15/15</td>
+<td><code>k3_node.transforms.general</code></td>
+<td>Multi-backend support (<code>torch.Tensor</code>, numpy arrays, Keras tensors)</td>
+</tr>
+<tr>
+<td>Graph (26)</td>
+<td><code>ToUndirected</code>, <code>OneHotDegree</code>, <code>TargetIndegree</code>, <code>LocalDegreeProfile</code>, <code>AddSelfLoops</code>, <code>AddRemainingSelfLoops</code>, <code>RemoveSelfLoops</code>, <code>RemoveIsolatedNodes</code>, <code>RemoveDuplicatedEdges</code>, <code>KNNGraph</code>, <code>RadiusGraph</code>, <code>ToDense</code>, <code>TwoHop</code>, <code>LineGraph</code>, <code>LaplacianLambdaMax</code>, <code>GDC</code>, <code>SIGN</code>, <code>GCNNorm</code>, <code>AddMetaPaths</code>, <code>AddRandomMetaPaths</code>, <code>RootedEgoNets</code>, <code>RootedRWSubgraph</code>, <code>LargestConnectedComponents</code>, <code>VirtualNode</code>, <code>AddLaplacianEigenvectorPE</code>, <code>AddRandomWalkPE</code>, <code>AddGPSE</code>, <code>FeaturePropagation</code>, <code>HalfHop</code></td>
+<td>✅ 26/26</td>
+<td><code>k3_node.transforms.graph</code></td>
+<td>Self-contained graph transformations with sparse matrix computations</td>
+</tr>
+<tr>
+<td>Vision / Spatial (21)</td>
+<td><code>Distance</code>, <code>Cartesian</code>, <code>LocalCartesian</code>, <code>Polar</code>, <code>Spherical</code>, <code>PointPairFeatures</code>, <code>Center</code>, <code>NormalizeRotation</code>, <code>NormalizeScale</code>, <code>RandomJitter</code>, <code>RandomFlip</code>, <code>LinearTransformation</code>, <code>RandomScale</code>, <code>RandomRotate</code>, <code>RandomShear</code>, <code>FaceToEdge</code>, <code>SamplePoints</code>, <code>FixedPoints</code>, <code>GenerateMeshNormals</code>, <code>Delaunay</code>, <code>ToSLIC</code>, <code>GridSampling</code>, <code>RandomTranslate</code></td>
+<td>✅ 21/21</td>
+<td><code>k3_node.transforms.spatial</code></td>
+<td>3D mesh and point cloud geometric processing with Delaunay &amp; grid clustering</td>
+</tr>
+</tbody>
+</table>
+<h2 id="notes-on-non-goals-caveats">Notes on non-goals / caveats</h2>
+<ul>
+<li><code>k3_node.layers.kge.KGTripletLoader</code> replaces PyG's
+  <code>torch.utils.data.DataLoader</code>-based loader with a framework-agnostic
+  batching iterator (numpy-backed), since a torch-specific <code>DataLoader</code>
+  doesn't fit a multi-backend (TF/PyTorch/JAX) library.</li>
+<li><code>k3_node.layers.unpool.knn_interpolate</code> reuses <code>k3_node.layers.pool.knn</code>
+  (a self-contained numpy brute-force k-NN) rather than PyG's <code>pyg-lib</code>/
+  <code>torch-cluster</code>-backed extension.</li>
+<li>Methods that are inherently framework-agnostic-unfriendly (e.g. PyTorch's
+  <code>torch.utils.checkpoint</code>, TorchScript export, Captum integration) are
+  ported as no-ops or omitted, with notes above.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "toc.integrate", "header.autohide", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
