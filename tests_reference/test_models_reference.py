@@ -71,6 +71,7 @@ from k3_node.models import (
     DimeNet, DimeNetPlusPlus, BesselBasisLayer,
     GPSE, GPSENodeEncoder,
     ViSNet, LPFormer,
+    GraphMAE2, sce_loss, load_graphmae2_weights,
 )
 from k3_node.models.dimenet import Envelope
 from k3_node.models.visnet import CosineCutoff, Sphere
@@ -636,7 +637,7 @@ def test_reference_group_add_rev():
 
 def test_reference_metapath2vec():
     torch.manual_seed(42)
-    edge_index_dict = {
+    edge_index_dict = {create a new pre-trained li
         ("a", "w", "p"): torch.tensor([[0, 1], [0, 1]]),
         ("p", "b", "a"): torch.tensor([[0, 1], [0, 1]]),
     }
@@ -755,6 +756,120 @@ def test_reference_gpse_encoder():
     out_pyg = pyg_enc(x, pe).detach().numpy()
     out_k3 = ops.convert_to_numpy(k3_enc(x, pe))
     assert np.allclose(out_pyg, out_k3, atol=1e-5)
+
+
+def test_reference_graphmae2_components():
+    import torch.nn as nn
+    import torch.nn.functional as F
+
+    # 1. SCE loss reference comparison
+    def pt_sce_loss(x, y, alpha=3.0):
+        x = F.normalize(x, p=2, dim=-1)
+        y = F.normalize(y, p=2, dim=-1)
+        return ((1.0 - (x * y).sum(dim=-1)) ** alpha).mean()
+
+    torch.manual_seed(42)
+    x = torch.randn(10, 32)
+    y = torch.randn(10, 32)
+    l_pt = pt_sce_loss(x, y, alpha=2.5).item()
+    l_k3 = float(ops.convert_to_numpy(sce_loss(x, y, alpha=2.5)))
+    assert abs(l_pt - l_k3) < 1e-5
+
+    # 2. GAT layer mathematical reference comparison
+    class RefGATConv(nn.Module):
+        def __init__(self, in_feats, out_feats, num_heads, residual=True, norm=None, activation=None):
+            super().__init__()
+            self.fc = nn.Linear(in_feats, num_heads * out_feats, bias=False)
+            self.attn_l = nn.Parameter(torch.randn(1, num_heads, out_feats))
+            self.attn_r = nn.Parameter(torch.randn(1, num_heads, out_feats))
+            self.bias = nn.Parameter(torch.zeros(num_heads * out_feats))
+            self.num_heads = num_heads
+            self.out_feats = out_feats
+            self.res_fc = (
+                nn.Linear(in_feats, num_heads * out_feats, bias=False)
+                if residual and in_feats != num_heads * out_feats
+                else None
+            )
+            self.norm = nn.LayerNorm(num_heads * out_feats, eps=1e-5) if norm == "layernorm" else None
+            self.activation = nn.PReLU(1) if activation == "prelu" else None
+
+        def forward(self, x, edge_index):
+            N = x.shape[0]
+            feat = self.fc(x).view(N, self.num_heads, self.out_feats)
+            el = (feat * self.attn_l).sum(dim=-1, keepdim=True)
+            er = (feat * self.attn_r).sum(dim=-1, keepdim=True)
+            row, col = edge_index[0], edge_index[1]
+            e = F.leaky_relu(el[row] + er[col], negative_slope=0.2)
+            from torch_geometric.utils import softmax as pt_softmax
+            a = pt_softmax(e, col, num_nodes=N)
+            msg = a * feat[row]
+            rst = torch.zeros(N, self.num_heads, self.out_feats, device=x.device)
+            rst.index_add_(0, col, msg)
+            rst = rst + self.bias.view(1, self.num_heads, self.out_feats)
+            if self.res_fc is not None:
+                rst = rst + self.res_fc(x).view(N, self.num_heads, self.out_feats)
+            rst = rst.flatten(1)
+            if self.norm is not None:
+                rst = self.norm(rst)
+            if self.activation is not None:
+                rst = self.activation(rst)
+            return rst
+
+    from k3_node.models.graphmae2 import GraphMAE2GATConv
+
+    in_feats, out_feats, num_heads = 16, 8, 4
+    ref_gat = RefGATConv(in_feats, out_feats, num_heads, residual=True, norm="layernorm", activation="prelu")
+    k3_gat = GraphMAE2GATConv(in_feats, out_feats, num_heads, residual=True, norm="layernorm", activation="prelu")
+    k3_gat.build((None, in_feats))
+
+    k3_gat.fc.kernel.assign(ref_gat.fc.weight.detach().t())
+    k3_gat.attn_l.assign(ref_gat.attn_l.detach())
+    k3_gat.attn_r.assign(ref_gat.attn_r.detach())
+    k3_gat.bias.assign(ref_gat.bias.detach())
+    if ref_gat.res_fc is not None:
+        k3_gat.res_fc.kernel.assign(ref_gat.res_fc.weight.detach().t())
+    k3_gat.norm.gamma.assign(ref_gat.norm.weight.detach())
+    k3_gat.norm.beta.assign(ref_gat.norm.bias.detach())
+    k3_gat.activation.alpha.assign(ref_gat.activation.weight.detach())
+
+    x_test = torch.randn(6, in_feats)
+    edge_idx = torch.tensor([[0, 1, 2, 3, 4, 0, 5], [1, 2, 3, 4, 0, 2, 0]])
+
+    out_ref = ref_gat(x_test, edge_idx).detach().numpy()
+    out_k3 = ops.convert_to_numpy(k3_gat(x_test, edge_idx))
+    assert np.allclose(out_ref, out_k3, atol=1e-5)
+
+
+def test_reference_graphmae2_checkpoint():
+    ckpt_path = "GraphMAE2-main/GraphMAE2_checkpoints/gat_gat_1024_4_ogbn-arxiv_0.5_1024_checkpoint.pt"
+    if not os.path.exists(ckpt_path):
+        import pytest
+        pytest.skip(f"Checkpoint {ckpt_path} not found")
+
+    model = GraphMAE2(
+        in_dim=128,
+        num_hidden=1024,
+        num_layers=4,
+        num_dec_layers=1,
+        nhead=8,
+        nhead_out=1,
+        activation="prelu",
+        norm="layernorm",
+        residual=True,
+    )
+    load_graphmae2_weights(model, ckpt_path)
+
+    torch.manual_seed(42)
+    x = torch.randn(6, 128)
+    edge_index = torch.tensor([[0, 1, 2, 3, 4, 5, 0], [1, 2, 3, 4, 5, 0, 2]])
+
+    emb = ops.convert_to_numpy(model.embed(x, edge_index))
+    assert emb.shape == (6, 1024)
+    assert not np.isnan(emb).any()
+
+    loss = float(ops.convert_to_numpy(model.loss(x, edge_index)))
+    assert loss > 0.0
+
 
 
 

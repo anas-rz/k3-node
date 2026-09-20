@@ -64,6 +64,7 @@ from .gpse import (
 )
 from .visnet import ViSNet
 from .lpformer import LPFormer, LPAttLayer
+from .graphmae2 import GraphMAE2, sce_loss, load_graphmae2_weights
 from .captum import to_captum_model, to_captum_input, captum_output_to_dicts
 
 __all__ = [
@@ -135,6 +136,9 @@ __all__ = [
     "ViSNet",
     "LPFormer",
     "LPAttLayer",
+    "GraphMAE2",
+    "sce_loss",
+    "load_graphmae2_weights",
     "to_captum_model",
     "to_captum_input",
     "captum_output_to_dicts",
