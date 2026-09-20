@@ -1365,6 +1365,116 @@ def test_reference_gps_model():
     np.testing.assert_allclose(k3_val, pyt_val, rtol=1e-3, atol=1e-3)
 
 
+def test_reference_grover():
+    import sys
+    import os
+    import os.path as osp
+    from unittest.mock import MagicMock
+
+    if "rdkit" not in sys.modules:
+        sys.modules["rdkit"] = MagicMock()
+        sys.modules["rdkit.Chem"] = MagicMock()
+        sys.modules["rdkit.Chem.rdchem"] = MagicMock()
+        sys.modules["rdkit.DataStructs"] = MagicMock()
+
+    grover_path = osp.join(osp.dirname(osp.dirname(__file__)), "grover")
+    if grover_path not in sys.path:
+        sys.path.insert(0, grover_path)
+
+    from grover.model.models import GROVEREmbedding
+    from k3_node.models.grover import GROVER, load_grover_weights
+
+    ckpt_path = "/tmp/grover_download_test/grover_base.pt"
+    if not os.path.exists(ckpt_path):
+        cache_path = osp.expanduser("~/.cache/k3_node/grover/grover_base.pt")
+        if os.path.exists(cache_path):
+            ckpt_path = cache_path
+        else:
+            pytest.skip("GROVER base checkpoint not found at /tmp or cache.")
+
+    ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    args = ckpt["args"]
+    args.cuda = False
+    args.dropout = 0.0
+
+    # 1. PyTorch reference model
+    pt_model = GROVEREmbedding(args)
+    state_dict = ckpt["state_dict"]
+    new_state_dict = {
+        k[len("grover.") :] if k.startswith("grover.") else k: v for k, v in state_dict.items()
+    }
+    pt_model.load_state_dict(new_state_dict, strict=True)
+    pt_model.eval()
+
+    # 2. K3 GROVER model
+    k3_model = GROVER(
+        hidden_size=args.hidden_size,
+        num_attn_head=args.num_attn_head,
+        depth=args.depth,
+        num_mt_block=args.num_mt_block,
+        node_fdim=151,
+        edge_fdim=165,
+        dropout=0.0,
+        activation=args.activation,
+        atom_emb_output="both",
+        bias=args.bias,
+    )
+    load_grover_weights(k3_model, ckpt_path)
+
+    # 3. Create test molecular batch
+    torch.manual_seed(42)
+    np.random.seed(42)
+
+    num_atoms = 5
+    num_bonds = 7
+    atom_fdim = 151
+    bond_fdim = 165
+
+    f_atoms_np = np.random.randn(num_atoms, atom_fdim).astype(np.float32)
+    f_atoms_np[0] = 0.0
+    f_bonds_np = np.random.randn(num_bonds, bond_fdim).astype(np.float32)
+    f_bonds_np[0] = 0.0
+
+    a2b_np = np.array([[0, 0], [2, 0], [1, 4], [3, 0], [0, 0]], dtype=np.int64)
+    b2a_np = np.array([0, 1, 2, 2, 3, 1, 3], dtype=np.int64)
+    b2revb_np = np.array([0, 2, 1, 4, 3, 6, 5], dtype=np.int64)
+    a_scope_np = np.array([[1, 2], [3, 2]], dtype=np.int64)
+    b_scope_np = np.array([[1, 3], [4, 3]], dtype=np.int64)
+    a2a_np = b2a_np[a2b_np]
+
+    batch_pt = (
+        torch.from_numpy(f_atoms_np),
+        torch.from_numpy(f_bonds_np),
+        torch.from_numpy(a2b_np),
+        torch.from_numpy(b2a_np),
+        torch.from_numpy(b2revb_np),
+        torch.from_numpy(a_scope_np),
+        torch.from_numpy(b_scope_np),
+        torch.from_numpy(a2a_np),
+    )
+
+    batch_k3 = (
+        ops.convert_to_tensor(f_atoms_np),
+        ops.convert_to_tensor(f_bonds_np),
+        ops.convert_to_tensor(a2b_np),
+        ops.convert_to_tensor(b2a_np),
+        ops.convert_to_tensor(b2revb_np),
+        ops.convert_to_tensor(a_scope_np),
+        ops.convert_to_tensor(b_scope_np),
+        ops.convert_to_tensor(a2a_np),
+    )
+
+    with torch.no_grad():
+        pt_out = pt_model(batch_pt)
+
+    k3_out = k3_model(batch_k3, training=False)
+
+    for key in ["atom_from_atom", "atom_from_bond", "bond_from_atom", "bond_from_bond"]:
+        pt_arr = pt_out[key].detach().cpu().numpy()
+        k3_arr = ops.convert_to_numpy(k3_out[key])
+        np.testing.assert_allclose(k3_arr, pt_arr, rtol=1e-4, atol=1e-4)
+
+
 
 
 
