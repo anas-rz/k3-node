@@ -118,6 +118,32 @@ class HeteroData(BaseData):
     def metadata(self) -> Tuple[List[NodeType], List[EdgeType]]:
         return self.node_types, self.edge_types
 
+    def get_node_store(self, key: NodeType) -> NodeStorage:
+        r"""Gets the NodeStorage object of a particular node type."""
+        out = self._node_store_dict.get(key, None)
+        if out is None:
+            out = NodeStorage(_parent=self)
+            out.__dict__["_key"] = key
+            self._node_store_dict[key] = out
+        return out
+
+    def get_edge_store(self, src: str, rel: str, dst: str) -> EdgeStorage:
+        r"""Gets the EdgeStorage object of a particular edge type given by (src, rel, dst)."""
+        key = (src, rel, dst)
+        out = self._edge_store_dict.get(key, None)
+        if out is None:
+            out = EdgeStorage(_parent=self)
+            out.__dict__["_key"] = key
+            self._edge_store_dict[key] = out
+        return out
+
+    def stores_as(self, data: "HeteroData") -> "HeteroData":
+        for node_type in data.node_types:
+            self.get_node_store(node_type)
+        for edge_type in data.edge_types:
+            self.get_edge_store(*edge_type)
+        return self
+
     @property
     def stores(self) -> List[BaseStorage]:
         return list(self._node_store_dict.values()) + list(self._edge_store_dict.values())

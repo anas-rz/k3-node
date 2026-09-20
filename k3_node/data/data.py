@@ -88,6 +88,9 @@ class BaseData:
     def edge_stores(self) -> List[EdgeStorage]:
         raise NotImplementedError
 
+    def stores_as(self, data: "BaseData") -> "BaseData":
+        raise NotImplementedError
+
     def to_dict(self) -> Dict[str, Any]:
         raise NotImplementedError
 
@@ -235,6 +238,9 @@ class Data(BaseData):
 
     def clone(self) -> "Data":
         return copy.deepcopy(self)
+
+    def stores_as(self, data: "Data") -> "Data":
+        return self
 
     @property
     def stores(self) -> List[BaseStorage]:
