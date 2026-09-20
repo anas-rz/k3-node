@@ -1,6 +1,23 @@
 name: Tests and coverage with PyTorch Backend
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'k3_node/**'
+      - '!k3_node/**/*.md'
+      - 'conftest.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - '.github/workflows/test_torch.yml'
+  pull_request:
+    paths:
+      - 'k3_node/**'
+      - '!k3_node/**/*.md'
+      - 'conftest.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - '.github/workflows/test_torch.yml'
+  workflow_dispatch:
 
 env:
   KERAS_BACKEND: torch

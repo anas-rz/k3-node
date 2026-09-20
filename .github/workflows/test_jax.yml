@@ -1,6 +1,23 @@
 name: Tests and coverage with JAX Backend
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'k3_node/**'
+      - '!k3_node/**/*.md'
+      - 'conftest.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - '.github/workflows/test_jax.yml'
+  pull_request:
+    paths:
+      - 'k3_node/**'
+      - '!k3_node/**/*.md'
+      - 'conftest.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - '.github/workflows/test_jax.yml'
+  workflow_dispatch:
 
 env:
   KERAS_BACKEND: jax
