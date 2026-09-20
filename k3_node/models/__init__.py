@@ -70,6 +70,25 @@ from .graphmae2 import (
     load_graphmae2_weights,
     download_graphmae2_checkpoint,
 )
+from .graphormer import (
+    Graphormer,
+    GraphNodeFeature,
+    GraphAttnBias,
+    GraphormerMultiheadAttention,
+    GraphormerGraphEncoderLayer,
+    GraphormerGraphEncoder,
+    load_graphormer_weights,
+    download_graphormer_checkpoint,
+)
+from .graphormer_3d import (
+    Graphormer3D,
+    GaussianLayer,
+    RBF,
+    Graphormer3DEncoderLayer,
+    NodeTaskHead,
+    load_graphormer3d_weights,
+    download_graphormer3d_checkpoint,
+)
 from .captum import to_captum_model, to_captum_input, captum_output_to_dicts
 
 __all__ = [
@@ -145,6 +164,21 @@ __all__ = [
     "sce_loss",
     "load_graphmae2_weights",
     "download_graphmae2_checkpoint",
+    "Graphormer",
+    "GraphNodeFeature",
+    "GraphAttnBias",
+    "GraphormerMultiheadAttention",
+    "GraphormerGraphEncoderLayer",
+    "GraphormerGraphEncoder",
+    "load_graphormer_weights",
+    "download_graphormer_checkpoint",
+    "Graphormer3D",
+    "GaussianLayer",
+    "RBF",
+    "Graphormer3DEncoderLayer",
+    "NodeTaskHead",
+    "load_graphormer3d_weights",
+    "download_graphormer3d_checkpoint",
     "to_captum_model",
     "to_captum_input",
     "captum_output_to_dicts",
