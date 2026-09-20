@@ -25,6 +25,9 @@ def remove_self_loops(
     edge_attr=None,
 ) -> Tuple:
     """Removes self-loops from `edge_index` and optional `edge_attr`."""
+    edge_index = ops.convert_to_tensor(edge_index)
+    if edge_attr is not None:
+        edge_attr = ops.convert_to_tensor(edge_attr)
     mask = edge_index[0] != edge_index[1]
     where_mask = ops.where(mask)
     indices = where_mask[0] if isinstance(where_mask, (list, tuple)) else where_mask
@@ -42,6 +45,7 @@ def add_self_loops(
     num_nodes: Optional[int] = None,
 ) -> Tuple:
     """Adds self-loops to `edge_index` and optional `edge_attr`."""
+    edge_index = ops.convert_to_tensor(edge_index)
     if num_nodes is None:
         num_nodes = int(ops.max(edge_index)) + 1 if ops.shape(edge_index)[1] > 0 else 0
     num_nodes = int(num_nodes)
@@ -51,6 +55,7 @@ def add_self_loops(
     edge_index = ops.concatenate([edge_index, loop_index], axis=1)
 
     if edge_attr is not None:
+        edge_attr = ops.convert_to_tensor(edge_attr)
         attr_shape = (num_nodes,) + tuple(ops.shape(edge_attr)[1:])
         if fill_value is None:
             loop_attr = ops.zeros(attr_shape, dtype=edge_attr.dtype)
@@ -76,6 +81,9 @@ def gcn_norm(
 ) -> Tuple:
     """Computes the GCN normalization coefficients."""
     fill_value = 2.0 if improved else 1.0
+    edge_index = ops.convert_to_tensor(edge_index)
+    if edge_weight is not None:
+        edge_weight = ops.convert_to_tensor(edge_weight)
 
     if num_nodes is None:
         num_nodes = int(ops.max(edge_index)) + 1 if ops.shape(edge_index)[1] > 0 else 0
@@ -113,6 +121,10 @@ def get_laplacian(
     num_nodes: Optional[int] = None,
 ) -> Tuple:
     """Computes the graph Laplacian of the given graph."""
+    edge_index = ops.convert_to_tensor(edge_index)
+    if edge_weight is not None:
+        edge_weight = ops.convert_to_tensor(edge_weight)
+
     if num_nodes is None:
         num_nodes = int(ops.max(edge_index)) + 1 if ops.shape(edge_index)[1] > 0 else 0
     num_nodes = int(num_nodes)
