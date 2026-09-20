@@ -44,7 +44,8 @@ def degree(index, num_nodes: Optional[int] = None, dtype=None):
         num_nodes = int(num_nodes)
     except (TypeError, ValueError):
         pass
-    deg = ops.bincount(index, minlength=num_nodes)
+    ones = ops.ones((ops.shape(index)[0],), dtype=dtype or "float32")
+    deg = ops.segment_sum(ones, index, num_segments=num_nodes)
     if dtype is not None:
         deg = ops.cast(deg, dtype)
     return deg
@@ -149,7 +150,7 @@ def gcn_norm(
     col_cast = ops.cast(col, "int32")
     idx_cast = ops.cast(idx, "int32")
 
-    deg = ops.bincount(idx_cast, weights=edge_weight, minlength=num_nodes)
+    deg = ops.segment_sum(edge_weight, idx_cast, num_segments=num_nodes)
     deg_inv_sqrt = ops.power(deg, -0.5)
     deg_inv_sqrt = ops.where(
         ops.isinf(deg_inv_sqrt) | ops.isnan(deg_inv_sqrt), 0.0, deg_inv_sqrt
