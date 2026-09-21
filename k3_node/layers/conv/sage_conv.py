@@ -83,7 +83,15 @@ class SAGEConv(MessagePassing):
 
     def call(self, x, edge_index=None, size=None, **kwargs):
         # Handle legacy calling: conv(x, adj) where adj is [N, N]
-        if edge_index is not None and len(ops.shape(edge_index)) == 2 and ops.shape(edge_index)[0] > 2 and ops.shape(edge_index)[0] == ops.shape(edge_index)[1]:
+        shape = getattr(edge_index, "shape", None)
+        if (
+            shape is not None
+            and len(shape) == 2
+            and shape[0] is not None
+            and shape[1] is not None
+            and shape[0] > 2
+            and shape[0] == shape[1]
+        ):
             where_adj = ops.where(edge_index != 0)
             where_adj = where_adj if not isinstance(where_adj, list) else where_adj
             edge_index = ops.stack([where_adj[0], where_adj[1]], axis=0)
@@ -91,12 +99,20 @@ class SAGEConv(MessagePassing):
         # Handle legacy calling: conv((x, adj))
         if edge_index is None and isinstance(x, (tuple, list)) and len(x) == 2:
             arg0, arg1 = x[0], x[1]
-            if len(ops.shape(arg1)) == 2 and ops.shape(arg1)[0] > 2 and ops.shape(arg1)[0] == ops.shape(arg1)[1]:
+            s1 = getattr(arg1, "shape", None)
+            if (
+                s1 is not None
+                and len(s1) == 2
+                and s1[0] is not None
+                and s1[1] is not None
+                and s1[0] > 2
+                and s1[0] == s1[1]
+            ):
                 where_adj = ops.where(arg1 != 0)
                 where_adj = where_adj if not isinstance(where_adj, list) else where_adj
                 edge_index = ops.stack([where_adj[0], where_adj[1]], axis=0)
                 x = arg0
-            elif ops.shape(arg1)[0] == 2:
+            elif s1 is not None and len(s1) >= 1 and s1[0] == 2:
                 edge_index = arg1
                 x = arg0
 

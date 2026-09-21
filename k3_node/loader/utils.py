@@ -22,6 +22,17 @@ def to_numpy_or_tensor(x):
     return x
 
 
+def to_numpy(x, dtype=None):
+    r"""Converts any tensor (PyTorch, TensorFlow, JAX) or array to a CPU NumPy ndarray."""
+    if hasattr(x, "cpu"):
+        x = x.cpu()
+    if hasattr(x, "detach"):
+        x = x.detach()
+    if hasattr(x, "numpy") and callable(x.numpy):
+        x = x.numpy()
+    return np.asarray(x, dtype=dtype)
+
+
 def index_select(value: Any, index: Any, dim: int = 0) -> Any:
     r"""Indexes the :obj:`value` tensor along dimension :obj:`dim` using the
     entries in :obj:`index`. Supports PyTorch, TensorFlow, JAX, and NumPy.

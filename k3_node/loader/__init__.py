@@ -24,8 +24,10 @@ from .random_node_loader import RandomNodeLoader
 from .shadow import ShaDowKHopSampler
 from .temporal_dataloader import TemporalDataLoader
 from .zip_loader import ZipLoader
+from .utils import to_numpy
 
 __all__ = [
+    'to_numpy',
     'DataLoader',
     'NodeLoader',
     'LinkLoader',
