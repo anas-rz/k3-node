@@ -6,6 +6,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from k3_node.layers.conv import GCNConv
+from k3_node.layers.conv.utils import is_tracing
 from k3_node.layers.pool import TopKPooling
 
 
@@ -90,6 +91,14 @@ class GraphUNet(keras.Model):
             conv.reset_parameters()
 
     def augment_adj(self, edge_index, edge_weight, num_nodes: int):
+        # The two-hop augmentation below goes through scipy sparse matmul,
+        # which needs concrete values and produces a data-dependent output
+        # size, so it cannot run under abstract tracing (e.g. Keras's
+        # build-time shape probe, or a jitted step). Fall back to the
+        # unaugmented adjacency in that case; downstream layers already
+        # handle traced/placeholder inputs gracefully.
+        if is_tracing(edge_index):
+            return edge_index, edge_weight
         row = ops.convert_to_numpy(edge_index[0])
         col = ops.convert_to_numpy(edge_index[1])
         if edge_weight is not None:
