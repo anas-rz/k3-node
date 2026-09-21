@@ -27,6 +27,7 @@ from .imdb import IMDB
 from .qm7 import QM7b
 from .molecule_net import MoleculeNet
 from .ppi import PPI
+from .reddit import Reddit
 
 __all__ = [
     "KarateClub",
@@ -62,5 +63,6 @@ __all__ = [
     "QM7b",
     "MoleculeNet",
     "PPI",
+    "Reddit",
 ]
 
