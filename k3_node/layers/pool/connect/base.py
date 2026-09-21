@@ -20,22 +20,46 @@ class ConnectOutput:
     batch: Optional[any] = None
 
     def __post_init__(self):
-        if len(ops.shape(self.edge_index)) != 2:
-            raise ValueError(
-                f"Expected 'edge_index' to be two-dimensional "
-                f"(got {len(ops.shape(self.edge_index))} dimensions)"
-            )
-        if ops.shape(self.edge_index)[0] != 2:
-            raise ValueError(
-                f"Expected 'edge_index' to have size '2' in the first dimension "
-                f"(got '{ops.shape(self.edge_index)[0]}')"
-            )
-        if self.edge_attr is not None and ops.shape(self.edge_attr)[0] != ops.shape(self.edge_index)[1]:
-            raise ValueError(
-                f"Expected 'edge_index' and 'edge_attr' to hold the same number "
-                f"of edges (got {ops.shape(self.edge_index)[1]} and "
-                f"{ops.shape(self.edge_attr)[0]} edges)"
-            )
+        shape_edge = getattr(self.edge_index, "shape", None)
+        if shape_edge is not None:
+            if len(shape_edge) != 2:
+                raise ValueError(
+                    f"Expected 'edge_index' to be two-dimensional "
+                    f"(got {len(shape_edge)} dimensions)"
+                )
+            if shape_edge[0] is not None and shape_edge[0] != 2:
+                raise ValueError(
+                    f"Expected 'edge_index' to have size '2' in the first dimension "
+                    f"(got '{shape_edge[0]}')"
+                )
+        if self.edge_attr is not None:
+            shape_attr = getattr(self.edge_attr, "shape", None)
+            if (
+                shape_edge is not None
+                and shape_attr is not None
+                and len(shape_edge) == 2
+                and len(shape_attr) >= 1
+                and shape_edge[1] is not None
+                and shape_attr[0] is not None
+                and shape_attr[0] != shape_edge[1]
+            ):
+                raise ValueError(
+                    f"Expected 'edge_index' and 'edge_attr' to hold the same number "
+                    f"of edges (got {shape_edge[1]} and {shape_attr[0]} edges)"
+                )
+
+
+try:
+    import jax
+    from jax.tree_util import register_pytree_node
+
+    register_pytree_node(
+        ConnectOutput,
+        lambda c: ((c.edge_index, c.edge_attr, c.batch), ()),
+        lambda aux, children: ConnectOutput(children[0], children[1], children[2]),
+    )
+except Exception:
+    pass
 
 
 class Connect(layers.Layer):

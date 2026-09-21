@@ -6,6 +6,9 @@ from .base import Connect, ConnectOutput
 from ..select.base import SelectOutput
 
 
+from k3_node.layers.conv.utils import is_tracing
+
+
 def filter_adj(
     edge_index,
     edge_attr: Optional[any] = None,
@@ -14,32 +17,46 @@ def filter_adj(
     num_nodes: Optional[int] = None,
 ) -> Tuple[any, Optional[any]]:
     r"""Filters out edges if their incident nodes are not in any cluster."""
-    if num_nodes is None:
-        num_nodes = int(ops.max(edge_index)) + 1 if ops.shape(edge_index)[1] > 0 else 0
+    if is_tracing(edge_index) or (node_index is not None and is_tracing(node_index)):
+        return edge_index, edge_attr
 
-    node_idx_np = ops.convert_to_numpy(node_index).astype(np.int64)
+    if node_index is None:
+        return edge_index, edge_attr
+
+    edge_index = ops.cast(edge_index, "int32")
+    node_index = ops.cast(node_index, "int32")
     if cluster_index is None:
-        cluster_idx_np = np.arange(len(node_idx_np), dtype=np.int64)
+        cluster_index = ops.arange(ops.shape(node_index)[0], dtype="int32")
     else:
-        cluster_idx_np = ops.convert_to_numpy(cluster_index).astype(np.int64)
+        cluster_index = ops.cast(cluster_index, "int32")
 
-    mapping = np.full((num_nodes,), -1, dtype=np.int64)
-    mapping[node_idx_np] = cluster_idx_np
+    if num_nodes is None:
+        num_nodes = ops.max(node_index) + 1 if ops.shape(node_index)[0] > 0 else 0
+        if ops.shape(edge_index)[1] > 0:
+            num_nodes = ops.maximum(num_nodes, ops.max(edge_index) + 1)
+    try:
+        num_nodes = int(num_nodes)
+    except (TypeError, ValueError):
+        pass
 
-    edge_index_np = ops.convert_to_numpy(edge_index).astype(np.int64)
-    row = mapping[edge_index_np[0]]
-    col = mapping[edge_index_np[1]]
-    valid = (row >= 0) & (col >= 0)
+    mapping = ops.full((num_nodes,), -1, dtype="int32")
+    mapping = ops.scatter_update(mapping, ops.expand_dims(node_index, -1), cluster_index)
 
-    row = row[valid]
-    col = col[valid]
+    row = ops.take(mapping, edge_index[0], axis=0)
+    col = ops.take(mapping, edge_index[1], axis=0)
+    mask = (row >= 0) & (col >= 0)
+    valid_idx = ops.where(mask)
+    if isinstance(valid_idx, (tuple, list)):
+        valid_idx = valid_idx[0]
+    valid_idx = ops.reshape(valid_idx, (-1,))
 
-    new_edge_index = ops.convert_to_tensor(np.stack([row, col], axis=0), dtype=edge_index.dtype)
+    new_edge_index = ops.stack(
+        [ops.take(row, valid_idx, axis=0), ops.take(col, valid_idx, axis=0)], axis=0
+    )
 
     new_edge_attr = None
     if edge_attr is not None:
-        edge_attr_np = ops.convert_to_numpy(edge_attr)[valid]
-        new_edge_attr = ops.convert_to_tensor(edge_attr_np, dtype=edge_attr.dtype)
+        new_edge_attr = ops.take(edge_attr, valid_idx, axis=0)
 
     return new_edge_index, new_edge_attr
 

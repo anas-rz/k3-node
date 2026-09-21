@@ -65,7 +65,7 @@ class TopKPooling(layers.Layer):
         if self.multiplier != 1.0:
             x_pooled = x_pooled * self.multiplier
 
-        connect_out = self.connect(select_out, edge_index, edge_attr, batch)
+        connect_out = self.connect.call(select_out, edge_index, edge_attr, batch)
 
         return (
             x_pooled,

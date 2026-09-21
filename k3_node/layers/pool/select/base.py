@@ -24,33 +24,70 @@ class SelectOutput:
     weight: Optional[any] = None
 
     def __post_init__(self):
-        if len(ops.shape(self.node_index)) != 1:
+        shape_node = getattr(self.node_index, "shape", None)
+        shape_cluster = getattr(self.cluster_index, "shape", None)
+        if shape_node is not None and len(shape_node) != 1:
             raise ValueError(
                 f"Expected 'node_index' to be one-dimensional "
-                f"(got {len(ops.shape(self.node_index))} dimensions)"
+                f"(got {len(shape_node)} dimensions)"
             )
-        if len(ops.shape(self.cluster_index)) != 1:
+        if shape_cluster is not None and len(shape_cluster) != 1:
             raise ValueError(
                 f"Expected 'cluster_index' to be one-dimensional "
-                f"(got {len(ops.shape(self.cluster_index))} dimensions)"
+                f"(got {len(shape_cluster)} dimensions)"
             )
-        if ops.shape(self.node_index)[0] != ops.shape(self.cluster_index)[0]:
+        if (
+            shape_node is not None
+            and shape_cluster is not None
+            and len(shape_node) > 0
+            and len(shape_cluster) > 0
+            and shape_node[0] is not None
+            and shape_cluster[0] is not None
+            and shape_node[0] != shape_cluster[0]
+        ):
             raise ValueError(
                 f"Expected 'node_index' and 'cluster_index' to hold the same "
-                f"number of values (got {ops.shape(self.node_index)[0]} and "
-                f"{ops.shape(self.cluster_index)[0]} values)"
+                f"number of values (got {shape_node[0]} and "
+                f"{shape_cluster[0]} values)"
             )
         if self.weight is not None:
-            if len(ops.shape(self.weight)) != 1:
+            shape_weight = getattr(self.weight, "shape", None)
+            if shape_weight is not None and len(shape_weight) != 1:
                 raise ValueError(
                     f"Expected 'weight' vector to be one-dimensional "
-                    f"(got {len(ops.shape(self.weight))} dimensions)"
+                    f"(got {len(shape_weight)} dimensions)"
                 )
-            if ops.shape(self.weight)[0] != ops.shape(self.node_index)[0]:
+            if (
+                shape_weight is not None
+                and shape_node is not None
+                and len(shape_weight) > 0
+                and len(shape_node) > 0
+                and shape_weight[0] is not None
+                and shape_node[0] is not None
+                and shape_weight[0] != shape_node[0]
+            ):
                 raise ValueError(
-                    f"Expected 'weight' to hold {ops.shape(self.node_index)[0]} "
-                    f"values (got {ops.shape(self.weight)[0]} values)"
+                    f"Expected 'weight' to hold {shape_node[0]} "
+                    f"values (got {shape_weight[0]} values)"
                 )
+
+
+try:
+    import jax
+    from jax.tree_util import register_pytree_node
+
+    register_pytree_node(
+        SelectOutput,
+        lambda s: (
+            (s.node_index, s.cluster_index, s.weight),
+            (s.num_nodes, s.num_clusters),
+        ),
+        lambda aux, children: SelectOutput(
+            children[0], aux[0], children[1], aux[1], children[2]
+        ),
+    )
+except Exception:
+    pass
 
 
 class Select(layers.Layer):

@@ -2,10 +2,13 @@ from typing import Optional
 from keras import ops
 
 
+from k3_node.layers.conv.utils import is_tracing
+
+
 def _infer_size(batch, size=None):
     if size is not None:
         return size
-    if hasattr(batch, "is_meta") and batch.is_meta:
+    if is_tracing(batch) or (hasattr(batch, "is_meta") and batch.is_meta):
         return None
     try:
         if hasattr(batch, "numpy") and not hasattr(batch, "_has_symbolic_representation"):
@@ -38,6 +41,11 @@ def global_add_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
             out = ops.reshape(out, (1, 1))
         return out
 
+    if is_tracing(x) or (batch is not None and is_tracing(batch)):
+        if size is not None:
+            return ops.zeros((size,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
+        return ops.sum(x, axis=0, keepdims=True)
+
     batch = ops.cast(batch, dtype="int32")
     if batch.shape[0] is not None and batch.shape[0] == 0:
         num_seg = size if size is not None else 0
@@ -57,6 +65,11 @@ def global_mean_pool(x, batch: Optional[any] = None, size: Optional[int] = None)
         if len(ops.shape(x)) == 1:
             out = ops.reshape(out, (1, 1))
         return out
+
+    if is_tracing(x) or (batch is not None and is_tracing(batch)):
+        if size is not None:
+            return ops.zeros((size,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
+        return ops.mean(x, axis=0, keepdims=True)
 
     batch = ops.cast(batch, dtype="int32")
     if batch.shape[0] is not None and batch.shape[0] == 0:
@@ -80,6 +93,11 @@ def global_max_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
         if len(ops.shape(x)) == 1:
             out = ops.reshape(out, (1, 1))
         return out
+
+    if is_tracing(x) or (batch is not None and is_tracing(batch)):
+        if size is not None:
+            return ops.zeros((size,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
+        return ops.max(x, axis=0, keepdims=True)
 
     batch = ops.cast(batch, dtype="int32")
     if batch.shape[0] is not None and batch.shape[0] == 0:
