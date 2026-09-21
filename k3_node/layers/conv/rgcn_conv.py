@@ -125,47 +125,14 @@ class RGCNConv(MessagePassing):
         else:
             x_l = x_r = x
 
-        num_nodes = ops.shape(x_r)[0]
-        out = ops.zeros((num_nodes, self.out_channels), dtype=x_r.dtype)
-        weight = self._get_weight()
-
         edge_index = ops.cast(edge_index, "int32")
-        if edge_type is not None:
-            edge_type = ops.cast(edge_type, "int32")
+        edge_type = ops.cast(edge_type, "int32")
+        num_nodes = ops.shape(x_r)[0]
+        size = (ops.shape(x_l)[0], num_nodes)
 
-        if edge_type is None:
-            raise ValueError("RGCNConv requires edge_type tensor")
-
-        # Iterate over relations
-        for r in range(self.num_relations):
-            mask = ops.equal(edge_type, r)
-            where_mask = ops.where(mask)
-            idx = where_mask[0] if isinstance(where_mask, (list, tuple)) else where_mask
-            idx = ops.reshape(idx, (-1,))
-            idx = ops.cast(idx, "int32")
-            if ops.shape(idx)[0] == 0:
-                continue
-            edge_index_r = ops.take(edge_index, idx, axis=1)
-
-            if self.num_blocks is not None:
-                # Block-diagonal
-                h = self.propagate(edge_index_r, x=x_l, size=(ops.shape(x_l)[0], num_nodes))
-                # h: (N, in_channels) -> (N, num_blocks, in_block)
-                h = ops.reshape(
-                    h,
-                    (
-                        -1,
-                        self.num_blocks,
-                        self.in_channels_l // self.num_blocks,
-                    ),
-                )
-                # weight[r]: (num_blocks, in_block, out_block)
-                # einsum 'nbc,bcd->nbd'
-                h_out = ops.einsum("nbc,bcd->nbd", h, weight[r])
-                out = out + ops.reshape(h_out, (-1, self.out_channels))
-            else:
-                h = self.propagate(edge_index_r, x=x_l, size=(ops.shape(x_l)[0], num_nodes))
-                out = out + ops.matmul(h, weight[r])
+        out = self.propagate(
+            edge_index, x=x_l, edge_type=edge_type, size=size
+        )
 
         if self.root is not None:
             out = out + ops.matmul(x_r, self.root)
@@ -175,8 +142,35 @@ class RGCNConv(MessagePassing):
 
         return out
 
-    def message(self, x_j):
-        return x_j
+    def message(self, x_j, edge_type):
+        weight = self._get_weight()
+        if self.num_blocks is not None:
+            w_r = ops.take(weight, edge_type, axis=0)  # (E, num_blocks, in_b, out_b)
+            x_j_b = ops.reshape(
+                x_j,
+                (-1, self.num_blocks, 1, self.in_channels_l // self.num_blocks),
+            )
+            msg = ops.matmul(x_j_b, w_r)
+            return ops.reshape(msg, (-1, self.out_channels))
+        else:
+            w_r = ops.take(weight, edge_type, axis=0)  # (E, in_channels, out_channels)
+            x_j_exp = ops.expand_dims(x_j, 1)
+            msg = ops.squeeze(ops.matmul(x_j_exp, w_r), 1)
+            return msg
+
+    def aggregate(self, inputs, edge_index=None, index=None, edge_type=None, dim_size=None, **kwargs):
+        if index is None and edge_index is not None:
+            index = edge_index[1]
+        if self.aggr == "mean" and edge_type is not None and index is not None:
+            one_hot = ops.one_hot(edge_type, self.num_relations)
+            norm = scatter(one_hot, index, dim=0, dim_size=dim_size, reduce="sum")
+            norm_per_edge = ops.take(norm, index, axis=0)
+            edge_type_expanded = ops.expand_dims(edge_type, -1)
+            norm_val = ops.take_along_axis(norm_per_edge, edge_type_expanded, axis=1)
+            norm_val = ops.maximum(norm_val, 1.0)
+            inputs = inputs / ops.cast(norm_val, inputs.dtype)
+            return scatter(inputs, index, dim=0, dim_size=dim_size, reduce="sum")
+        return super().aggregate(inputs, edge_index=edge_index, index=index, dim_size=dim_size, **kwargs)
 
 
 class FastRGCNConv(RGCNConv):

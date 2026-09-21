@@ -152,6 +152,9 @@ class DNAConv(MessagePassing):
         if not self.built:
             self.build()
 
+        if len(ops.shape(x)) == 2:
+            x = ops.expand_dims(x, axis=1)
+
         num_nodes = ops.shape(x)[0]
         if self.normalize:
             edge_index, edge_weight = gcn_norm(

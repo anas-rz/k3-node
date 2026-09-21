@@ -11,8 +11,10 @@ from .dense_gcn_conv import DenseGCNConv
 from .dense_graph_conv import DenseGraphConv
 from .dense_gin_conv import DenseGINConv
 from .diff_pool import dense_diff_pool
+diff_pool = dense_diff_pool
 from .mincut_pool import dense_mincut_pool
-from .dmon_pool import DMoNPooling
+mincut_pool = dense_mincut_pool
+from .dmon_pool import DMoNPooling, dense_dmon_pool, dmon_pool
 
 __all__ = [
     "Linear",
@@ -24,8 +26,12 @@ __all__ = [
     "DenseSAGEConv",
     "DenseGATConv",
     "dense_diff_pool",
+    "diff_pool",
     "dense_mincut_pool",
+    "mincut_pool",
     "DMoNPooling",
+    "dense_dmon_pool",
+    "dmon_pool",
 ]
 
 lin_classes = __all__[:3]

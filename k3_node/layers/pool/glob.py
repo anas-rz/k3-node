@@ -41,11 +41,6 @@ def global_add_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
             out = ops.reshape(out, (1, 1))
         return out
 
-    if is_tracing(x) or (batch is not None and is_tracing(batch)):
-        if size is not None:
-            return ops.zeros((size,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
-        return ops.sum(x, axis=0, keepdims=True)
-
     batch = ops.cast(batch, dtype="int32")
     if batch.shape[0] is not None and batch.shape[0] == 0:
         num_seg = size if size is not None else 0
@@ -65,11 +60,6 @@ def global_mean_pool(x, batch: Optional[any] = None, size: Optional[int] = None)
         if len(ops.shape(x)) == 1:
             out = ops.reshape(out, (1, 1))
         return out
-
-    if is_tracing(x) or (batch is not None and is_tracing(batch)):
-        if size is not None:
-            return ops.zeros((size,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
-        return ops.mean(x, axis=0, keepdims=True)
 
     batch = ops.cast(batch, dtype="int32")
     if batch.shape[0] is not None and batch.shape[0] == 0:
@@ -93,11 +83,6 @@ def global_max_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
         if len(ops.shape(x)) == 1:
             out = ops.reshape(out, (1, 1))
         return out
-
-    if is_tracing(x) or (batch is not None and is_tracing(batch)):
-        if size is not None:
-            return ops.zeros((size,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
-        return ops.max(x, axis=0, keepdims=True)
 
     batch = ops.cast(batch, dtype="int32")
     if batch.shape[0] is not None and batch.shape[0] == 0:

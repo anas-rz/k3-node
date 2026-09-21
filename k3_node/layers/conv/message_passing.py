@@ -236,6 +236,14 @@ class MessagePassing(layers.Layer):
         for param_name in self.msg_signature.keys():
             if param_name in kwargs:
                 msg_kwargs[param_name] = kwargs[param_name]
+            elif param_name in ("dim_size", "size_i"):
+                msg_kwargs[param_name] = dim_size
+            elif param_name == "size_j":
+                msg_kwargs["size_j"] = size[0] if size is not None and size[0] is not None else dim_size
+            elif param_name == "index":
+                msg_kwargs["index"] = i
+            elif param_name == "edge_index":
+                msg_kwargs["edge_index"] = edge_index
             elif param_name.endswith("_i"):
                 root = param_name[:-2]
                 if root in kwargs:
@@ -372,12 +380,15 @@ class MessagePassing(layers.Layer):
         r"""Computes or updates edge attributes."""
         raise NotImplementedError
 
-    def call(self, inputs, edge_index=None, **kwargs):
+    def call(self, inputs, edge_index=None, edge_attr=None, **kwargs):
         r"""Default call handler supporting both (x, edge_index) and legacy (inputs,) tuples."""
         if edge_index is None and isinstance(inputs, (tuple, list)):
             x, a, e = self.get_inputs(inputs)
             return self.propagate(x, a, e, **kwargs)
         if edge_index is not None:
+            if edge_attr is not None:
+                kwargs["edge_attr"] = edge_attr
+                kwargs["e"] = edge_attr
             return self.propagate(edge_index, x=inputs, **kwargs)
         raise NotImplementedError(
             f"Layer {self.__class__.__name__} does not implement call() with inputs={inputs}, edge_index={edge_index}"

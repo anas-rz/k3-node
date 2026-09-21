@@ -77,7 +77,12 @@ class LayerNorm(layers.Layer):
                 var = ops.mean(ops.power(x - mean, 2))
                 out = (x - mean) / ops.sqrt(var + self.eps)
             else:
-                if batch_size is None:
+                if batch_size is not None and not isinstance(batch_size, int):
+                    try:
+                        batch_size = int(batch_size)
+                    except Exception:
+                        pass
+                elif batch_size is None:
                     batch_size = ops.cast(ops.max(batch), "int32") + 1
 
                 batch = ops.cast(batch, "int32")

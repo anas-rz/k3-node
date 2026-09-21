@@ -89,6 +89,12 @@ class EdgePooling(layers.Layer):
         batch,
         edge_score,
     ) -> Tuple[any, any, any, UnpoolInfo]:
+        from k3_node.layers.conv.utils import is_tracing
+        if is_tracing(x) or is_tracing(edge_index) or is_tracing(edge_score):
+            num_nodes = ops.shape(x)[0]
+            unpool_info = UnpoolInfo(edge_index, ops.arange(num_nodes, dtype="int32"), batch, ops.ones((num_nodes,), dtype=x.dtype))
+            return x, edge_index, batch, unpool_info
+
         edge_index_np = ops.convert_to_numpy(edge_index).astype(np.int64)
         edge_score_np = ops.convert_to_numpy(edge_score)
         num_nodes = ops.shape(x)[0]

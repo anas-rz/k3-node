@@ -22,7 +22,12 @@ class GraphSizeNorm(layers.Layer):
             num_nodes = ops.cast(ops.shape(x)[0], dtype=x.dtype)
             return x * ops.power(num_nodes, -0.5)
 
-        if batch_size is None:
+        if batch_size is not None and not isinstance(batch_size, int):
+            try:
+                batch_size = int(batch_size)
+            except Exception:
+                pass
+        elif batch_size is None:
             batch_size = ops.cast(ops.max(batch), "int32") + 1
 
         batch = ops.cast(batch, "int32")

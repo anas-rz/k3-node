@@ -27,32 +27,26 @@ class SortAggregation(Aggregation):
         max_num_elements: Optional[int] = None,
         **kwargs,
     ):
-        fill_value = float(ops.min(x)) - 1.0
+        fill_value = -1e9
         batch_x, mask = self.to_dense_batch(
             x, index=index, ptr=ptr, dim_size=dim_size, dim=dim,
             fill_value=fill_value, max_num_elements=max_num_elements,
         )
 
-        batch_x_np = ops.convert_to_numpy(batch_x)
-        B, N, D = batch_x_np.shape
+        B = ops.shape(batch_x)[0]
+        N = ops.shape(batch_x)[1]
+        D = ops.shape(batch_x)[2]
 
-        # Sort along last feature channel descending
-        scores = batch_x_np[:, :, -1]  # [B, N]
-        perm = np.argsort(-scores, axis=-1)  # [B, N]
+        scores = batch_x[:, :, -1]  # [B, N]
+        k = self.k
+        k_val = min(k, int(scores.shape[1])) if hasattr(scores, "shape") and isinstance(scores.shape[1], int) else k
+        _, perm = ops.top_k(scores, k=k_val, sorted=True)  # [B, k]
+        perm_expanded = ops.repeat(ops.expand_dims(perm, -1), D, axis=-1)
+        out_x = ops.take_along_axis(batch_x, perm_expanded, axis=1)
+        out_x = ops.where(ops.equal(out_x, fill_value), ops.zeros_like(out_x), out_x)
+        out_x = ops.reshape(out_x, (B, -1))
 
-        # Gather sorted nodes for each graph in batch
-        sorted_x = np.take_along_axis(batch_x_np, perm[:, :, None], axis=1)
-
-        if N >= self.k:
-            out_x = sorted_x[:, :self.k]
-        else:
-            pad = np.full((B, self.k - N, D), fill_value, dtype=batch_x_np.dtype)
-            out_x = np.concatenate([sorted_x, pad], axis=1)
-
-        out_x[out_x == fill_value] = 0.0
-        out_x = out_x.reshape(B, self.k * D)
-
-        return ops.convert_to_tensor(out_x, dtype=x.dtype)
+        return out_x
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(k={self.k})"

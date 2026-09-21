@@ -1,4 +1,5 @@
 import copy
+from typing import Callable, Optional
 
 import keras
 from keras import ops
@@ -8,35 +9,34 @@ from k3_node.models.utils import reset, uniform_
 EPS = 1e-15
 
 
-class DeepGraphInfomax(keras.layers.Layer):
+class DeepGraphInfomax(keras.Model):
     r"""The Deep Graph Infomax model from the
-    `"Deep Graph Infomax" <https://arxiv.org/abs/1809.10341>`_
-    paper based on user-defined encoder and summary model :math:`\mathcal{E}`
-    and :math:`\mathcal{R}` respectively, and a corruption function
-    :math:`\mathcal{C}`.
-
-    Args:
-        hidden_channels (int): The latent space dimensionality.
-        encoder: The encoder module :math:`\mathcal{E}`.
-        summary (callable): The readout function :math:`\mathcal{R}`.
-        corruption (callable): The corruption function :math:`\mathcal{C}`.
+    `"Deep Graph Infomax" <https://arxiv.org/abs/1809.10341>`_ paper.
     """
-    def __init__(self, hidden_channels, encoder, summary, corruption, **kwargs):
+
+    def __init__(
+        self,
+        hidden_channels: int,
+        encoder: Callable,
+        summary: Callable,
+        corruption: Optional[Callable] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.hidden_channels = hidden_channels
         self.encoder = encoder
         self.summary = summary
-        self.corruption = corruption
-
+        self.corruption = corruption if corruption is not None else default_corruption
         self.weight = self.add_weight(
             shape=(hidden_channels, hidden_channels),
-            initializer="zeros",
+            initializer="glorot_uniform",
+            trainable=True,
             name="weight",
         )
-        self.reset_parameters()
+        self.built = True
+        self.loss = self.loss_fn
 
     def reset_parameters(self):
-        r"""Resets all learnable parameters of the module."""
         reset(self.encoder)
         reset(self.summary)
         uniform_(self.hidden_channels, self.weight)
@@ -44,6 +44,8 @@ class DeepGraphInfomax(keras.layers.Layer):
     def call(self, *args, **kwargs):
         r"""Returns the latent space for the input arguments, their
         corruptions and their summary representation."""
+        if len(args) == 1 and isinstance(args[0], (tuple, list)):
+            args = tuple(args[0])
         pos_z = self.encoder(*args, **kwargs)
 
         cor = self.corruption(*args, **kwargs)
@@ -66,12 +68,14 @@ class DeepGraphInfomax(keras.layers.Layer):
         value = ops.matmul(z, ops.matmul(self.weight, summary))
         return ops.sigmoid(value) if sigmoid else value
 
-    def loss(self, pos_z, neg_z, summary):
+    def loss_fn(self, pos_z, neg_z, summary):
         r"""Computes the mutual information maximization objective."""
         pos_loss = -ops.mean(ops.log(self.discriminate(pos_z, summary, sigmoid=True) + EPS))
         neg_loss = -ops.mean(ops.log(1 - self.discriminate(neg_z, summary, sigmoid=True) + EPS))
 
         return pos_loss + neg_loss
+
+    loss = loss_fn
 
     def test(self, train_z, train_y, test_z, test_y, solver="lbfgs", *args, **kwargs):
         r"""Evaluates latent space quality via a logistic regression

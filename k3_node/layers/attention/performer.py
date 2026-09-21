@@ -45,7 +45,8 @@ def generalized_kernel(x, mat, kernel=ops.relu, epsilon=0.001):
 class PerformerProjection(layers.Layer):
     def __init__(self, num_cols, kernel=ops.relu):
         super().__init__()
-        self.num_rows = int(num_cols * ops.log(num_cols))
+        import math
+        self.num_rows = max(1, int(num_cols * math.log(max(2, num_cols))))
         self.num_cols = num_cols
 
         # Generate an orthogonal projection matrix

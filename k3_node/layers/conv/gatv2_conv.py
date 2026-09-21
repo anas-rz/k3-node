@@ -130,9 +130,12 @@ class GATv2Conv(MessagePassing):
         x_r = ops.reshape(self.lin_r(x_dst), (-1, H, C)) if x_dst is not None else x_l
 
         if self.add_self_loops:
-            num_nodes = ops.shape(x_l)[0]
-            if x_r is not None:
-                num_nodes = min(num_nodes, ops.shape(x_r)[0])
+            if not isinstance(x, (tuple, list)):
+                num_nodes = ops.shape(x)[0]
+            else:
+                num_nodes = ops.shape(x_l)[0]
+                if x_r is not None:
+                    num_nodes = ops.minimum(num_nodes, ops.shape(x_r)[0])
             edge_index, edge_attr = remove_self_loops(edge_index, edge_attr)
             edge_index, edge_attr = add_self_loops(
                 edge_index, edge_attr, fill_value=self.fill_value, num_nodes=num_nodes

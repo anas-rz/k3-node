@@ -75,12 +75,12 @@ class PANPooling(layers.Layer):
 
         if hasattr(M, "coo"):
             row, col, edge_weight = M.coo()
-        elif isinstance(M, (tuple, list)):
-            if len(M) == 2:
-                edge_index, edge_weight = M
-                row, col = edge_index[0], edge_index[1]
-            else:
-                row, col, edge_weight = M[0], M[1], M[2]
+        elif isinstance(M, (tuple, list)) and len(M) >= 2 and not isinstance(M[0], int):
+            edge_index, edge_weight = M[0], M[1]
+            row, col = edge_index[0], edge_index[1]
+        elif hasattr(M, "shape") and len(M.shape) == 2 and M.shape[0] == 2:
+            row, col = M[0], M[1]
+            edge_weight = ops.ones((ops.shape(col)[0],), dtype=x.dtype)
         else:
             nz = ops.where(M != 0)
             row, col = nz[0], nz[1]
@@ -88,6 +88,7 @@ class PANPooling(layers.Layer):
 
         col = ops.cast(col, dtype="int32")
         row = ops.cast(row, dtype="int32")
+        edge_weight = ops.cast(edge_weight, dtype=x.dtype)
 
         score1 = ops.sum(x * self.p, axis=-1)
         score2 = ops.segment_sum(edge_weight, col, num_segments=num_nodes)

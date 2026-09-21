@@ -2,6 +2,7 @@ from typing import Callable, Optional, Tuple, Union
 from keras import layers, ops
 import numpy as np
 
+from .connect.filter_edges import FilterEdges
 from .select.topk import SelectTopK
 
 
@@ -141,41 +142,13 @@ class ASAPooling(layers.Layer):
         perm = select_out.node_index
 
         x_out = ops.take(x_new, perm, axis=0) * ops.reshape(ops.take(fitness, perm, axis=0), (-1, 1))
-        batch_out = ops.take(batch, perm, axis=0)
 
-        # Graph coarsening using dense matrix multiplication:
-        # A of shape [N, N], S of shape [N, len(perm)]
-        row_np = ops.convert_to_numpy(row)
-        col_np = ops.convert_to_numpy(col)
-        score_np = ops.convert_to_numpy(score)
-        ew_np = ops.convert_to_numpy(edge_weight)
-        perm_np = ops.convert_to_numpy(perm)
+        connect = FilterEdges()
+        connect_out = connect(select_out, edge_index, edge_weight, batch)
 
-        A_np = np.zeros((N, N), dtype=np.float32)
-        A_np[row_np, col_np] = ew_np
-
-        S_np = np.zeros((N, len(perm_np)), dtype=np.float32)
-        # S[i, c] where col_np is in perm_np
-        perm_map = {idx: pos for pos, idx in enumerate(perm_np)}
-        for r, c, s_val in zip(row_np, col_np, score_np):
-            if c in perm_map:
-                S_np[r, perm_map[c]] = s_val
-
-        coarse_A = np.dot(np.dot(S_np.T, A_np), S_np)
-        if not self.add_self_loops:
-            np.fill_diagonal(coarse_A, 0.0)
-        else:
-            np.fill_diagonal(coarse_A, 1.0)
-
-        edges = np.where(coarse_A > 0)
-        edge_index_out = ops.convert_to_tensor(
-            np.stack([edges[0], edges[1]], axis=0),
-            dtype=edge_index.dtype,
-        )
-        edge_weight_out = ops.convert_to_tensor(
-            coarse_A[edges[0], edges[1]],
-            dtype=x.dtype,
-        )
+        edge_index_out = connect_out.edge_index
+        edge_weight_out = connect_out.edge_attr
+        batch_out = connect_out.batch
 
         return x_out, edge_index_out, edge_weight_out, batch_out, perm
 

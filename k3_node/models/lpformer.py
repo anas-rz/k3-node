@@ -116,7 +116,7 @@ class LPAttLayer(keras.layers.Layer):
         return h
 
 
-class LPFormer(keras.layers.Layer):
+class LPFormer(keras.Model):
     r"""The LPFormer model from the
     `"LPFormer: An Adaptive Graph Transformer for Link Prediction"
     <https://arxiv.org/abs/2310.11009>`_ paper.
@@ -143,6 +143,8 @@ class LPFormer(keras.layers.Layer):
         ppr_thresholds: Optional[List[float]] = None,
         **kwargs,
     ):
+        num_gnn_layers = kwargs.pop("num_layers", num_gnn_layers)
+        num_heads = kwargs.pop("heads", num_heads)
         super().__init__(**kwargs)
         if ppr_thresholds is None:
             ppr_thresholds = [0, 1e-4, 1e-2]
@@ -206,7 +208,7 @@ class LPFormer(keras.layers.Layer):
         h = self.gnn(x, edge_index, training=training)
         return self.gnn_norm(h)
 
-    def call(self, batch, x, edge_index, ppr_matrix=None, training=False):
+    def call(self, batch=None, x=None, edge_index=None, ppr_matrix=None, training=False):
         r"""Forward pass of LPFormer.
 
         Args:
@@ -215,6 +217,20 @@ class LPFormer(keras.layers.Layer):
             edge_index: Graph edge index (2, E).
             ppr_matrix: Optional precomputed PPR matrix of shape (N, N).
         """
+        if edge_index is None:
+            if x is not None:
+                # Called as model(x, edge_index)
+                x, edge_index, batch = batch, x, x
+            elif isinstance(batch, (tuple, list)):
+                if len(batch) == 2:
+                    x, edge_index = batch[0], batch[1]
+                    batch = edge_index
+                elif len(batch) >= 3:
+                    batch, x, edge_index = batch[0], batch[1], batch[2]
+        elif batch is not None and x is not None and edge_index is not None:
+            if ops.shape(batch)[0] != 2 and ops.shape(edge_index)[0] == 2:
+                x, edge_index, batch = batch, x, edge_index
+
         num_nodes = ops.shape(x)[0]
         if ppr_matrix is None:
             ppr_matrix = compute_ppr_matrix(edge_index, num_nodes)

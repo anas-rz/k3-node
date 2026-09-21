@@ -1,7 +1,7 @@
 from keras import layers, ops
 
 from k3_node.layers.conv.message_passing import MessagePassing
-from k3_node.layers.conv.utils import gcn_norm
+from k3_node.layers.conv.utils import gcn_norm, is_tracing
 
 
 class GCNConv(MessagePassing):
@@ -104,7 +104,7 @@ class GCNConv(MessagePassing):
                     flow=self.flow,
                     dtype=x.dtype,
                 )
-                if self.cached:
+                if self.cached and not is_tracing(edge_index):
                     self._cached_edge_index = edge_index
                     self._cached_norm = edge_weight
 

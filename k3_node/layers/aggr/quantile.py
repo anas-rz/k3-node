@@ -42,6 +42,20 @@ class QuantileAggregation(Aggregation):
         **kwargs,
     ):
         self.assert_index_present(index)
+        from k3_node.layers.conv.utils import is_tracing
+        if is_tracing(x) or is_tracing(index):
+            batch_x, mask = self.to_dense_batch(
+                x, index=index, ptr=ptr, dim_size=dim_size, dim=dim, fill_value=self.fill_value
+            )
+            sorted_x = ops.sort(batch_x, axis=1)
+            N_max = ops.shape(sorted_x)[1]
+            outs = []
+            for q_val in self.q:
+                q_idx = ops.cast(ops.round(q_val * ops.cast(N_max - 1, "float32")), "int32")
+                q_out = ops.take(sorted_x, q_idx, axis=1)
+                outs.append(q_out)
+            return ops.concatenate(outs, axis=-1)
+
         x_np = ops.convert_to_numpy(x)
         idx_np = ops.convert_to_numpy(index).astype(np.int64)
 

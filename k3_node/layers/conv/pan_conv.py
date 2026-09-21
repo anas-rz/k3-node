@@ -26,7 +26,7 @@ class PANConv(MessagePassing):
         self.lin = Dense(out_channels, use_bias=True)
         self.weight = self.add_weight(
             shape=(filter_size + 1,),
-            initializer="glorot_uniform",
+            initializer="ones",
             name="weight",
         )
 
@@ -61,12 +61,16 @@ class PANConv(MessagePassing):
 
         # PAN entropy / path calculation
         # M = sum_{k=0}^filter_size weight[k] * A^k
+        # M = sum_{k=0}^filter_size exp(-E(k)/T) * A^k
+        w = ops.softplus(self.weight)
         eye = ops.eye(num_nodes, dtype=x.dtype)
         M = self.weight[0] * eye
+        M = w[0] * eye
         curr_adj = eye
         for k in range(1, self.filter_size + 1):
             curr_adj = ops.matmul(curr_adj, adj)
             M = M + self.weight[k] * curr_adj
+            M = M + w[k] * curr_adj
 
         deg = ops.sum(M, axis=1)
         deg_inv_sqrt = ops.power(ops.maximum(deg, 1e-12), -0.5)
@@ -74,6 +78,7 @@ class PANConv(MessagePassing):
         deg_inv_sqrt = ops.where(ops.isfinite(deg_inv_sqrt), deg_inv_sqrt, 0.0)
 
         M_norm = ops.expand_dims(deg_inv_sqrt, 0) * M * ops.expand_dims(deg_inv_sqrt, 1)
+        M_norm = ops.expand_dims(deg_inv_sqrt, 1) * M * ops.expand_dims(deg_inv_sqrt, 0)
 
         out = ops.matmul(M_norm, x)
         out = self.lin(out)

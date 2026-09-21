@@ -51,14 +51,24 @@ class Conv(Layer):
 
 def check_dtypes_decorator(call):
     @wraps(call)
-    def _inner_check_dtypes(inputs, **kwargs):
-        inputs = check_dtypes(inputs)
-        return call(inputs, **kwargs)
+    def _inner_check_dtypes(*args, **kwargs):
+        if len(args) == 0:
+            return call(**kwargs)
+        elif len(args) == 1:
+            inputs = check_dtypes(args[0])
+            return call(inputs, **kwargs)
+        else:
+            checked = check_dtypes(list(args))
+            if isinstance(checked, (list, tuple)) and len(checked) == len(args):
+                return call(*checked, **kwargs)
+            return call(*args, **kwargs)
 
     return _inner_check_dtypes
 
 
 def check_dtypes(inputs):
+    if not isinstance(inputs, (list, tuple)):
+        return inputs
     for value in inputs:
         if not hasattr(value, "dtype"):
             # It's not a valid tensor.
@@ -72,7 +82,10 @@ def check_dtypes(inputs):
     else:
         return inputs
 
-    if backend.is_int_dtype(a.dtype) and backend.is_float_dtype(x.dtype):
+    # If 'a' is an edge_index of shape (2, E), it must remain integer
+    if hasattr(a, "shape") and len(a.shape) == 2 and a.shape[0] == 2 and a.shape[1] != 2:
+        pass
+    elif backend.is_int_dtype(a.dtype) and backend.is_float_dtype(x.dtype):
         warnings.warn(
             f"The adjacency matrix of dtype {a.dtype} is incompatible with the dtype "
             f"of the node features {x.dtype} and has been automatically cast to "

@@ -25,7 +25,7 @@ class LGConv(MessagePassing):
             x, edge_index = x[0], x[1]
 
         if self.normalize:
-            num_nodes = int(ops.shape(x)[self.node_dim])
+            num_nodes = x.shape[self.node_dim] if hasattr(x, "shape") and x.shape[self.node_dim] is not None else ops.shape(x)[self.node_dim]
             edge_index, edge_weight = gcn_norm(
                 edge_index,
                 edge_weight,

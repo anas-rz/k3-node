@@ -1,6 +1,7 @@
 # ported from spektral
 
 from keras import activations
+from keras import activations, ops
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
 
@@ -70,8 +71,7 @@ class APPNPConv(Conv):
         self.mlp_activation = activations.get(mlp_activation)
         self.dropout_rate = dropout_rate
 
-    def build(self, input_shape):
-        assert len(input_shape) >= 2
+    def build(self, input_shape=None):
         layer_kwargs = dict(
             kernel_initializer=self.kernel_initializer,
             bias_initializer=self.bias_initializer,
@@ -91,15 +91,38 @@ class APPNPConv(Conv):
             )
         mlp_layers.append(Dense(self.channels, "linear", **layer_kwargs))
         self.mlp = Sequential(mlp_layers)
+        if input_shape is not None:
+            feat_shape = input_shape[0] if isinstance(input_shape, (list, tuple)) else input_shape
+            self.mlp.build(feat_shape)
         self.built = True
 
     def call(self, inputs, mask=None):
         x, a = inputs
+    def call(self, inputs, a=None, mask=None):
+        if a is not None:
+            x = inputs
+        elif isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+            x, a = inputs
+        else:
+            x = inputs
+            a = None
+
+        if not self.built:
+            self.build(getattr(x, "shape", None))
+
+        if a is not None and hasattr(a, "shape") and len(a.shape) == 2 and a.shape[0] == 2 and a.shape[1] != 2:
+            num_nodes = ops.shape(x)[-2] if len(ops.shape(x)) >= 2 else ops.shape(x)[0]
+            row, col = ops.cast(a[0], "int32"), ops.cast(a[1], "int32")
+            idx = ops.stack([row, col], axis=-1)
+            zeros = ops.zeros((num_nodes, num_nodes), dtype=x.dtype)
+            a = ops.scatter_update(zeros, idx, ops.ones((ops.shape(a)[1],), dtype=x.dtype))
+
         mlp_out = self.mlp(x)
         output = mlp_out
-        for _ in range(self.propagations):
-            output = (1 - self.alpha) * modal_dot(a, output) + self.alpha * mlp_out
-        if mask[0] is not None:
+        if a is not None:
+            for _ in range(self.propagations):
+                output = (1 - self.alpha) * modal_dot(a, output) + self.alpha * mlp_out
+        if mask is not None and isinstance(mask, (list, tuple)) and len(mask) > 0 and mask[0] is not None:
             output *= mask[0]
         output = self.activation(output)
 

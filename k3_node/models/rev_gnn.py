@@ -17,27 +17,30 @@ class GroupAddRev(keras.layers.Layer):
     """
     def __init__(
         self,
-        conv: Union[keras.layers.Layer, List[keras.layers.Layer]],
+        *args,
         split_dim: int = -1,
-        num_groups: Optional[int] = None,
+        num_groups: int = 2,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.split_dim = split_dim
 
-        if isinstance(conv, (list, tuple)):
-            self.convs = list(conv)
-        else:
+        if len(args) == 1 and isinstance(args[0], (list, tuple)):
+            self.convs = list(args[0])
+        elif len(args) > 1:
+            self.convs = list(args)
+        elif len(args) == 1:
+            conv = args[0]
             assert num_groups is not None, "Please specify 'num_groups'"
             self.convs = [conv]
-            # Since Keras layers might not be easily deepcopied with unbuilt state,
-            # we allow passing a list or cloning via layer config if possible
             for _ in range(num_groups - 1):
                 try:
                     cloned = conv.__class__.from_config(conv.get_config())
                 except Exception:
                     cloned = copy.deepcopy(conv)
                 self.convs.append(cloned)
+        else:
+            raise ValueError("GroupAddRev requires at least one layer argument")
 
         if len(self.convs) < 2:
             raise ValueError(f"The number of groups should not be smaller than '2' (got '{self.num_groups}')")
@@ -54,7 +57,10 @@ class GroupAddRev(keras.layers.Layer):
             if hasattr(conv, "reset_parameters"):
                 conv.reset_parameters()
 
-    def call(self, x, edge_index, *args):
+    def call(self, x, edge_index=None, *args):
+        if edge_index is None and isinstance(x, (tuple, list)):
+            if len(x) >= 2:
+                x, edge_index = x[0], x[1]
         xs = ops.split(x, self.num_groups, axis=self.split_dim)
 
         ys = []

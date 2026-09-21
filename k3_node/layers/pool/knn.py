@@ -87,6 +87,9 @@ def knn(
     batch_size: Optional[int] = None,
 ):
     r"""Finds for each element in `y` the `k` nearest points in `x`."""
+    x = ops.convert_to_tensor(x)
+    y = ops.convert_to_tensor(y)
+
     if len(ops.shape(x)) == 1:
         x = ops.expand_dims(x, axis=-1)
     if len(ops.shape(y)) == 1:
@@ -94,47 +97,25 @@ def knn(
 
     N = ops.shape(x)[0]
     M = ops.shape(y)[0]
-
-    x_np = ops.convert_to_numpy(x)
-    y_np = ops.convert_to_numpy(y)
-
     if cosine:
-        x_norm = x_np / np.maximum(np.linalg.norm(x_np, axis=-1, keepdims=True), 1e-12)
-        y_norm = y_np / np.maximum(np.linalg.norm(y_np, axis=-1, keepdims=True), 1e-12)
-        dist = 1.0 - np.dot(y_norm, x_norm.T)
+        x_norm = x / ops.maximum(ops.norm(x, axis=-1, keepdims=True), 1e-12)
+        y_norm = y / ops.maximum(ops.norm(y, axis=-1, keepdims=True), 1e-12)
+        dist = 1.0 - ops.matmul(y_norm, ops.transpose(x_norm))
     else:
-        # Pairwise Euclidean squared distance
-        y_sq = np.sum(y_np**2, axis=-1, keepdims=True)
-        x_sq = np.sum(x_np**2, axis=-1, keepdims=True)
-        dist = np.maximum(y_sq + x_sq.T - 2.0 * np.dot(y_np, x_np.T), 0.0)
+        y_exp = ops.expand_dims(y, axis=1)
+        x_exp = ops.expand_dims(x, axis=0)
+        dist = ops.sum(ops.power(y_exp - x_exp, 2), axis=-1)
 
     if batch_x is not None or batch_y is not None:
-        if batch_x is None:
-            batch_x_np = np.zeros(N, dtype=np.int64)
-        else:
-            batch_x_np = ops.convert_to_numpy(batch_x).astype(np.int64)
+        batch_x = ops.zeros((N,), dtype="int32") if batch_x is None else ops.cast(batch_x, "int32")
+        batch_y = ops.zeros((M,), dtype="int32") if batch_y is None else ops.cast(batch_y, "int32")
+        mask = ops.expand_dims(batch_y, axis=1) != ops.expand_dims(batch_x, axis=0)
+        dist = ops.where(mask, 1e9, dist)
 
-        if batch_y is None:
-            batch_y_np = np.zeros(M, dtype=np.int64)
-        else:
-            batch_y_np = ops.convert_to_numpy(batch_y).astype(np.int64)
-
-        mask = batch_y_np[:, None] != batch_x_np[None, :]
-        dist[mask] = float("inf")
-
-    # For each row in y, find k smallest
-    k_actual = min(k, N)
-    col_indices = np.argsort(dist, axis=-1)[:, :k_actual]
-
-    row = np.repeat(np.arange(M), k_actual)
-    col = col_indices.reshape(-1)
-
-    # Filter out infinite distances
-    valid = ~np.isinf(dist[row, col])
-    row = row[valid]
-    col = col[valid]
-
-    return ops.convert_to_tensor(np.stack([row, col], axis=0), dtype="int64")
+    _, col_indices = ops.top_k(-dist, k=k, sorted=True)
+    row = ops.repeat(ops.arange(0, M, dtype="int64"), k)
+    col = ops.reshape(ops.cast(col_indices, "int64"), (-1,))
+    return ops.stack([row, col], axis=0)
 
 
 def knn_graph(
@@ -149,21 +130,34 @@ def knn_graph(
 ):
     r"""Computes graph edges to the nearest `k` points."""
     assert flow in ["source_to_target", "target_to_source"]
-    edge_index = knn(
-        x,
-        x,
-        k if loop else k + 1,
-        batch_x=batch,
-        batch_y=batch,
-        cosine=cosine,
-    )
-    edge_index_np = ops.convert_to_numpy(edge_index)
+    x = ops.convert_to_tensor(x)
+    if len(ops.shape(x)) == 1:
+        x = ops.expand_dims(x, axis=-1)
+
+    N = ops.shape(x)[0]
+    if cosine:
+        x_norm = x / ops.maximum(ops.norm(x, axis=-1, keepdims=True), 1e-12)
+        dist = 1.0 - ops.matmul(x_norm, ops.transpose(x_norm))
+    else:
+        x_exp_0 = ops.expand_dims(x, axis=0)
+        x_exp_1 = ops.expand_dims(x, axis=1)
+        dist = ops.sum(ops.power(x_exp_1 - x_exp_0, 2), axis=-1)
+
     if not loop:
-        mask = edge_index_np[0] != edge_index_np[1]
-        edge_index_np = edge_index_np[:, mask]
+        diag_mask = ops.eye(N, dtype=dist.dtype) * 1e9
+        dist = dist + diag_mask
+
+    if batch is not None:
+        batch = ops.cast(batch, "int32")
+        batch_mask = ops.expand_dims(batch, axis=1) != ops.expand_dims(batch, axis=0)
+        dist = ops.where(batch_mask, 1e9, dist)
+
+    _, col_indices = ops.top_k(-dist, k=k, sorted=True)
+    row = ops.repeat(ops.arange(0, N, dtype="int64"), k)
+    col = ops.reshape(ops.cast(col_indices, "int64"), (-1,))
 
     if flow == "source_to_target":
-        edge_index_np = np.flip(edge_index_np, axis=0)
-
-    return ops.convert_to_tensor(edge_index_np, dtype=edge_index.dtype)
+        return ops.stack([col, row], axis=0)
+    else:
+        return ops.stack([row, col], axis=0)
 

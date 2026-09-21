@@ -89,7 +89,7 @@ class ChebConv(MessagePassing):
         if edge_index is None and isinstance(x, (tuple, list)):
             x, edge_index = x[0], x[1]
 
-        num_nodes = int(ops.shape(x)[self.node_dim])
+        num_nodes = x.shape[self.node_dim] if hasattr(x, "shape") and x.shape[self.node_dim] is not None else ops.shape(x)[self.node_dim]
         edge_index, norm = self.__norm__(
             edge_index,
             num_nodes,

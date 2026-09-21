@@ -9,7 +9,7 @@ from k3_node.layers.conv import GCNConv
 from k3_node.layers.pool import TopKPooling
 
 
-class GraphUNet(keras.layers.Layer):
+class GraphUNet(keras.Model):
     r"""The Graph U-Net model from the `"Graph U-Nets"
     <https://arxiv.org/abs/1905.05178>`_ paper which implements a U-Net like
     architecture with graph pooling and unpooling operations.
@@ -118,7 +118,10 @@ class GraphUNet(keras.layers.Layer):
         new_edge_weight = ops.convert_to_tensor(v2, dtype="float32")
         return new_edge_index, new_edge_weight
 
-    def call(self, x, edge_index, batch=None, edge_weight=None):
+    def call(self, x, edge_index=None, batch=None, edge_weight=None):
+        if edge_index is None and isinstance(x, (tuple, list)):
+            if len(x) >= 2:
+                x, edge_index = x[0], x[1]
         num_nodes = ops.shape(x)[0]
         if batch is None:
             batch = ops.zeros((num_nodes,), dtype="int32")

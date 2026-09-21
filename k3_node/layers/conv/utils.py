@@ -279,8 +279,16 @@ def scatter(src, index, dim=0, dim_size=None, reduce="sum"):
         return sum_val / count
     elif reduce == "max":
         return ops.segment_max(src, index, num_segments=dim_size)
+        val = ops.segment_max(src, index, num_segments=dim_size)
+        ones = ops.ones((ops.shape(index)[0], 1), dtype=src.dtype)
+        count = ops.segment_sum(ones, index, num_segments=dim_size)
+        return ops.where(ops.greater(count, 0), val, ops.zeros_like(val))
     elif reduce == "min":
         return ops.segment_min(src, index, num_segments=dim_size)
+        val = ops.segment_min(src, index, num_segments=dim_size)
+        ones = ops.ones((ops.shape(index)[0], 1), dtype=src.dtype)
+        count = ops.segment_sum(ones, index, num_segments=dim_size)
+        return ops.where(ops.greater(count, 0), val, ops.zeros_like(val))
     else:
         raise ValueError(f"Unknown reduce operation: {reduce}")
 

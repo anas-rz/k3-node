@@ -78,7 +78,6 @@ class MemPooling(layers.Layer):
                 batch = ops.zeros((ops.shape(x)[0],), dtype="int32")
             else:
                 batch = ops.cast(batch, dtype="int32")
-            B = int(ops.max(batch)) + 1 if batch_size is None else batch_size
             N = ops.shape(x)[0] if max_num_nodes is None else max_num_nodes
             # Simple conversion if already batch
             x = ops.expand_dims(x, axis=0)

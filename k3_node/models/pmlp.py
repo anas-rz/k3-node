@@ -7,7 +7,7 @@ from k3_node.layers.conv import SimpleConv
 from k3_node.layers.norm import BatchNorm
 
 
-class PMLP(keras.layers.Layer):
+class PMLP(keras.Model):
     r"""The P(ropagational)MLP model from the `"Graph Neural Networks are
     Inherently Good Generalizers: Insights by Bridging GNNs and MLPs"
     <https://arxiv.org/abs/2212.09034>`_ paper.
@@ -110,6 +110,9 @@ class PMLP(keras.layers.Layer):
             training (bool, optional): Override the instance-level
                 ``self.training`` flag. (default: :obj:`None`)
         """
+        if edge_index is None and isinstance(x, (tuple, list)):
+            if len(x) >= 2:
+                x, edge_index = x[0], x[1]
         # Respect both call-time kwarg and instance-level flag (PyG compat)
         is_training = training if training is not None else self.training
 

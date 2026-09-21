@@ -56,7 +56,7 @@ class SparseLinear(keras.layers.Layer):
         return out
 
 
-class LINKX(keras.layers.Layer):
+class LINKX(keras.Model):
     r"""The LINKX model from the `"Large Scale Learning on Non-Homophilous
     Graphs: New Benchmarks and Strong Simple Methods"
     <https://arxiv.org/abs/2110.14446>`_ paper.
@@ -126,7 +126,10 @@ class LINKX(keras.layers.Layer):
         self.node_mlp.reset_parameters()
         self.final_mlp.reset_parameters()
 
-    def call(self, x, edge_index, edge_weight=None, training=None):
+    def call(self, x, edge_index=None, edge_weight=None, training=None):
+        if edge_index is None and isinstance(x, (tuple, list)):
+            if len(x) >= 2:
+                x, edge_index = x[0], x[1]
         out = self.edge_lin(edge_index, edge_weight)
 
         if self.edge_norm is not None and self.edge_mlp is not None:

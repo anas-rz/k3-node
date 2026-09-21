@@ -63,7 +63,13 @@ class PatchTransformerAggregation(Aggregation):
         **kwargs,
     ):
         if max_num_elements is None:
-            if ptr is not None:
+            from k3_node.layers.conv.utils import is_tracing
+            if is_tracing(x) or is_tracing(index):
+                if hasattr(x, "shape") and x.shape[0] is not None:
+                    max_num_elements = int(x.shape[0])
+                else:
+                    max_num_elements = 16
+            elif ptr is not None:
                 ptr_np = ops.convert_to_numpy(ptr)
                 count = ptr_np[1:] - ptr_np[:-1]
                 max_num_elements = int(np.max(count)) if len(count) > 0 else 1

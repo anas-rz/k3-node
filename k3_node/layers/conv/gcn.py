@@ -38,6 +38,12 @@ class GraphConvolution(Layer):
         bias_constraint=None,
         **kwargs,
     ):
+        if isinstance(activation, int):
+            # Called as GraphConvolution(in_channels, out_channels)
+            self.in_channels = units
+            units = activation
+            activation = kwargs.pop("activation", None)
+
         if "input_shape" not in kwargs and input_dim is not None:
             kwargs["input_shape"] = (input_dim,)
 
@@ -59,8 +65,11 @@ class GraphConvolution(Layer):
         super().__init__(**kwargs)
 
     def build(self, input_shapes):
-        feat_shape = input_shapes[0]
-        input_dim = int(feat_shape[-1])
+        if isinstance(input_shapes, (list, tuple)) and len(input_shapes) > 0 and isinstance(input_shapes[0], (list, tuple)):
+            feat_shape = input_shapes[0]
+        else:
+            feat_shape = input_shapes
+        input_dim = int(feat_shape[-1]) if feat_shape is not None and feat_shape[-1] is not None else 8
 
         self.kernel = self.add_weight(
             shape=(1, input_dim, self.units),
@@ -82,8 +91,26 @@ class GraphConvolution(Layer):
             self.bias = None
         self.built = True
 
-    def call(self, inputs):
-        features, A = inputs
+    def call(self, inputs, A=None, **kwargs):
+        if A is not None:
+            features = inputs
+        elif isinstance(inputs, (list, tuple)):
+            features, A = inputs
+        else:
+            features, A = inputs, None
+
+        if A is not None and hasattr(A, "shape") and len(A.shape) == 2 and A.shape[0] == 2 and A.shape[1] != 2:
+            num_nodes = ops.shape(features)[-2]
+            a_dense = ops.zeros((num_nodes, num_nodes), dtype=features.dtype)
+            indices = ops.transpose(A, axes=[1, 0])
+            updates = ops.ones(shape=(ops.shape(A)[1],), dtype=features.dtype)
+            A = ops.scatter_update(a_dense, indices, updates)
+
+        was_2d = len(ops.shape(features)) == 2
+        if was_2d:
+            features = ops.expand_dims(features, 0)
+        if len(ops.shape(A)) == 2:
+            A = ops.expand_dims(A, 0)
 
         # Calculate the layer operation of GCN
 
@@ -96,5 +123,8 @@ class GraphConvolution(Layer):
         if self.bias is not None:
             output += self.bias
         output = self.activation(output)
+
+        if was_2d:
+            output = ops.squeeze(output, 0)
 
         return output

@@ -108,60 +108,86 @@ class DMoNPooling(layers.Layer):
         if self.drop is not None:
             s = self.drop(s, training=training)
         s = ops.softmax(s, axis=-1)
-
-        batch_size = ops.shape(x)[0]
-        num_nodes = ops.shape(x)[1]
-        C = self.k
-
-        if mask is None:
-            mask = ops.ones((batch_size, num_nodes, 1), dtype=x.dtype)
-        else:
-            mask = ops.cast(ops.reshape(mask, (batch_size, num_nodes, 1)), x.dtype)
-
-        x = x * mask
-        s = s * mask
-
-        out = ops.selu(ops.matmul(ops.swapaxes(s, 1, 2), x))
-        out_adj = ops.matmul(ops.matmul(ops.swapaxes(s, 1, 2), adj), s)
-
-        # Spectral loss:
-        degrees = ops.sum(adj, axis=-1, keepdims=True) * mask
-        degrees_t = ops.swapaxes(degrees, 1, 2)
-
-        m = ops.sum(degrees, axis=(1, 2)) / 2.0
-        m_expand = ops.broadcast_to(ops.reshape(m, (-1, 1, 1)), (batch_size, C, C))
-
-        ca = ops.matmul(ops.swapaxes(s, 1, 2), degrees)
-        cb = ops.matmul(degrees_t, s)
-
-        normalizer = ops.matmul(ca, cb) / 2.0 / m_expand
-        decompose = out_adj - normalizer
-        tr = ops.sum(ops.diagonal(decompose, axis1=1, axis2=2), axis=-1)
-        spectral_loss = ops.mean(-tr / 2.0 / m)
-
-        # Orthogonality regularization:
-        ss = ops.matmul(ops.swapaxes(s, 1, 2), s)
-        i_s = ops.eye(C, dtype=ss.dtype)
-        norm_ss = ops.sqrt(ops.sum(ops.power(ss, 2), axis=(-1, -2), keepdims=True))
-        norm_is = ops.sqrt(ops.cast(C, ss.dtype))
-        diff = (ss / norm_ss) - (ops.expand_dims(i_s, axis=0) / norm_is)
-        ortho_loss = ops.mean(ops.sqrt(ops.sum(ops.power(diff, 2), axis=(-1, -2))))
-
-        # Cluster loss:
-        cluster_size = ops.sum(s, axis=1)
-        cluster_loss = ops.sqrt(ops.sum(ops.power(cluster_size, 2), axis=1))
-        cluster_loss = ops.mean(cluster_loss / ops.sum(mask, axis=1) * norm_is - 1.0)
-
-        # Fix and normalize coarsened adjacency matrix:
-        eye_c = ops.expand_dims(ops.eye(C, dtype=out_adj.dtype), axis=0)
-        out_adj = out_adj * (1.0 - eye_c)
-        d = ops.sum(out_adj, axis=-1, keepdims=False)
-        d = ops.expand_dims(ops.sqrt(d), axis=1) + 1e-15
-        out_adj = (out_adj / d) / ops.swapaxes(d, 1, 2)
-
+        if mask is not None:
+            batch_size = ops.shape(x)[0]
+            num_nodes = ops.shape(x)[1]
+            mask_m = ops.cast(ops.reshape(mask, (batch_size, num_nodes, 1)), x.dtype)
+            s = s * mask_m
+        out, out_adj, spectral_loss, ortho_loss, cluster_loss = dense_dmon_pool(x, adj, s, mask=mask)
         return s, out, out_adj, spectral_loss, ortho_loss, cluster_loss
 
     def __repr__(self) -> str:
         return (f'{self.__class__.__name__}({self.mlp.in_channels}, '
                 f'num_clusters={self.mlp.out_channels})')
+
+
+def dense_dmon_pool(
+    x,
+    adj,
+    s,
+    mask: Optional[any] = None,
+) -> Tuple[any, any, any, any, any]:
+    r"""Functional dense DMoN pooling operator."""
+    if len(ops.shape(x)) == 2:
+        x = ops.expand_dims(x, axis=0)
+    if len(ops.shape(adj)) == 2:
+        adj = ops.expand_dims(adj, axis=0)
+    if len(ops.shape(s)) == 2:
+        s = ops.expand_dims(s, axis=0)
+
+    batch_size = ops.shape(x)[0]
+    num_nodes = ops.shape(x)[1]
+    C = ops.shape(s)[-1]
+
+    if mask is None:
+        mask = ops.ones((batch_size, num_nodes, 1), dtype=x.dtype)
+    else:
+        mask = ops.cast(ops.reshape(mask, (batch_size, num_nodes, 1)), x.dtype)
+
+    x = x * mask
+    s = s * mask
+
+    out = ops.selu(ops.matmul(ops.swapaxes(s, 1, 2), x))
+    out_adj = ops.matmul(ops.matmul(ops.swapaxes(s, 1, 2), adj), s)
+
+    # Spectral loss:
+    degrees = ops.sum(adj, axis=-1, keepdims=True) * mask
+    degrees_t = ops.swapaxes(degrees, 1, 2)
+
+    m = ops.sum(degrees, axis=(1, 2)) / 2.0
+    m_expand = ops.broadcast_to(ops.reshape(m, (-1, 1, 1)), (batch_size, C, C))
+
+    ca = ops.matmul(ops.swapaxes(s, 1, 2), degrees)
+    cb = ops.matmul(degrees_t, s)
+
+    normalizer = ops.matmul(ca, cb) / 2.0 / (m_expand + 1e-15)
+    decompose = out_adj - normalizer
+    tr = ops.sum(ops.diagonal(decompose, axis1=1, axis2=2), axis=-1)
+    spectral_loss = ops.mean(-tr / 2.0 / (m + 1e-15))
+
+    # Orthogonality regularization:
+    ss = ops.matmul(ops.swapaxes(s, 1, 2), s)
+    i_s = ops.eye(C, dtype=ss.dtype)
+    norm_ss = ops.sqrt(ops.sum(ops.power(ss, 2), axis=(-1, -2), keepdims=True) + 1e-15)
+    norm_is = ops.sqrt(ops.cast(C, ss.dtype))
+    diff = (ss / norm_ss) - (ops.expand_dims(i_s, axis=0) / norm_is)
+    ortho_loss = ops.mean(ops.sqrt(ops.sum(ops.power(diff, 2), axis=(-1, -2)) + 1e-15))
+
+    # Cluster loss:
+    cluster_size = ops.sum(s, axis=1)
+    cluster_loss = ops.sqrt(ops.sum(ops.power(cluster_size, 2), axis=1) + 1e-15)
+    cluster_loss = ops.mean(cluster_loss / (ops.sum(mask, axis=1) + 1e-15) * norm_is - 1.0)
+
+    # Fix and normalize coarsened adjacency matrix:
+    eye_c = ops.expand_dims(ops.eye(C, dtype=out_adj.dtype), axis=0)
+    out_adj = out_adj * (1.0 - eye_c)
+    d = ops.sum(out_adj, axis=-1, keepdims=False)
+    d = ops.expand_dims(ops.sqrt(d), axis=1) + 1e-15
+    out_adj = (out_adj / d) / ops.swapaxes(d, 1, 2)
+
+    return out, out_adj, spectral_loss, ortho_loss, cluster_loss
+
+
+dmon_pool = dense_dmon_pool
+
 

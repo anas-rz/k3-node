@@ -15,7 +15,7 @@ class PDNConv(MessagePassing):
         in_channels: int,
         out_channels: int,
         edge_dim: int,
-        hidden_channels: int,
+        hidden_channels: int = 16,
         add_self_loops: bool = True,
         normalize: bool = True,
         bias: bool = True,

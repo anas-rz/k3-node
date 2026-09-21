@@ -33,7 +33,7 @@ def _normalization_resolver(query, *args, **kwargs):
     raise ValueError(f"Could not resolve normalization layer '{query}'")
 
 
-class MLP(keras.layers.Layer):
+class MLP(keras.Model):
     r"""A Multi-Layer Perceptron (MLP) model.
 
     There exists two ways to instantiate an `MLP`:

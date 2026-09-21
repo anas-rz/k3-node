@@ -23,7 +23,12 @@ class MeanSubtractionNorm(layers.Layer):
         if batch is None:
             return x - ops.mean(x, axis=0, keepdims=True)
 
-        if dim_size is None:
+        if dim_size is not None and not isinstance(dim_size, int):
+            try:
+                dim_size = int(dim_size)
+            except Exception:
+                pass
+        elif dim_size is None:
             dim_size = ops.cast(ops.max(batch), "int32") + 1
 
         batch = ops.cast(batch, "int32")

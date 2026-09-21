@@ -109,11 +109,11 @@ class BatchNorm(layers.Layer):
             self.bias.assign(ops.zeros(self.bias.shape, dtype=self.bias.dtype))
 
     def call(self, x, training=None):
-        num_samples = ops.shape(x)[0]
+        num_samples_static = x.shape[0]
         is_training = training if training is not None else True
 
         if is_training:
-            if num_samples <= 1:
+            if num_samples_static is not None and num_samples_static <= 1:
                 if not self.allow_single_element:
                     raise ValueError(f"Expected more than 1 value per channel when training, got input size {ops.shape(x)}")
                 # Evaluation behavior with running stats
@@ -124,7 +124,7 @@ class BatchNorm(layers.Layer):
                 var = ops.var(x, axis=0)
 
                 if self.track_running_stats:
-                    n = ops.cast(num_samples, dtype=x.dtype)
+                    n = ops.cast(ops.shape(x)[0], dtype=x.dtype)
                     unbiased_var = var * n / ops.maximum(n - 1.0, 1.0)
                     if self.momentum is None:
                         count = ops.cast(self.num_batches_tracked + 1, dtype=x.dtype)

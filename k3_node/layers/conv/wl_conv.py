@@ -24,7 +24,16 @@ class WLConv(keras.layers.Layer):
     def build(self, input_shape=None):
         self.built = True
 
-    def call(self, x, edge_index):
+    def call(self, x, edge_index=None, num_nodes=None):
+        if edge_index is None:
+            if isinstance(x, (tuple, list)) and len(x) >= 2:
+                x, edge_index = x[0], x[1]
+            elif ops.shape(x)[0] == 2:
+                edge_index = x
+                if num_nodes is None:
+                    num_nodes = int(ops.max(edge_index)) + 1
+                x = ops.zeros((num_nodes,), dtype="int64")
+
         if len(ops.shape(x)) > 1:
             x = ops.argmax(x, axis=-1)
 

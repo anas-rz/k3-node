@@ -2,6 +2,7 @@ import keras
 from keras import ops
 from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.conv.utils import scatter, softmax
+from k3_node.layers.conv.utils import is_tracing
 
 
 class HypergraphConv(MessagePassing):
@@ -90,12 +91,16 @@ class HypergraphConv(MessagePassing):
 
         num_nodes = ops.shape(x)[0]
         if num_edges is None:
-            num_edges = 0
-            if ops.shape(hyperedge_index)[1] > 0:
-                num_edges = int(ops.max(hyperedge_index[1])) + 1
+            if not is_tracing(hyperedge_index):
+                try:
+                    num_edges = int(ops.max(hyperedge_index[1])) + 1
+                except Exception:
+                    num_edges = None
 
         if hyperedge_weight is None:
-            hyperedge_weight = ops.ones((num_edges,), dtype=x.dtype)
+            edge_w = ops.ones((ops.shape(hyperedge_index)[1],), dtype=x.dtype)
+        else:
+            edge_w = ops.take(hyperedge_weight, hyperedge_index[1], axis=0)
 
         x = self.lin(x)
 
@@ -117,7 +122,6 @@ class HypergraphConv(MessagePassing):
             else:
                 alpha = softmax(alpha, index=hyperedge_index[0], num_nodes=num_nodes)
 
-        edge_w = ops.take(hyperedge_weight, hyperedge_index[1], axis=0)
         D = scatter(edge_w, hyperedge_index[0], dim=0, dim_size=num_nodes, reduce="sum")
         D = ops.where(ops.equal(D, 0), 0.0, 1.0 / D)
 

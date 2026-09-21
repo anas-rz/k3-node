@@ -63,7 +63,7 @@ class GatedGraphConv(MessagePassing):
         self.n_layers = n_layers
         self.num_layers = n_layers
 
-    def build(self, input_shape):
+    def build(self, input_shape=None):
         self.kernel = self.add_weight(
             name="kernel",
             shape=(self.n_layers, self.channels, self.channels),
@@ -83,6 +83,8 @@ class GatedGraphConv(MessagePassing):
             use_bias=self.use_bias,
             dtype=self.dtype,
         )
+        self.rnn.build((self.channels,))
+        super().build(input_shape)
         self.built = True
 
     def call(self, x, edge_index=None, edge_weight=None, **kwargs):
@@ -97,6 +99,8 @@ class GatedGraphConv(MessagePassing):
             to_pad = self.channels - F
             ndims = len(ops.shape(x)) - 1
             output = ops.pad(x, [[0, 0]] * ndims + [[0, to_pad]])
+        elif F > self.channels:
+            output = x[..., :self.channels]
         else:
             output = x
 

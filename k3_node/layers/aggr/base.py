@@ -21,37 +21,73 @@ def to_dense_batch(
     r"""Transforms a batched feature tensor into a dense representation
     of shape `(batch_size, max_nodes, *dims)`.
     """
-    x_np = ops.convert_to_numpy(x)
-    index_np = ops.convert_to_numpy(index).astype(np.int64)
-    N = len(index_np)
+    from k3_node.layers.conv.utils import is_tracing
 
-    B = int(np.max(index_np)) + 1 if len(index_np) > 0 else 0
-    if dim_size is not None:
-        B = max(B, dim_size)
+    if not (is_tracing(x) or is_tracing(index)):
+        try:
+            x_np = ops.convert_to_numpy(x)
+            index_np = ops.convert_to_numpy(index).astype(np.int64)
+            N = len(index_np)
 
-    # Compute local index for each node in its graph
-    counts = np.bincount(index_np, minlength=B)
-    max_nodes = int(np.max(counts)) if len(counts) > 0 else 0
+            B = int(np.max(index_np)) + 1 if len(index_np) > 0 else 0
+            if dim_size is not None:
+                B = max(B, int(dim_size))
+
+            # Compute local index for each node in its graph
+            counts = np.bincount(index_np, minlength=B)
+            max_nodes = int(np.max(counts)) if len(counts) > 0 else 0
+            if max_num_elements is not None:
+                max_nodes = max(max_nodes, int(max_num_elements))
+
+            out_np = np.full((B, max_nodes, *x_np.shape[1:]), fill_value, dtype=x_np.dtype)
+            mask_np = np.zeros((B, max_nodes), dtype=bool)
+
+            # Fast assignment
+            curr_counts = np.zeros(B, dtype=np.int64)
+            for i in range(N):
+                b = index_np[i]
+                pos = curr_counts[b]
+                if pos < max_nodes:
+                    out_np[b, pos] = x_np[i]
+                    mask_np[b, pos] = True
+                curr_counts[b] += 1
+
+            return (
+                ops.convert_to_tensor(out_np, dtype=x.dtype),
+                ops.convert_to_tensor(mask_np, dtype="bool"),
+            )
+        except Exception:
+            pass
+
+    # Pure ops implementation for symbolic tracing / graph execution
+    N = ops.shape(x)[0]
+    idx_col = ops.expand_dims(index, 1)
+    idx_row = ops.expand_dims(index, 0)
+    same_seg = ops.cast(ops.equal(idx_col, idx_row), "int32")
+    tril = ops.tril(ops.ones((N, N), dtype="int32"))
+    local_idx = ops.sum(same_seg * tril, axis=1) - 1
+
     if max_num_elements is not None:
-        max_nodes = max(max_nodes, max_num_elements)
+        max_nodes = int(max_num_elements)
+    elif hasattr(x, "shape") and x.shape[0] is not None:
+        max_nodes = int(x.shape[0])
+    else:
+        max_nodes = ops.max(local_idx) + 1
 
-    out_np = np.full((B, max_nodes, *x_np.shape[1:]), fill_value, dtype=x_np.dtype)
-    mask_np = np.zeros((B, max_nodes), dtype=bool)
+    if dim_size is not None and isinstance(dim_size, int):
+        B = dim_size
+    elif hasattr(index, "shape") and index.shape[0] is not None and dim_size is not None:
+        B = int(dim_size)
+    else:
+        B = ops.max(index) + 1
 
-    # Fast assignment
-    curr_counts = np.zeros(B, dtype=np.int64)
-    for i in range(N):
-        b = index_np[i]
-        pos = curr_counts[b]
-        if pos < max_nodes:
-            out_np[b, pos] = x_np[i]
-            mask_np[b, pos] = True
-        curr_counts[b] += 1
+    dense_x = ops.full((B, max_nodes, *ops.shape(x)[1:]), fill_value, dtype=x.dtype)
+    mask = ops.zeros((B, max_nodes), dtype="bool")
 
-    return (
-        ops.convert_to_tensor(out_np, dtype=x.dtype),
-        ops.convert_to_tensor(mask_np, dtype="bool"),
-    )
+    scatter_indices = ops.stack([ops.cast(index, "int32"), ops.cast(local_idx, "int32")], axis=1)
+    dense_x = ops.scatter_update(dense_x, scatter_indices, x)
+    mask = ops.scatter_update(mask, scatter_indices, ops.ones((N,), dtype="bool"))
+    return dense_x, mask
 
 
 class Aggregation(layers.Layer):
@@ -103,14 +139,10 @@ class Aggregation(layers.Layer):
                 )
 
         if index is not None and dim_size is None:
-            from k3_node.layers.conv.utils import is_tracing
-            if is_tracing(index):
-                dim_size = x.shape[dim] if hasattr(x, "shape") and x.shape[dim] is not None else ops.shape(x)[dim]
-            else:
-                dim_size = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
+            dim_size = ops.max(index) + 1
             try:
                 dim_size = int(dim_size)
-            except (TypeError, ValueError):
+            except Exception:
                 pass
 
         # Handle positional / keyword call to call()
@@ -141,6 +173,9 @@ class Aggregation(layers.Layer):
 
     def assert_sorted_index(self, index: Optional[any]):
         if index is not None:
+            from k3_node.layers.conv.utils import is_tracing
+            if is_tracing(index):
+                return
             idx_np = ops.convert_to_numpy(index)
             if not np.all(idx_np[:-1] <= idx_np[1:]):
                 raise ValueError(
@@ -187,15 +222,21 @@ class Aggregation(layers.Layer):
             count = ops.segment_sum(ones, index, num_segments=dim_size)
             return sum_val / ops.maximum(count, 1.0)
         elif reduce == "max":
-            return ops.segment_max(x, index, num_segments=dim_size)
+            val = ops.segment_max(x, index, num_segments=dim_size)
+            ones = ops.ones_like(x)
+            count = ops.segment_sum(ones, index, num_segments=dim_size)
+            return ops.where(ops.greater(count, 0), val, ops.zeros_like(val))
         elif reduce == "min":
-            return -ops.segment_max(-x, index, num_segments=dim_size)
+            val = -ops.segment_max(-x, index, num_segments=dim_size)
+            ones = ops.ones_like(x)
+            count = ops.segment_sum(ones, index, num_segments=dim_size)
+            return ops.where(ops.greater(count, 0), val, ops.zeros_like(val))
         elif reduce == "mul":
-            x_np = ops.convert_to_numpy(x)
-            idx_np = ops.convert_to_numpy(index).astype(np.int64)
-            out_np = np.ones((dim_size, *x_np.shape[1:]), dtype=x_np.dtype)
-            np.multiply.at(out_np, idx_np, x_np)
-            return ops.convert_to_tensor(out_np, dtype=x.dtype)
+            log_abs = ops.log(ops.maximum(ops.abs(x), 1e-7))
+            sum_log = ops.segment_sum(log_abs, index, num_segments=dim_size)
+            neg_count = ops.segment_sum(ops.cast(ops.less(x, 0.0), dtype=x.dtype), index, num_segments=dim_size)
+            sign = ops.cos(ops.cast(3.141592653589793, dtype=x.dtype) * neg_count)
+            return ops.exp(sum_log) * sign
         else:
             raise ValueError(f"Unsupported reduction '{reduce}'")
 

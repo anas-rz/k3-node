@@ -3,7 +3,7 @@ from typing import Optional, Union, Tuple
 from keras import ops
 
 from k3_node.layers.conv.message_passing import MessagePassing
-from k3_node.layers.conv.utils import gcn_norm
+from k3_node.layers.conv.utils import gcn_norm, is_tracing
 
 
 class GCN2Conv(MessagePassing):
@@ -76,7 +76,7 @@ class GCN2Conv(MessagePassing):
                 edge_index = self._cached_edge_index
                 edge_weight = self._cached_norm
             else:
-                num_nodes = int(ops.shape(x)[self.node_dim])
+                num_nodes = x.shape[self.node_dim] if hasattr(x, "shape") and x.shape[self.node_dim] is not None else ops.shape(x)[self.node_dim]
                 edge_index, edge_weight = gcn_norm(
                     edge_index,
                     edge_weight,
@@ -85,7 +85,7 @@ class GCN2Conv(MessagePassing):
                     flow=self.flow,
                     dtype=x.dtype,
                 )
-                if self.cached:
+                if self.cached and not is_tracing(edge_index):
                     self._cached_edge_index = edge_index
                     self._cached_norm = edge_weight
 

@@ -1,4 +1,5 @@
 from keras import layers, ops
+from k3_node.layers.conv.utils import is_tracing
 
 
 class GraphNorm(layers.Layer):
@@ -64,7 +65,16 @@ class GraphNorm(layers.Layer):
             return self.weight * out / std + self.bias
 
         if batch_size is None:
-            batch_size = ops.cast(ops.max(batch), "int32") + 1
+            if not is_tracing(batch):
+                try:
+                    batch_size = int(ops.max(batch)) + 1
+                except Exception:
+                    batch_size = None
+        elif not isinstance(batch_size, int):
+            try:
+                batch_size = int(batch_size)
+            except Exception:
+                pass
 
         batch = ops.cast(batch, "int32")
         ones = ops.ones((ops.shape(x)[0], 1), dtype=x.dtype)

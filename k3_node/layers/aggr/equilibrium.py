@@ -72,7 +72,8 @@ class EquilibriumAggregation(Aggregation):
     ):
         self.assert_index_present(index)
         index = ops.cast(index, dtype="int32")
-        dim_size = dim_size or (int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0)
+        if dim_size is None:
+            dim_size = ops.max(index) + 1
 
         # Initial mean aggregation as starting state
         x_mean = self.reduce(x, index, ptr, dim_size, dim, reduce="mean")

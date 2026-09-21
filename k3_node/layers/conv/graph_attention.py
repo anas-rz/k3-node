@@ -59,6 +59,11 @@ class GraphAttention(Layer):
                 )
             )
 
+        if isinstance(attn_heads, int) and attn_heads > 1 and "out_channels" not in kwargs:
+            self.in_channels = units
+            units = attn_heads
+            attn_heads = 1
+
         self.units = units  # Number of output features (F' in the paper)
         self.attn_heads = attn_heads  # Number of attention heads (K in the paper)
         self.attn_heads_reduction = attn_heads_reduction  # Eq. 5 and 6 in the paper
@@ -97,8 +102,11 @@ class GraphAttention(Layer):
         super().__init__(**kwargs)
 
     def build(self, input_shapes):
-        feat_shape = input_shapes[0]
-        input_dim = int(feat_shape[-1])
+        if isinstance(input_shapes, (list, tuple)) and len(input_shapes) > 0 and isinstance(input_shapes[0], (list, tuple)):
+            feat_shape = input_shapes[0]
+        else:
+            feat_shape = input_shapes
+        input_dim = int(feat_shape[-1]) if feat_shape is not None and feat_shape[-1] is not None else 8
 
         # Variables to support integrated gradients
         self.delta = self.add_weight(
@@ -156,8 +164,24 @@ class GraphAttention(Layer):
         X = inputs[0]  # Node features (1 x N x F)
         A = inputs[1]  # Adjacency matrix (1 X N x N)
         N = ops.shape(A)[-1]
+    def call(self, inputs, A=None, **kwargs):
+        if A is not None:
+            X = inputs
+        elif isinstance(inputs, (list, tuple)):
+            X = inputs[0]
+            A = inputs[1]
+        else:
+            X, A = inputs, None
+
+        if A is not None and hasattr(A, "shape") and len(A.shape) == 2 and A.shape[0] == 2 and A.shape[1] != 2:
+            num_nodes = ops.shape(X)[-2]
+            a_dense = ops.zeros((num_nodes, num_nodes), dtype=X.dtype)
+            indices = ops.transpose(A, axes=[1, 0])
+            updates = ops.ones(shape=(ops.shape(A)[1],), dtype=X.dtype)
+            A = ops.scatter_update(a_dense, indices, updates)
 
         assert len(ops.shape(A)) == 2, f"Adjacency matrix A should be 2-D"
+        N = ops.shape(A)[-1]
 
         outputs = []
         for head in range(self.attn_heads):

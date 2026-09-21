@@ -19,7 +19,7 @@ from k3_node.models.mlp import MLP, _normalization_resolver
 from k3_node.models.jumping_knowledge import JumpingKnowledge
 
 
-class BasicGNN(keras.layers.Layer):
+class BasicGNN(keras.Model):
     r"""An abstract base class for implementing basic GNN models.
 
     Args:

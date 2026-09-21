@@ -151,9 +151,12 @@ class GATConv(MessagePassing):
         alpha_dst = ops.sum(x_dst_proj * self.att_dst, axis=-1) if x_dst_proj is not None else None
 
         if self.add_self_loops:
-            num_nodes = ops.shape(x_src)[0]
-            if x_dst is not None:
-                num_nodes = min(num_nodes, ops.shape(x_dst)[0])
+            if not isinstance(x, (tuple, list)):
+                num_nodes = ops.shape(x)[0]
+            else:
+                num_nodes = ops.shape(x_src)[0]
+                if x_dst is not None:
+                    num_nodes = ops.minimum(num_nodes, ops.shape(x_dst)[0])
             edge_index, edge_attr = remove_self_loops(edge_index, edge_attr)
             edge_index, edge_attr = add_self_loops(
                 edge_index, edge_attr, fill_value=self.fill_value, num_nodes=num_nodes

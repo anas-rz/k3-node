@@ -50,7 +50,12 @@ class PairNorm(layers.Layer):
                 norm = ops.sqrt(ops.sum(ops.power(x, 2), axis=-1, keepdims=True))
                 return scale * x / (self.eps + norm)
 
-        if batch_size is None:
+        if batch_size is not None and not isinstance(batch_size, int):
+            try:
+                batch_size = int(batch_size)
+            except Exception:
+                pass
+        elif batch_size is None:
             batch_size = ops.cast(ops.max(batch), "int32") + 1
 
         batch = ops.cast(batch, "int32")

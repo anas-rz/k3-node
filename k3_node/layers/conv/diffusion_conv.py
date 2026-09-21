@@ -56,6 +56,7 @@ class DiffusionConv(Conv):
     def __init__(
         self,
         channels,
+        out_channels=None,
         K=6,
         activation="tanh",
         kernel_initializer="glorot_uniform",
@@ -63,6 +64,9 @@ class DiffusionConv(Conv):
         kernel_constraint=None,
         **kwargs,
     ):
+        if out_channels is not None:
+            self.in_channels = channels
+            channels = out_channels
         super().__init__(
             activation=activation,
             kernel_initializer=kernel_initializer,
@@ -84,6 +88,9 @@ class DiffusionConv(Conv):
             )
             for _ in range(self.channels)
         ]
+        for f in self.filters:
+            f.build(None)
+        super().build(input_shape)
 
     def apply_filters(self, x, a):
         diffused_features = []
@@ -94,8 +101,21 @@ class DiffusionConv(Conv):
 
         return ops.concatenate(diffused_features, -1)
 
-    def call(self, inputs):
-        x, a = inputs
+    def call(self, inputs, a=None, **kwargs):
+        if a is not None:
+            x = inputs
+        elif isinstance(inputs, (list, tuple)):
+            x, a = inputs
+        else:
+            x, a = inputs, None
+
+        if a is not None and hasattr(a, "shape") and len(a.shape) == 2 and a.shape[0] == 2 and a.shape[1] != 2:
+            num_nodes = ops.shape(x)[0]
+            a_dense = ops.zeros((num_nodes, num_nodes), dtype=x.dtype)
+            indices = ops.transpose(a, axes=[1, 0])
+            updates = ops.ones(shape=(ops.shape(a)[1],), dtype=x.dtype)
+            a = ops.scatter_update(a_dense, indices, updates)
+
         output = self.apply_filters(x, a)
 
         output = self.activation(output)

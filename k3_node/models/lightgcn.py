@@ -25,7 +25,7 @@ class BPRLoss:
         return -log_prob + regularization
 
 
-class LightGCN(keras.layers.Layer):
+class LightGCN(keras.Model):
     r"""The LightGCN model from the `"LightGCN: Simplifying and Powering
     Graph Convolution Network for Recommendation"
     <https://arxiv.org/abs/2002.02126>`_ paper.

@@ -54,6 +54,7 @@ class GPSConv(keras.layers.Layer):
         norm: Optional[str] = "batch_norm",
         **kwargs,
     ):
+        conv = kwargs.pop("local_gnn", conv)
         super().__init__(**kwargs)
 
         self.channels = channels

@@ -100,6 +100,11 @@ class InstanceNorm(layers.Layer):
         if batch is None:
             batch = ops.zeros((ops.shape(x)[0],), dtype="int32")
             batch_size = 1
+        elif batch_size is not None and not isinstance(batch_size, int):
+            try:
+                batch_size = int(batch_size)
+            except Exception:
+                pass
         elif batch_size is None:
             batch_size = ops.cast(ops.max(batch), "int32") + 1
 
