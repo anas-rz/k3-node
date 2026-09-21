@@ -72,22 +72,26 @@ class SelectOutput:
                 )
 
 
-try:
-    import jax
-    from jax.tree_util import register_pytree_node
+import keras
 
-    register_pytree_node(
-        SelectOutput,
-        lambda s: (
-            (s.node_index, s.cluster_index, s.weight),
-            (s.num_nodes, s.num_clusters),
-        ),
-        lambda aux, children: SelectOutput(
-            children[0], aux[0], children[1], aux[1], children[2]
-        ),
-    )
-except Exception:
-    pass
+if keras.config.backend() == "jax":
+    try:
+        import jax
+        from jax.tree_util import register_pytree_node
+
+        register_pytree_node(
+            SelectOutput,
+            lambda s: (
+                (s.node_index, s.cluster_index, s.weight),
+                (s.num_nodes, s.num_clusters),
+            ),
+            lambda aux, children: SelectOutput(
+                children[0], aux[0], children[1], aux[1], children[2]
+            ),
+        )
+    except Exception:
+        pass
+
 
 
 class Select(layers.Layer):

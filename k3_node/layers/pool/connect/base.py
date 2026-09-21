@@ -49,17 +49,21 @@ class ConnectOutput:
                 )
 
 
-try:
-    import jax
-    from jax.tree_util import register_pytree_node
+import keras
 
-    register_pytree_node(
-        ConnectOutput,
-        lambda c: ((c.edge_index, c.edge_attr, c.batch), ()),
-        lambda aux, children: ConnectOutput(children[0], children[1], children[2]),
-    )
-except Exception:
-    pass
+if keras.config.backend() == "jax":
+    try:
+        import jax
+        from jax.tree_util import register_pytree_node
+
+        register_pytree_node(
+            ConnectOutput,
+            lambda c: ((c.edge_index, c.edge_attr, c.batch), ()),
+            lambda aux, children: ConnectOutput(children[0], children[1], children[2]),
+        )
+    except Exception:
+        pass
+
 
 
 class Connect(layers.Layer):

@@ -5,6 +5,13 @@ from keras import ops
 def is_tracing(x: Any) -> bool:
     if x is None:
         return False
+    try:
+        from keras.src.backend.common.symbolic_scope import in_symbolic_scope
+
+        if in_symbolic_scope():
+            return True
+    except Exception:
+        pass
     name = type(x).__name__
     if "Tracer" in name or "KerasTensor" in name or "SymbolicTensor" in name:
         return True
