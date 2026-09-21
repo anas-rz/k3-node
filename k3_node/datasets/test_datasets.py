@@ -277,3 +277,46 @@ def test_ppi():
 
         with pytest.raises(AssertionError):
             datasets.PPI(root=tmp_dir, split="unknown")
+
+
+def test_reddit():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        raw_dir = osp.join(tmp_dir, "raw")
+        os.makedirs(raw_dir, exist_ok=True)
+
+        num_nodes = 10
+        num_features = 602
+        features = np.random.randn(num_nodes, num_features).astype(np.float32)
+        labels = np.random.randint(0, 41, size=num_nodes, dtype=np.int64)
+        node_types = np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3], dtype=np.int64)
+
+        np.savez(
+            osp.join(raw_dir, "reddit_data.npz"),
+            feature=features,
+            label=labels,
+            node_types=node_types,
+        )
+
+        row = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        col = np.array([1, 0, 3, 2, 5, 4, 7, 6, 9, 8])
+        data_arr = np.ones(10, dtype=np.float32)
+        adj_coo = sp.coo_matrix((data_arr, (row, col)), shape=(num_nodes, num_nodes))
+        sp.save_npz(osp.join(raw_dir, "reddit_graph.npz"), adj_coo)
+
+        dataset = datasets.Reddit(root=tmp_dir)
+        assert len(dataset) == 1
+        assert dataset.num_features == 602
+        assert dataset.num_classes == 41
+
+        data = dataset[0]
+        assert data.num_nodes == 10
+        assert data.x.shape == (10, 602)
+        assert data.y.shape == (10,)
+        assert data.edge_index.shape[0] == 2
+        assert data.train_mask.shape == (10,)
+        assert data.val_mask.shape == (10,)
+        assert data.test_mask.shape == (10,)
+        assert int(ops.sum(ops.cast(data.train_mask, "int32"))) == 4
+        assert int(ops.sum(ops.cast(data.val_mask, "int32"))) == 3
+        assert int(ops.sum(ops.cast(data.test_mask, "int32"))) == 3
+

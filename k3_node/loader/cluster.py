@@ -50,17 +50,35 @@ class ClusterData(BaseDataset):
         self.sparse_format = sparse_format
         self.data = data
 
-        self.cluster = partition_graph(data.edge_index, data.num_nodes, num_parts)
+        loaded = False
+        if save_dir is not None:
+            import os.path as osp
+            recursive_str = '_recursive' if recursive else ''
+            root_dir = osp.join(save_dir, f'part_{num_parts}{recursive_str}')
+            path = osp.join(root_dir, filename or 'metis.pt')
+            if osp.exists(path):
+                try:
+                    import torch
+                    part = torch.load(path, map_location="cpu", weights_only=False)
+                    if hasattr(part, "partptr") and hasattr(part, "node_perm"):
+                        partptr = np.asarray(part.partptr)
+                        node_perm = np.asarray(part.node_perm)
+                        self.part_nodes = [node_perm[partptr[i]:partptr[i+1]] for i in range(num_parts)]
+                        self.cluster = np.zeros(data.num_nodes, dtype=np.int64)
+                        for i in range(num_parts):
+                            self.cluster[self.part_nodes[i]] = i
+                        loaded = True
+                except Exception:
+                    pass
 
-        # Precompute part indices
-        self.part_nodes = []
-        is_torch = torch is not None and isinstance(self.cluster, Tensor)
-        for i in range(num_parts):
-            if is_torch:
-                nodes = (self.cluster == i).nonzero(as_tuple=False).view(-1)
-            else:
-                nodes = np.nonzero(self.cluster == i)[0]
-            self.part_nodes.append(nodes)
+        if not loaded:
+            self.cluster = partition_graph(data.edge_index, data.num_nodes, num_parts)
+            from k3_node.loader.utils import to_numpy
+            cluster_np = to_numpy(self.cluster)
+            sort_idx = np.argsort(cluster_np)
+            sorted_cluster = cluster_np[sort_idx]
+            split_idx = np.searchsorted(sorted_cluster, np.arange(num_parts + 1))
+            self.part_nodes = [sort_idx[split_idx[i]:split_idx[i+1]] for i in range(num_parts)]
 
     def __len__(self) -> int:
         return self.num_parts
@@ -99,7 +117,7 @@ class ClusterLoader(BaseDataLoader):
         for part_id in batch:
             all_nodes.append(self.cluster_data.part_nodes[part_id])
 
-        if is_torch:
+        if is_torch and all_nodes and isinstance(all_nodes[0], Tensor):
             nodes = torch.cat(all_nodes, dim=0)
         else:
             nodes = np.concatenate([np.asarray(x) for x in all_nodes], axis=0)
