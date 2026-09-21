@@ -233,3 +233,47 @@ def test_read_tu():
         assert "x" in slices
         assert "y" in slices
         assert sizes["num_node_labels"] == 2
+
+
+def test_ppi():
+    import json
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        raw_dir = osp.join(tmp_dir, "raw")
+        os.makedirs(raw_dir, exist_ok=True)
+
+        for split in ["train", "valid", "test"]:
+            graph = {
+                "directed": True,
+                "multigraph": False,
+                "graph": {},
+                "nodes": [{"id": 0}, {"id": 1}, {"id": 2}, {"id": 3}],
+                "links": [
+                    {"source": 0, "target": 1},
+                    {"source": 1, "target": 0},
+                    {"source": 2, "target": 3},
+                    {"source": 3, "target": 2},
+                ],
+            }
+            with open(osp.join(raw_dir, f"{split}_graph.json"), "w") as f:
+                json.dump(graph, f)
+
+            np.save(osp.join(raw_dir, f"{split}_feats.npy"), np.ones((4, 50), dtype=np.float32))
+            np.save(osp.join(raw_dir, f"{split}_labels.npy"), np.ones((4, 121), dtype=np.float32))
+            np.save(osp.join(raw_dir, f"{split}_graph_id.npy"), np.array([1, 1, 2, 2], dtype=np.int64))
+
+        dataset = datasets.PPI(root=tmp_dir, split="train")
+        assert len(dataset) == 2
+        assert dataset.num_features == 50
+        assert dataset.num_classes == 121
+
+        data0 = dataset[0]
+        assert data0.num_nodes == 2
+        assert data0.x.shape == (2, 50)
+        assert data0.y.shape == (2, 121)
+        assert data0.edge_index.shape == (2, 2)
+
+        val_dataset = datasets.PPI(root=tmp_dir, split="val")
+        assert len(val_dataset) == 2
+
+        with pytest.raises(AssertionError):
+            datasets.PPI(root=tmp_dir, split="unknown")
