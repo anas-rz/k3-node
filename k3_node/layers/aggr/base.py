@@ -23,39 +23,46 @@ def to_dense_batch(
     """
     from k3_node.layers.conv.utils import is_tracing
 
-    if not (is_tracing(x) or is_tracing(index)):
+    if not is_tracing(index):
         try:
-            x_np = ops.convert_to_numpy(x)
+            # `index` is purely structural (never differentiated), so plain
+            # numpy is fine for it. `x` itself is placed into the dense
+            # tensor with the differentiable `ops.scatter` below -- a numpy
+            # round-trip on `x` would silently detach it from the graph and
+            # stop gradients from flowing back into whatever produced it.
             index_np = ops.convert_to_numpy(index).astype(np.int64)
             N = len(index_np)
 
-            B = int(np.max(index_np)) + 1 if len(index_np) > 0 else 0
+            B = int(np.max(index_np)) + 1 if N > 0 else 0
             if dim_size is not None:
                 B = max(B, int(dim_size))
 
-            # Compute local index for each node in its graph
+            # Compute local index for each node in its graph. `index` is
+            # required to be sorted (see `assert_sorted_index`), so the
+            # first occurrence of each value is its graph's start offset.
             counts = np.bincount(index_np, minlength=B)
             max_nodes = int(np.max(counts)) if len(counts) > 0 else 0
             if max_num_elements is not None:
                 max_nodes = max(max_nodes, int(max_num_elements))
 
-            out_np = np.full((B, max_nodes, *x_np.shape[1:]), fill_value, dtype=x_np.dtype)
+            local_index = np.arange(N) - np.searchsorted(index_np, index_np, side="left")
+            valid = local_index < max_nodes
+
             mask_np = np.zeros((B, max_nodes), dtype=bool)
+            mask_np[index_np[valid], local_index[valid]] = True
 
-            # Fast assignment
-            curr_counts = np.zeros(B, dtype=np.int64)
-            for i in range(N):
-                b = index_np[i]
-                pos = curr_counts[b]
-                if pos < max_nodes:
-                    out_np[b, pos] = x_np[i]
-                    mask_np[b, pos] = True
-                curr_counts[b] += 1
+            feat_shape = tuple(ops.shape(x)[1:])
+            scatter_idx = np.stack([index_np[valid], local_index[valid]], axis=1)
+            x_valid = x if bool(valid.all()) else ops.take(x, np.nonzero(valid)[0], axis=0)
+            out = ops.scatter(scatter_idx, x_valid, shape=(B, max_nodes, *feat_shape))
 
-            return (
-                ops.convert_to_tensor(out_np, dtype=x.dtype),
-                ops.convert_to_tensor(mask_np, dtype="bool"),
-            )
+            if fill_value != 0.0:
+                mask_t = ops.convert_to_tensor(mask_np)
+                mask_expanded = ops.reshape(mask_t, (B, max_nodes) + (1,) * len(feat_shape))
+                fill = ops.full((B, max_nodes, *feat_shape), fill_value, dtype=x.dtype)
+                out = ops.where(mask_expanded, out, fill)
+
+            return out, ops.convert_to_tensor(mask_np, dtype="bool")
         except Exception:
             pass
 
