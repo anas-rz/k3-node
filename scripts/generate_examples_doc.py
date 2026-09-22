@@ -269,12 +269,25 @@ def generate_category_page(category: str, examples_list: list) -> str:
         "",
         "---",
         "",
+        '<div class="grid cards" markdown>',
+        "",
     ]
 
     for ex in sorted(examples_list, key=lambda e: e["title"]):
-        lines.append(f"- [{ex['title']}]({ex['doc_file']}) — {ex['description']}")
+        lines.append(f"-   {ex['icon']} __{ex['title']}__")
+        lines.append("")
+        lines.append(f"    {ex['description']}")
+        lines.append("")
+        lines.append(f"    `{ex['dataset']}` · `{ex['layer']}`")
+        lines.append("")
+        lines.append(
+            f"    [:octicons-arrow-right-24: Read Tutorial]({ex['doc_file']}){{ .md-button .md-button--primary }} &nbsp; "
+            f"[:simple-googlecolab:]({ex['colab_url']}){{ .md-button title=\"View in Colab\" }} &nbsp; "
+            f"[:octicons-mark-github-16:]({ex['github_url']}){{ .md-button title=\"GitHub source\" }}"
+        )
+        lines.append("")
 
-    lines.append("")
+    lines.extend(["</div>", ""])
     return "\n".join(lines)
 
 
