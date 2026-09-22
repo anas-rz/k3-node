@@ -759,6 +759,53 @@ METADATA = {
     },
 }
 
+# Maps each example stem to the examples/ subdirectory it belongs to.
+# Keep in sync with the layout under examples/ (see examples/*/README or the
+# directory names themselves for the grouping rationale).
+CATEGORIES = {
+    "node_classification": [
+        "agnn", "arma", "cora", "correct_and_smooth", "dir_gnn", "dna", "egc",
+        "equilibrium_median", "film", "gat", "gcn", "gcn2_cora", "geniepath",
+        "graph_unet", "lcm_aggr_2nd_min", "linkx", "mixhop", "pmlp", "sgc",
+        "sign", "super_gat", "tagcn", "label_prop", "rect",
+    ],
+    "large_scale_training": [
+        "ogbn_train", "ogbn_proteins_deepgcn", "unimp_arxiv", "hierarchical_sampling",
+        "cluster_gcn_reddit", "graph_saint", "shadow", "rev_gnn", "graphland", "reddit",
+    ],
+    "inductive_learning": ["ppi", "gcn2_ppi", "cluster_gcn_ppi"],
+    "link_prediction": [
+        "ar_link_pred", "autoencoder", "link_pred", "lpformer", "renet",
+        "seal_link_pred", "tgn", "signed_gcn",
+    ],
+    "knowledge_graphs": [
+        "kge_fb15k_237", "rgcn_link_pred", "rgat", "rgcn", "relbench_example", "rdl",
+    ],
+    "graph_classification": [
+        "colors_topk_pool", "mem_pool", "mnist_graclus", "mnist_nn_conv",
+        "mnist_voxel_grid", "mutag_gin", "proteins_diff_pool", "proteins_dmon_pool",
+        "proteins_gmt", "proteins_mincut_pool", "proteins_topk_pool",
+        "triangles_sag_pool", "upfd", "wl_kernel",
+    ],
+    "molecular_property_prediction": [
+        "attentive_fp", "graph_gps", "pna", "qm9_nn_conv",
+        "qm9_pretrained_dimenet", "qm9_pretrained_schnet",
+    ],
+    "point_cloud_3d": [
+        "dgcnn_classification", "dgcnn_segmentation", "point_transformer_classification",
+        "point_transformer_segmentation", "pointnet2_classification",
+        "pointnet2_segmentation", "randlanet_classification", "randlanet_segmentation",
+        "faust",
+    ],
+    "representation_learning": [
+        "graph_sage_unsup", "graph_sage_unsup_ppi", "infomax_inductive",
+        "infomax_transductive", "node2vec", "gpse",
+    ],
+    "clustering": ["argva_node_clustering", "ogc"],
+    "utilities_and_misc": ["datapipe", "tensorboard_logging", "glnn", "lightgcn"],
+}
+STEM_TO_CATEGORY = {stem: cat for cat, stems in CATEGORIES.items() for stem in stems}
+
 
 def sanitize_pyg_code_for_colab(code: str) -> str:
     """Make original PyG example Colab-friendly without breaking its functionality."""
@@ -1294,7 +1341,10 @@ def convert_all():
             pyg_code = fp.read()
 
         nb = create_colab_notebook(stem, pyg_code)
-        out_nb_path = os.path.join(OUT_DIR, f"{stem}.ipynb")
+        category = STEM_TO_CATEGORY.get(stem, "")
+        out_dir = os.path.join(OUT_DIR, category) if category else OUT_DIR
+        os.makedirs(out_dir, exist_ok=True)
+        out_nb_path = os.path.join(out_dir, f"{stem}.ipynb")
 
         with open(out_nb_path, "w", encoding="utf-8") as fp:
             json.dump(nb, fp, indent=2)

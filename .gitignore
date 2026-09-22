@@ -8,6 +8,7 @@ GraphGPS
 grover
 Mole-BERT
 site/
+docs/examples/
 *.egg-info/
 dist/
 build/

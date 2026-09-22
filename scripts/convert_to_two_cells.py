@@ -138,7 +138,7 @@ def convert(nb_path: Path) -> bool:
 
 def main():
     only = sys.argv[1:] if len(sys.argv) > 1 else None
-    notebooks = sorted(EXAMPLES_DIR.glob("*.ipynb"))
+    notebooks = sorted(EXAMPLES_DIR.glob("**/*.ipynb"))
     if only:
         wanted = set(only)
         notebooks = [n for n in notebooks if n.stem in wanted or n.name in wanted]

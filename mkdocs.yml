@@ -53,9 +53,18 @@ nav:
       - Quickstart: quickstart.md
       - Multi-Backend Guide: backends.md
   - Examples:
-      - Code Examples: examples/index.md
-      - OGBN-Arxiv (TensorFlow): examples/ogb_arxiv_spektral_dataset.md
-      - Cora (PyTorch): examples/planetoid_PyTorch_Geometric.md
+      - Overview: examples/index.md
+      - Node Classification: examples/node_classification.md
+      - Large-Scale & Scalable Training: examples/large_scale_training.md
+      - Inductive Learning: examples/inductive_learning.md
+      - Link Prediction: examples/link_prediction.md
+      - Knowledge Graphs: examples/knowledge_graphs.md
+      - Graph Classification: examples/graph_classification.md
+      - Molecular Property Prediction: examples/molecular_property_prediction.md
+      - Point Cloud & 3D: examples/point_cloud_3d.md
+      - Representation Learning: examples/representation_learning.md
+      - Clustering: examples/clustering.md
+      - Utilities & Misc: examples/utilities_and_misc.md
   - API Reference:
       - Convolution Layers: api/conv.md
       - Aggregation Layers: api/aggr.md

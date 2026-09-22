@@ -88,7 +88,7 @@ def main():
     ap.add_argument("--only", type=str, default=None, help="comma-separated notebook stems")
     args = ap.parse_args()
 
-    notebooks = sorted(EXAMPLES_DIR.glob("*.ipynb"))
+    notebooks = sorted(EXAMPLES_DIR.glob("**/*.ipynb"))
     if args.only:
         wanted = set(args.only.split(","))
         notebooks = [n for n in notebooks if n.stem in wanted]
