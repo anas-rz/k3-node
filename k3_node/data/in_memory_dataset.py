@@ -22,11 +22,15 @@ class InMemoryDataset(Dataset):
         log: bool = True,
         force_reload: bool = False,
     ):
-        super().__init__(root, transform, pre_transform, pre_filter, log, force_reload)
+        # Must be set before `super().__init__()`, which triggers
+        # `self.process()` for datasets processed for the first time --
+        # `process()` implementations (e.g. `TUDataset`) commonly call
+        # `len(self)` / `self.get(idx)`, both of which read these attributes.
         self._data: Optional[BaseData] = None
         self.slices: Optional[Dict[str, Any]] = None
         self.sizes: Dict[str, Any] = {}
         self._data_list: Optional[List[BaseData]] = None
+        super().__init__(root, transform, pre_transform, pre_filter, log, force_reload)
 
     @property
     def data(self) -> Optional[BaseData]:

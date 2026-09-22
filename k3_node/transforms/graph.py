@@ -452,6 +452,13 @@ class ToDense(BaseTransform):
                 if hasattr(data, key) and getattr(data, key) is not None:
                     val = getattr(data, key)
                     val_np = to_numpy(val)
+                    # `y` is only padded when it's genuinely node-level (one
+                    # row per node, as in dense node classification). For
+                    # graph-level labels (e.g. graph classification, where
+                    # `y` has a single row per graph) padding would corrupt
+                    # the label by appending zeros to it.
+                    if key == "y" and val_np.shape[0] != orig_num_nodes:
+                        continue
                     pad_shape = (pad_nodes,) + val_np.shape[1:]
                     padded = np.concatenate([val_np, np.zeros(pad_shape, dtype=val_np.dtype)], axis=0)
                     setattr(data, key, match_tensor(padded, val))
