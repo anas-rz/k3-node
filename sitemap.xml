@@ -101,6 +101,10 @@
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/clustering/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
          <loc>https://anas-rz.github.io/k3-node/examples/colors_topk_pool/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
@@ -177,6 +181,10 @@
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/graph_classification/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
          <loc>https://anas-rz.github.io/k3-node/examples/graph_gps/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
@@ -205,6 +213,10 @@
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/inductive_learning/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
          <loc>https://anas-rz.github.io/k3-node/examples/infomax_inductive/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
@@ -217,7 +229,15 @@
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/knowledge_graphs/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
          <loc>https://anas-rz.github.io/k3-node/examples/label_prop/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/large_scale_training/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
@@ -230,6 +250,10 @@
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/examples/link_pred/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/link_prediction/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
@@ -261,11 +285,19 @@
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/molecular_property_prediction/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
          <loc>https://anas-rz.github.io/k3-node/examples/mutag_gin/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/examples/node2vec/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/node_classification/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
@@ -286,6 +318,10 @@
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/examples/pna/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/point_cloud_3d/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
@@ -369,6 +405,10 @@
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/representation_learning/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
          <loc>https://anas-rz.github.io/k3-node/examples/rev_gnn/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
@@ -430,6 +470,10 @@
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/examples/upfd/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/utilities_and_misc/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
