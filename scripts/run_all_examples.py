@@ -31,7 +31,11 @@ _summary_lock = Lock()
 def extract_code(nb_path: Path) -> str:
     nb = json.loads(nb_path.read_text())
     code_cells = [c for c in nb["cells"] if c["cell_type"] == "code"]
-    return "".join(code_cells[-1]["source"])
+    src = "".join(code_cells[-1]["source"])
+    # Strip Jupyter/Colab shell-magic lines (e.g. "!pip install ..."), which
+    # are valid in a notebook cell but not in a plain .py script.
+    lines = [l for l in src.split("\n") if not l.strip().startswith("!")]
+    return "\n".join(lines)
 
 
 def run_one(nb_path: Path, backend: str, timeout: int) -> dict:
