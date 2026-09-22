@@ -269,10 +269,6 @@
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
-         <loc>https://anas-rz.github.io/k3-node/examples/ogb_arxiv_spektral_dataset/</loc>
-         <lastmod>2026-09-22</lastmod>
-    </url>
-    <url>
          <loc>https://anas-rz.github.io/k3-node/examples/ogbn_proteins_deepgcn/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
@@ -282,10 +278,6 @@
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/examples/ogc/</loc>
-         <lastmod>2026-09-22</lastmod>
-    </url>
-    <url>
-         <loc>https://anas-rz.github.io/k3-node/examples/planetoid_PyTorch_Geometric/</loc>
          <lastmod>2026-09-22</lastmod>
     </url>
     <url>
