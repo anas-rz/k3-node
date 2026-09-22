@@ -1382,21 +1382,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#k3_node.models.DeepGraphInfomax.loss" class="md-nav__link">
+  <a href="#k3_node.models.DeepGraphInfomax.loss_fn" class="md-nav__link">
     <span class="md-ellipsis">
       
-        loss
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.models.DeepGraphInfomax.reset_parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        reset_parameters
+        loss_fn
       
     </span>
   </a>
@@ -2721,7 +2710,7 @@
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
+              Bases: <code><span title="keras.Model">Model</span></code></p>
 
 
 
@@ -3318,7 +3307,7 @@ Point Clouds" &lt;https://arxiv.org/abs/1801.07829&gt;</code>_ paper, using the
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
+              Bases: <code><span title="keras.Model">Model</span></code></p>
 
 
 
@@ -4323,93 +4312,12 @@ adjacency matrix.</p>
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
+              Bases: <code><span title="keras.Model">Model</span></code></p>
 
 
 
         <p>The Deep Graph Infomax model from the
-<code>"Deep Graph Infomax" &lt;https://arxiv.org/abs/1809.10341&gt;</code>_
-paper based on user-defined encoder and summary model :math:<code>\mathcal{E}</code>
-and :math:<code>\mathcal{R}</code> respectively, and a corruption function
-:math:<code>\mathcal{C}</code>.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>hidden_channels</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The latent space dimensionality.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>encoder</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The encoder module :math:<code>\mathcal{E}</code>.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>summary</code>
-            </td>
-            <td>
-                  <code><span title="callable">callable</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The readout function :math:<code>\mathcal{R}</code>.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>corruption</code>
-            </td>
-            <td>
-                  <code><span title="callable">callable</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The corruption function :math:<code>\mathcal{C}</code>.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+<code>"Deep Graph Infomax" &lt;https://arxiv.org/abs/1809.10341&gt;</code>_ paper.</p>
 
 
 
@@ -4473,8 +4381,8 @@ probability scores assigned to this patch-summary pair.</p>
 <div class="doc doc-object doc-function">
 
 
-<h4 id="k3_node.models.DeepGraphInfomax.loss" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">loss</span><span class="p">(</span><span class="n">pos_z</span><span class="p">,</span> <span class="n">neg_z</span><span class="p">,</span> <span class="n">summary</span><span class="p">)</span></code>
+<h4 id="k3_node.models.DeepGraphInfomax.loss_fn" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">loss_fn</span><span class="p">(</span><span class="n">pos_z</span><span class="p">,</span> <span class="n">neg_z</span><span class="p">,</span> <span class="n">summary</span><span class="p">)</span></code>
 
 </h4>
 
@@ -4482,24 +4390,6 @@ probability scores assigned to this patch-summary pair.</p>
     <div class="doc doc-contents ">
 
         <p>Computes the mutual information maximization objective.</p>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h4 id="k3_node.models.DeepGraphInfomax.reset_parameters" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">reset_parameters</span><span class="p">()</span></code>
-
-</h4>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Resets all learnable parameters of the module.</p>
 
 
     </div>
@@ -5201,7 +5091,7 @@ Large-Graph Representations"
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
+              Bases: <code><span title="keras.Model">Model</span></code></p>
 
 
 
@@ -5377,7 +5267,7 @@ Large-Graph Representations"
 
 
 <h4 id="k3_node.models.LPFormer.call" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">ppr_matrix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">batch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">edge_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ppr_matrix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h4>
 
@@ -5410,7 +5300,7 @@ Large-Graph Representations"
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -5425,7 +5315,7 @@ Large-Graph Representations"
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -5440,7 +5330,7 @@ Large-Graph Representations"
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -5541,7 +5431,7 @@ Large-Graph Representations"
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
+              Bases: <code><span title="keras.Model">Model</span></code></p>
 
 
 
@@ -5674,6 +5564,23 @@ readout.</p>
             </td>
             <td>
                   <code>0.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>batch_size</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Fixed batch size (number of graphs) for JAX/XLA
+static shape compatibility. (default: <code>None</code>)</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -6888,7 +6795,7 @@ symmetric normalization coefficients on-the-fly.
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
+              Bases: <code><span title="keras.Model">Model</span></code></p>
 
 
 
@@ -7172,7 +7079,7 @@ inference. (default: :obj:<code>None</code>)</p>
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
+              Bases: <code><span title="keras.Model">Model</span></code></p>
 
 
 
@@ -7609,7 +7516,7 @@ between 0 and 1. (default: <code>0.5</code>)</p>
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
+              Bases: <code><span title="keras.Model">Model</span></code></p>
 
 
 
@@ -9113,7 +9020,7 @@ or list of GNN layers.</p>
               </div>
             </td>
             <td>
-                  <code>None</code>
+                  <code>2</code>
             </td>
           </tr>
       </tbody>

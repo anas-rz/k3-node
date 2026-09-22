@@ -2891,7 +2891,7 @@ aggregation. (default: <code>1</code>)</p>
 
 
 <h4 id="k3_node.layers.conv.MessagePassing.call" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">edge_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">edge_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">edge_attr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h4>
 
@@ -10456,6 +10456,36 @@ Implementation of Crystal Graph Convolutional Neural Networks (CGCNN) layer</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
+                <code>channels</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of channels/units (optional).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_dim</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The dimensionality of edge features (optional).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>aggregate</code>
             </td>
             <td>
@@ -11461,7 +11491,7 @@ Implementation of PPNP layer</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -11472,7 +11502,7 @@ Implementation of PPNP layer</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Deprecated, use tf.gather or GatherIndices instead.</p>
+                <p>Deprecated.</p>
               </div>
             </td>
             <td>
@@ -11487,7 +11517,7 @@ Implementation of PPNP layer</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Deprecated, use <code>keras.layers.Input</code> with <code>input_shape</code> instead.</p>
+                <p>Deprecated.</p>
               </div>
             </td>
             <td>

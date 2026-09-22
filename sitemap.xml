@@ -2,78 +2,446 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://anas-rz.github.io/k3-node/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/backends/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/checklist/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/quickstart/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/aggr/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/conv/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/data/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/datasets/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/dense/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/kge/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/loader/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/models/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/norm/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/pool/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/pretrained/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/transforms/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/examples/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/agnn/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/ar_link_pred/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/argva_node_clustering/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/arma/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/attentive_fp/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/autoencoder/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/cluster_gcn_ppi/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/cluster_gcn_reddit/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/colors_topk_pool/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/cora/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/correct_and_smooth/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/datapipe/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/dgcnn_classification/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/dgcnn_segmentation/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/dir_gnn/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/dna/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/egc/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/equilibrium_median/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/faust/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/film/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/gat/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/gcn/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/gcn2_cora/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/gcn2_ppi/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/geniepath/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/glnn/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/gpse/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/graph_gps/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/graph_sage_unsup/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/graph_sage_unsup_ppi/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/graph_saint/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/graph_unet/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/graphland/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/hierarchical_sampling/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/infomax_inductive/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/infomax_transductive/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/kge_fb15k_237/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/label_prop/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/lcm_aggr_2nd_min/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/lightgcn/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/link_pred/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/linkx/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/lpformer/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/mem_pool/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/mixhop/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/mnist_graclus/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/mnist_nn_conv/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/mnist_voxel_grid/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/mutag_gin/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/node2vec/</loc>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/examples/ogb_arxiv_spektral_dataset/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/ogbn_proteins_deepgcn/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/ogbn_train/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/ogc/</loc>
+         <lastmod>2026-09-22</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/examples/planetoid_PyTorch_Geometric/</loc>
-         <lastmod>2026-09-20</lastmod>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/pmlp/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/pna/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/point_transformer_classification/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/point_transformer_segmentation/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/pointnet2_classification/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/pointnet2_segmentation/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/ppi/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/proteins_diff_pool/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/proteins_dmon_pool/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/proteins_gmt/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/proteins_mincut_pool/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/proteins_topk_pool/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/qm9_nn_conv/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/qm9_pretrained_dimenet/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/qm9_pretrained_schnet/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/randlanet_classification/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/randlanet_segmentation/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/rdl/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/rect/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/reddit/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/relbench_example/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/renet/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/rev_gnn/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/rgat/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/rgcn/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/rgcn_link_pred/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/seal_link_pred/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/sgc/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/shadow/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/sign/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/signed_gcn/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/super_gat/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/tagcn/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/tensorboard_logging/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/tgn/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/triangles_sag_pool/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/unimp_arxiv/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/upfd/</loc>
+         <lastmod>2026-09-22</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/wl_kernel/</loc>
+         <lastmod>2026-09-22</lastmod>
     </url>
 </urlset>
