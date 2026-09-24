@@ -21,6 +21,14 @@
          <lastmod>2026-09-24</lastmod>
     </url>
     <url>
+         <loc>https://anas-rz.github.io/k3-node/api/attention/</loc>
+         <lastmod>2026-09-24</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/api/bio/</loc>
+         <lastmod>2026-09-24</lastmod>
+    </url>
+    <url>
          <loc>https://anas-rz.github.io/k3-node/api/conv/</loc>
          <lastmod>2026-09-24</lastmod>
     </url>
@@ -45,11 +53,19 @@
          <lastmod>2026-09-24</lastmod>
     </url>
     <url>
+         <loc>https://anas-rz.github.io/k3-node/api/materials/</loc>
+         <lastmod>2026-09-24</lastmod>
+    </url>
+    <url>
          <loc>https://anas-rz.github.io/k3-node/api/models/</loc>
          <lastmod>2026-09-24</lastmod>
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/norm/</loc>
+         <lastmod>2026-09-24</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/api/ops/</loc>
          <lastmod>2026-09-24</lastmod>
     </url>
     <url>
@@ -478,6 +494,10 @@
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/examples/wl_kernel/</loc>
+         <lastmod>2026-09-24</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/guides/finetuning/</loc>
          <lastmod>2026-09-24</lastmod>
     </url>
 </urlset>
