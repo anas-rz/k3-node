@@ -26,6 +26,10 @@ from k3_node import datasets
 from k3_node import io
 from k3_node import loader
 from k3_node import transforms
+from k3_node import models
+from k3_node import materials
+from k3_node import bio
+from k3_node import chemistry
 
 __all__ = [
     "data",
@@ -33,4 +37,9 @@ __all__ = [
     "io",
     "loader",
     "transforms",
+    "models",
+    "materials",
+    "bio",
+    "chemistry",
 ]
+

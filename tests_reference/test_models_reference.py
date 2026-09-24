@@ -8,6 +8,7 @@ as part of the default GitHub Actions test suites.
 """
 
 import os
+import pytest
 os.environ["KERAS_BACKEND"] = "torch"
 import math
 import numpy as np
@@ -1260,12 +1261,28 @@ def test_reference_gps_model():
             return torch_geometric.utils.scatter(src, index, dim=dim, dim_size=dim_size, reduce='max')
     sys.modules['torch_scatter'] = TorchScatterShim
 
-    import ogb.utils.features
-    ogb.utils.features.get_atom_feature_dims = lambda: [119, 4, 12, 12, 10, 6, 6, 2, 2]
-
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     graphgps_dir = os.path.join(base_dir, "GraphGPS")
+    if not os.path.exists(graphgps_dir):
+        pytest.skip("GraphGPS repository not found")
     sys.path.insert(0, graphgps_dir)
+
+    try:
+        import ogb.utils.features
+    except ImportError:
+        import types
+        ogb = types.ModuleType("ogb")
+        ogb.__path__ = []
+        ogb.utils = types.ModuleType("ogb.utils")
+        ogb.utils.features = types.ModuleType("ogb.utils.features")
+        ogb.graphproppred = types.ModuleType("ogb.graphproppred")
+        ogb.graphproppred.PygGraphPropPredDataset = object
+        sys.modules["ogb"] = ogb
+        sys.modules["ogb.utils"] = ogb.utils
+        sys.modules["ogb.utils.features"] = ogb.utils.features
+        sys.modules["ogb.graphproppred"] = ogb.graphproppred
+    ogb.utils.features.get_atom_feature_dims = lambda: [119, 4, 12, 12, 10, 6, 6, 2, 2]
+    ogb.utils.features.get_bond_feature_dims = lambda: [5, 6, 2]
 
     from torch_geometric.data import Batch
     from torch_geometric.graphgym.config import cfg, set_cfg
@@ -1378,6 +1395,8 @@ def test_reference_grover():
         sys.modules["rdkit.DataStructs"] = MagicMock()
 
     grover_path = osp.join(osp.dirname(osp.dirname(__file__)), "grover")
+    if not osp.exists(grover_path):
+        pytest.skip("grover repository not found")
     if grover_path not in sys.path:
         sys.path.insert(0, grover_path)
 
@@ -1485,6 +1504,8 @@ def test_reference_mole_bert():
         sys.modules["torch_scatter"] = MagicMock()
 
     mole_bert_path = osp.join(osp.dirname(osp.dirname(__file__)), "Mole-BERT")
+    if not osp.exists(mole_bert_path):
+        pytest.skip("Mole-BERT repository not found")
     if mole_bert_path not in sys.path:
         sys.path.insert(0, mole_bert_path)
 
@@ -1550,9 +1571,326 @@ def test_reference_mole_bert():
     np.testing.assert_allclose(k3_out, pt_out, rtol=1e-4, atol=1e-4)
 
 
+# ==============================================================================
+# Uni-Mol Reference Parity Tests
+# ==============================================================================
+
+def test_reference_unimol_gaussian_layer():
+    from k3_node.models import UniMolGaussianLayer
+
+    def gaussian(x, mean, std):
+        pi = 3.14159
+        a = (2 * pi) ** 0.5
+        return torch.exp(-0.5 * (((x - mean) / std) ** 2)) / (a * std)
+
+    class PyTGaussianLayer(torch.nn.Module):
+        def __init__(self, K=32, edge_types=64):
+            super().__init__()
+            self.K = K
+            self.means = torch.nn.Embedding(1, K)
+            self.stds = torch.nn.Embedding(1, K)
+            self.mul = torch.nn.Embedding(edge_types, 1)
+            self.bias = torch.nn.Embedding(edge_types, 1)
+
+        def forward(self, x, edge_type):
+            mul = self.mul(edge_type).type_as(x)
+            bias = self.bias(edge_type).type_as(x)
+            x = mul * x.unsqueeze(-1) + bias
+            x = x.expand(-1, -1, -1, self.K)
+            mean = self.means.weight.float().view(-1)
+            std = self.stds.weight.float().view(-1).abs() + 1e-5
+            return gaussian(x.float(), mean, std).type_as(self.means.weight)
+
+    torch.manual_seed(42)
+    np.random.seed(42)
+
+    K = 32
+    edge_types = 64
+    pt_layer = PyTGaussianLayer(K=K, edge_types=edge_types)
+    pt_layer.eval()
+
+    k3_layer = UniMolGaussianLayer(num_kernel=K, edge_types=edge_types)
+    k3_layer.build(None)
+
+    # Copy weights
+    k3_layer.means.embeddings.assign(ops.convert_to_tensor(pt_layer.means.weight.detach().numpy()))
+    k3_layer.stds.embeddings.assign(ops.convert_to_tensor(pt_layer.stds.weight.detach().numpy()))
+    k3_layer.mul.embeddings.assign(ops.convert_to_tensor(pt_layer.mul.weight.detach().numpy()))
+    k3_layer.bias.embeddings.assign(ops.convert_to_tensor(pt_layer.bias.weight.detach().numpy()))
+
+    bsz, seq_len = 2, 5
+    dist_np = np.random.uniform(0.5, 5.0, (bsz, seq_len, seq_len)).astype(np.float32)
+    et_np = np.random.randint(0, edge_types, (bsz, seq_len, seq_len)).astype(np.int64)
+
+    with torch.no_grad():
+        pt_out = pt_layer(torch.from_numpy(dist_np), torch.from_numpy(et_np)).numpy()
+
+    k3_out = ops.convert_to_numpy(
+        k3_layer(ops.convert_to_tensor(dist_np), ops.convert_to_tensor(et_np, dtype="int32"))
+    )
+
+    np.testing.assert_allclose(k3_out, pt_out, rtol=1e-5, atol=1e-5)
 
 
+def test_reference_unimol_self_multihead_attention():
+    import importlib.util
+    import os.path as osp
+
+    spec = importlib.util.spec_from_file_location(
+        "ref_transformers",
+        osp.join(osp.dirname(osp.dirname(__file__)), "Uni-Mol", "unimol_tools", "unimol_tools", "models", "transformers.py"),
+    )
+    ref_tf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ref_tf)
+
+    from k3_node.layers.attention import SelfMultiheadAttentionWithPair
+
+    torch.manual_seed(42)
+    np.random.seed(42)
+
+    embed_dim = 32
+    num_heads = 4
+    bsz = 2
+    seq_len = 6
+
+    pt_layer = ref_tf.SelfMultiheadAttention(embed_dim=embed_dim, num_heads=num_heads, dropout=0.0)
+    pt_layer.eval()
+
+    k3_layer = SelfMultiheadAttentionWithPair(embed_dim=embed_dim, num_heads=num_heads, dropout=0.0)
+    k3_layer.build(None)
+
+    # Copy weights
+    k3_layer.in_proj.kernel.assign(ops.convert_to_tensor(pt_layer.in_proj.weight.t().detach().numpy()))
+    k3_layer.in_proj.bias.assign(ops.convert_to_tensor(pt_layer.in_proj.bias.detach().numpy()))
+    k3_layer.out_proj.kernel.assign(ops.convert_to_tensor(pt_layer.out_proj.weight.t().detach().numpy()))
+    k3_layer.out_proj.bias.assign(ops.convert_to_tensor(pt_layer.out_proj.bias.detach().numpy()))
+
+    x_np = np.random.randn(bsz, seq_len, embed_dim).astype(np.float32)
+    attn_bias_np = np.random.randn(bsz * num_heads, seq_len, seq_len).astype(np.float32)
+
+    with torch.no_grad():
+        pt_out = pt_layer(
+            torch.from_numpy(x_np),
+            attn_bias=torch.from_numpy(attn_bias_np),
+        ).numpy()
+
+    k3_out = ops.convert_to_numpy(
+        k3_layer(
+            ops.convert_to_tensor(x_np),
+            attn_bias=ops.convert_to_tensor(attn_bias_np),
+            training=False,
+        )
+    )
+
+    np.testing.assert_allclose(k3_out, pt_out, rtol=1e-4, atol=1e-4)
 
 
+def test_reference_unimol_transformer_encoder_layer():
+    import importlib.util
+    import os.path as osp
+
+    spec = importlib.util.spec_from_file_location(
+        "ref_transformers",
+        osp.join(osp.dirname(osp.dirname(__file__)), "Uni-Mol", "unimol_tools", "unimol_tools", "models", "transformers.py"),
+    )
+    ref_tf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ref_tf)
+
+    from k3_node.layers.attention import TransformerEncoderLayerWithPair
+
+    torch.manual_seed(42)
+    np.random.seed(42)
+
+    embed_dim = 32
+    ffn_dim = 64
+    num_heads = 4
+    bsz = 2
+    seq_len = 5
+
+    pt_layer = ref_tf.TransformerEncoderLayer(
+        embed_dim=embed_dim,
+        ffn_embed_dim=ffn_dim,
+        attention_heads=num_heads,
+        dropout=0.0,
+        attention_dropout=0.0,
+        activation_dropout=0.0,
+        activation_fn="gelu",
+        post_ln=False,
+    )
+    pt_layer.eval()
+
+    k3_layer = TransformerEncoderLayerWithPair(
+        embed_dim=embed_dim,
+        ffn_embed_dim=ffn_dim,
+        attention_heads=num_heads,
+        dropout=0.0,
+        attention_dropout=0.0,
+        activation_dropout=0.0,
+        activation_fn="gelu",
+        post_ln=False,
+    )
+    k3_layer.build(None)
+
+    # Copy weights
+    k3_layer.self_attn.in_proj.kernel.assign(ops.convert_to_tensor(pt_layer.self_attn.in_proj.weight.t().detach().numpy()))
+    k3_layer.self_attn.in_proj.bias.assign(ops.convert_to_tensor(pt_layer.self_attn.in_proj.bias.detach().numpy()))
+    k3_layer.self_attn.out_proj.kernel.assign(ops.convert_to_tensor(pt_layer.self_attn.out_proj.weight.t().detach().numpy()))
+    k3_layer.self_attn.out_proj.bias.assign(ops.convert_to_tensor(pt_layer.self_attn.out_proj.bias.detach().numpy()))
+    k3_layer.self_attn_layer_norm.gamma.assign(ops.convert_to_tensor(pt_layer.self_attn_layer_norm.weight.detach().numpy()))
+    k3_layer.self_attn_layer_norm.beta.assign(ops.convert_to_tensor(pt_layer.self_attn_layer_norm.bias.detach().numpy()))
+
+    k3_layer.fc1.kernel.assign(ops.convert_to_tensor(pt_layer.fc1.weight.t().detach().numpy()))
+    k3_layer.fc1.bias.assign(ops.convert_to_tensor(pt_layer.fc1.bias.detach().numpy()))
+    k3_layer.fc2.kernel.assign(ops.convert_to_tensor(pt_layer.fc2.weight.t().detach().numpy()))
+    k3_layer.fc2.bias.assign(ops.convert_to_tensor(pt_layer.fc2.bias.detach().numpy()))
+    k3_layer.final_layer_norm.gamma.assign(ops.convert_to_tensor(pt_layer.final_layer_norm.weight.detach().numpy()))
+    k3_layer.final_layer_norm.beta.assign(ops.convert_to_tensor(pt_layer.final_layer_norm.bias.detach().numpy()))
+
+    x_np = np.random.randn(bsz, seq_len, embed_dim).astype(np.float32)
+    attn_bias_np = np.random.randn(bsz * num_heads, seq_len, seq_len).astype(np.float32)
+
+    with torch.no_grad():
+        pt_out = pt_layer(
+            torch.from_numpy(x_np),
+            attn_bias=torch.from_numpy(attn_bias_np),
+        ).numpy()
+
+    k3_out = ops.convert_to_numpy(
+        k3_layer(
+            ops.convert_to_tensor(x_np),
+            attn_bias=ops.convert_to_tensor(attn_bias_np),
+            training=False,
+        )
+    )
+
+    np.testing.assert_allclose(k3_out, pt_out, rtol=1e-4, atol=1e-4)
 
 
+def test_reference_unimol2_triangle_multiplication():
+    from k3_node.layers.attention import TriangleMultiplication
+
+    torch.manual_seed(42)
+    np.random.seed(42)
+
+    class PyTTriangleMultiplication(torch.nn.Module):
+        def __init__(self, pair_dim, hidden_dim, mode="outgoing"):
+            super().__init__()
+            self.mode = mode
+            self.norm = torch.nn.LayerNorm(pair_dim, eps=1e-5)
+            self.proj_a = torch.nn.Linear(pair_dim, hidden_dim, bias=False)
+            self.proj_b = torch.nn.Linear(pair_dim, hidden_dim, bias=False)
+            self.gate_a = torch.nn.Linear(pair_dim, hidden_dim, bias=True)
+            self.gate_b = torch.nn.Linear(pair_dim, hidden_dim, bias=True)
+            self.gate_out = torch.nn.Linear(pair_dim, pair_dim, bias=True)
+            self.proj_out = torch.nn.Linear(hidden_dim, pair_dim, bias=True)
+            self.norm_out = torch.nn.LayerNorm(hidden_dim, eps=1e-5)
+
+        def forward(self, pair):
+            residual = pair
+            x = self.norm(pair)
+            a = self.proj_a(x) * torch.sigmoid(self.gate_a(x))
+            b = self.proj_b(x) * torch.sigmoid(self.gate_b(x))
+            if self.mode == "outgoing":
+                out = torch.einsum("bikc,bjkc->bijc", a, b)
+            else:
+                out = torch.einsum("bkic,bkjc->bijc", a, b)
+            out = self.norm_out(out)
+            out = self.proj_out(out) * torch.sigmoid(self.gate_out(pair))
+            return residual + out
+
+    pair_dim = 16
+    hidden_dim = 8
+    bsz = 2
+    seq_len = 4
+
+    for mode in ["outgoing", "incoming"]:
+        pt_layer = PyTTriangleMultiplication(pair_dim=pair_dim, hidden_dim=hidden_dim, mode=mode)
+        pt_layer.eval()
+
+        k3_layer = TriangleMultiplication(pair_dim=pair_dim, hidden_dim=hidden_dim, mode=mode)
+        k3_layer.build(None)
+
+        # Copy weights
+        k3_layer.norm.gamma.assign(ops.convert_to_tensor(pt_layer.norm.weight.detach().numpy()))
+        k3_layer.norm.beta.assign(ops.convert_to_tensor(pt_layer.norm.bias.detach().numpy()))
+
+        k3_layer.proj_a.kernel.assign(ops.convert_to_tensor(pt_layer.proj_a.weight.t().detach().numpy()))
+        k3_layer.proj_b.kernel.assign(ops.convert_to_tensor(pt_layer.proj_b.weight.t().detach().numpy()))
+        k3_layer.gate_a.kernel.assign(ops.convert_to_tensor(pt_layer.gate_a.weight.t().detach().numpy()))
+        k3_layer.gate_a.bias.assign(ops.convert_to_tensor(pt_layer.gate_a.bias.detach().numpy()))
+        k3_layer.gate_b.kernel.assign(ops.convert_to_tensor(pt_layer.gate_b.weight.t().detach().numpy()))
+        k3_layer.gate_b.bias.assign(ops.convert_to_tensor(pt_layer.gate_b.bias.detach().numpy()))
+
+        k3_layer.gate_out.kernel.assign(ops.convert_to_tensor(pt_layer.gate_out.weight.t().detach().numpy()))
+        k3_layer.gate_out.bias.assign(ops.convert_to_tensor(pt_layer.gate_out.bias.detach().numpy()))
+        k3_layer.proj_out.kernel.assign(ops.convert_to_tensor(pt_layer.proj_out.weight.t().detach().numpy()))
+        k3_layer.proj_out.bias.assign(ops.convert_to_tensor(pt_layer.proj_out.bias.detach().numpy()))
+        k3_layer.norm_out.gamma.assign(ops.convert_to_tensor(pt_layer.norm_out.weight.detach().numpy()))
+        k3_layer.norm_out.beta.assign(ops.convert_to_tensor(pt_layer.norm_out.bias.detach().numpy()))
+
+        pair_np = np.random.randn(bsz, seq_len, seq_len, pair_dim).astype(np.float32)
+
+        with torch.no_grad():
+            pt_out = pt_layer(torch.from_numpy(pair_np)).numpy()
+
+        k3_out = ops.convert_to_numpy(
+            k3_layer(ops.convert_to_tensor(pair_np), training=False)
+        )
+
+        np.testing.assert_allclose(k3_out, pt_out, rtol=1e-4, atol=1e-4)
+
+
+def test_reference_unimol2_outer_product():
+    from k3_node.layers.attention import OuterProduct
+
+    torch.manual_seed(42)
+    np.random.seed(42)
+
+    class PyTOuterProduct(torch.nn.Module):
+        def __init__(self, embed_dim, pair_dim, hidden_dim=32):
+            super().__init__()
+            self.norm = torch.nn.LayerNorm(embed_dim, eps=1e-5)
+            self.proj_left = torch.nn.Linear(embed_dim, hidden_dim, bias=True)
+            self.proj_right = torch.nn.Linear(embed_dim, hidden_dim, bias=True)
+            self.proj_out = torch.nn.Linear(hidden_dim, pair_dim, bias=True)
+
+        def forward(self, x):
+            x_norm = self.norm(x)
+            left = self.proj_left(x_norm)
+            right = self.proj_right(x_norm)
+            prod = left.unsqueeze(2) * right.unsqueeze(1)
+            return self.proj_out(prod)
+
+    embed_dim = 32
+    pair_dim = 16
+    hidden_dim = 8
+    bsz = 2
+    seq_len = 5
+
+    pt_layer = PyTOuterProduct(embed_dim=embed_dim, pair_dim=pair_dim, hidden_dim=hidden_dim)
+    pt_layer.eval()
+
+    k3_layer = OuterProduct(embed_dim=embed_dim, pair_dim=pair_dim, hidden_dim=hidden_dim)
+    k3_layer.build(None)
+
+    # Copy weights
+    k3_layer.norm.gamma.assign(ops.convert_to_tensor(pt_layer.norm.weight.detach().numpy()))
+    k3_layer.norm.beta.assign(ops.convert_to_tensor(pt_layer.norm.bias.detach().numpy()))
+
+    k3_layer.proj_left.kernel.assign(ops.convert_to_tensor(pt_layer.proj_left.weight.t().detach().numpy()))
+    k3_layer.proj_left.bias.assign(ops.convert_to_tensor(pt_layer.proj_left.bias.detach().numpy()))
+    k3_layer.proj_right.kernel.assign(ops.convert_to_tensor(pt_layer.proj_right.weight.t().detach().numpy()))
+    k3_layer.proj_right.bias.assign(ops.convert_to_tensor(pt_layer.proj_right.bias.detach().numpy()))
+
+    k3_layer.proj_out.kernel.assign(ops.convert_to_tensor(pt_layer.proj_out.weight.t().detach().numpy()))
+    k3_layer.proj_out.bias.assign(ops.convert_to_tensor(pt_layer.proj_out.bias.detach().numpy()))
+
+    x_np = np.random.randn(bsz, seq_len, embed_dim).astype(np.float32)
+
+    with torch.no_grad():
+        pt_out = pt_layer(torch.from_numpy(x_np)).numpy()
+
+    k3_out = ops.convert_to_numpy(
+        k3_layer(ops.convert_to_tensor(x_np), training=False)
+    )
+    np.testing.assert_allclose(k3_out, pt_out, rtol=1e-4, atol=1e-4)
