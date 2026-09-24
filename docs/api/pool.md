@@ -69,3 +69,24 @@ The `k3_node.layers.pool` module provides global readouts, hierarchical graph co
 ### knn_graph
 ::: k3_node.layers.pool.knn_graph
 
+---
+
+## Unpooling
+
+Interpolates features back from a coarsened point set/graph onto a denser one, mirroring `torch_geometric.nn.unpool`.
+
+### knn_interpolate
+::: k3_node.layers.unpool.knn_interpolate
+
+---
+
+## Regularization Functionals
+
+Differentiable graph-pooling regularizers from `k3_node.layers.functional`, typically added as auxiliary loss terms alongside a pooling layer (e.g. `DMoNPooling`, `MinCutPooling`) to encourage balanced, well-separated cluster assignments.
+
+### bro
+::: k3_node.layers.functional.bro
+
+### gini
+::: k3_node.layers.functional.gini
+

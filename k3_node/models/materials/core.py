@@ -237,10 +237,12 @@ class EmbeddingBlock(layers.Layer):
 
 def vector_to_skewtensor(vector):
     """Create skew-symmetric 3x3 tensor from a 3D vector.
-    
+
+    ```
     [0, -v_z, v_y]
     [v_z, 0, -v_x]
     [-v_y, v_x, 0]
+    ```
     """
     vector = ops.convert_to_tensor(vector)
     vx = vector[..., 0]

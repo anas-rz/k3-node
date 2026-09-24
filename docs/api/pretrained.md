@@ -2,6 +2,8 @@
 
 K3 Node provides native implementations of modern Graph Foundation Models with built-in checkpoint downloaders and weight loaders for official pre-trained models.
 
+This page covers general-purpose graph foundation models. For domain-specific pretrained checkpoints see the [Materials](materials.md#pretrained-checkpoints) (CHGNet, M3GNet, MEGNet, TensorNet, ...) and [Bio](bio.md#pretrained-checkpoints) (Uni-Mol docking) API pages. See the [Fine-Tuning Recipes](../guides/finetuning.md) guide for end-to-end worked examples of adapting any of these to a downstream task.
+
 ---
 
 ## 1. GraphMAE2 (Masked Autoencoder for Graphs)
@@ -21,8 +23,8 @@ GraphMAE2 is an advanced masked autoencoder for self-supervised graph representa
 ```python
 from k3_node.models.graphmae2 import GraphMAE2, load_graphmae2_weights, download_graphmae2_checkpoint
 
-# Download checkpoint
-ckpt_path = download_graphmae2_checkpoint("cora")
+# Download checkpoint (one of "ogbn-arxiv", "ogbn-products", "mag-scholar-f", "ogbn-papers100M")
+ckpt_path = download_graphmae2_checkpoint("ogbn-arxiv")
 
 # Initialize and load model
 model = GraphMAE2(in_dim=1433, num_hidden=512, out_dim=1433, num_layers=2)
@@ -115,4 +117,51 @@ ckpt_path = download_mole_bert_checkpoint()
 model = MoleBERT(num_layer=5, emb_dim=300, num_tasks=1)
 load_mole_bert_weights(model, ckpt_path)
 ```
+
+---
+
+## 6. Uni-Mol Family (3D Molecular Pretraining)
+
+[Uni-Mol](https://openreview.net/forum?id=6K2RM6wVqKu) pretrains a 3D-coordinate-aware transformer on large-scale molecular conformations for downstream property prediction, conformation generation, and (see [Bio API](bio.md)) protein–ligand docking. `UniMol2` and `UniMol-Plus` are scaled-up successors with two-track atom/pair transformers.
+
+### UniMolModel
+::: k3_node.models.unimol.UniMolModel
+
+### UniMolConfGenModel
+A `UniMolModel` variant specialized for 3D conformation generation (denoising a noisy input conformation back to equilibrium geometry).
+
+::: k3_node.models.unimol.UniMolConfGenModel
+
+### Checkpoint Utilities
+::: k3_node.models.unimol.load_unimol_weights
+::: k3_node.models.unimol.download_unimol_checkpoint
+
+### Usage Example
+```python
+from k3_node.models.unimol import UniMolModel, load_unimol_weights, download_unimol_checkpoint
+
+ckpt_path = download_unimol_checkpoint("mol_pre_no_h")
+
+model = UniMolModel(output_dim=2, data_type="molecule")
+load_unimol_weights(model, checkpoint_path=ckpt_path)
+```
+
+### UniMol2Model
+Scalable Uni-Mol2 pretraining model, available in five parameter-count presets (`"84m"` through `"1.1b"`).
+
+::: k3_node.models.unimol2.UniMol2Model
+
+#### Checkpoint Utilities
+::: k3_node.models.unimol2.load_unimol2_weights
+::: k3_node.models.unimol2.download_unimol2_checkpoint
+
+### UniMolPlusPCQModel / UniMolPlusOC20Model
+Uni-Mol+ two-track (atom + pair) transformer, pretrained on the PCQM4Mv2 quantum-chemistry benchmark (`UniMolPlusPCQModel`) or the OC20 catalyst dataset (`UniMolPlusOC20Model`).
+
+::: k3_node.models.unimol_plus.UniMolPlusPCQModel
+::: k3_node.models.unimol_plus.UniMolPlusOC20Model
+
+#### Checkpoint Utilities
+::: k3_node.models.unimol_plus.load_unimol_plus_weights
+::: k3_node.models.unimol_plus.download_unimol_plus_checkpoint
 

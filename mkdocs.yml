@@ -67,6 +67,7 @@ nav:
       - Utilities & Misc: examples/utilities_and_misc.md
   - API Reference:
       - Convolution Layers: api/conv.md
+      - Attention Layers: api/attention.md
       - Aggregation Layers: api/aggr.md
       - Normalization Layers: api/norm.md
       - Pooling Layers: api/pool.md
@@ -74,10 +75,15 @@ nav:
       - Knowledge Graph Embeddings: api/kge.md
       - Models: api/models.md
       - Pretrained Foundation Models: api/pretrained.md
+      - Materials & Crystal GNNs: api/materials.md
+      - Biological & Macromolecular Models: api/bio.md
       - Graph Data Structures: api/data.md
       - Graph Datasets: api/datasets.md
       - Data Loaders & Samplers: api/loader.md
       - Graph Transforms: api/transforms.md
+      - Graph Utilities & Ops: api/ops.md
+  - Guides:
+      - Fine-Tuning Recipes: guides/finetuning.md
   - Porting Checklist: checklist.md
 
 markdown_extensions:
