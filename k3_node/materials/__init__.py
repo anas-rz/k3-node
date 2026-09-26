@@ -1,5 +1,6 @@
-"""Top-level namespace for materials and crystal graph neural network models."""
+"""Materials and crystal models (aliased from k3_node.applications.materials)."""
 
-from k3_node.models.materials import *
-from k3_node.models.materials import __all__
+from k3_node.applications.materials import *
+from k3_node.applications.materials import __all__
+
 

@@ -29,6 +29,7 @@ from k3_node import layers
 from k3_node import loader
 from k3_node import transforms
 from k3_node import models
+from k3_node import applications
 from k3_node import materials
 from k3_node import bio
 from k3_node import chemistry
@@ -43,6 +44,7 @@ __all__ = [
     "loader",
     "transforms",
     "models",
+    "applications",
     "materials",
     "bio",
     "chemistry",
