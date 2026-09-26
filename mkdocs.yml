@@ -82,9 +82,11 @@ nav:
       - Graph Datasets: api/datasets.md
       - Data Loaders & Samplers: api/loader.md
       - Graph Transforms: api/transforms.md
+      - Tabular-to-Graph ETL: api/etl.md
       - Graph Utilities & Ops: api/ops.md
   - Guides:
       - High-Level Task APIs: guides/tasks.md
+      - Tabular-to-Graph ETL: guides/etl.md
       - Fine-Tuning Recipes: guides/finetuning.md
   - Porting Checklist: checklist.md
 

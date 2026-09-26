@@ -43,6 +43,15 @@ from k3_node.tasks import (
     LinkPredictor,
 )
 
+from k3_node import etl
+from k3_node.etl import (
+    TableToGraph,
+    TabularToGraph,
+    table_to_graph,
+    RelationalToGraph,
+    relational_to_graph,
+)
+
 __all__ = [
     "data",
     "Data",
@@ -63,5 +72,11 @@ __all__ = [
     "GraphClassifier",
     "GraphRegressor",
     "LinkPredictor",
+    "etl",
+    "TableToGraph",
+    "TabularToGraph",
+    "table_to_graph",
+    "RelationalToGraph",
+    "relational_to_graph",
 ]
 
