@@ -72,6 +72,7 @@ nav:
       - Normalization Layers: api/norm.md
       - Pooling Layers: api/pool.md
       - Dense Layers: api/dense.md
+      - High-Level Task APIs: api/tasks.md
       - Knowledge Graph Embeddings: api/kge.md
       - Models: api/models.md
       - Pretrained Foundation Models: api/pretrained.md
@@ -83,6 +84,7 @@ nav:
       - Graph Transforms: api/transforms.md
       - Graph Utilities & Ops: api/ops.md
   - Guides:
+      - High-Level Task APIs: guides/tasks.md
       - Fine-Tuning Recipes: guides/finetuning.md
   - Porting Checklist: checklist.md
 

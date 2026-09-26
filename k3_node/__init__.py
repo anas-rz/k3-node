@@ -34,6 +34,15 @@ from k3_node import materials
 from k3_node import bio
 from k3_node import chemistry
 
+from k3_node import tasks
+from k3_node.tasks import (
+    NodeClassifier,
+    NodeRegressor,
+    GraphClassifier,
+    GraphRegressor,
+    LinkPredictor,
+)
+
 __all__ = [
     "data",
     "Data",
@@ -48,5 +57,11 @@ __all__ = [
     "materials",
     "bio",
     "chemistry",
+    "tasks",
+    "NodeClassifier",
+    "NodeRegressor",
+    "GraphClassifier",
+    "GraphRegressor",
+    "LinkPredictor",
 ]
 
