@@ -1259,10 +1259,43 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#k3_node.data.Data.inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        inputs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.data.Data.accuracy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        accuracy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#k3_node.data.Data.subgraph" class="md-nav__link">
     <span class="md-ellipsis">
       
         subgraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.data.Data.to_generator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        to_generator
       
     </span>
   </a>
@@ -1763,8 +1796,96 @@
 
 
 
+<div class="doc doc-object doc-attribute">
 
 
+
+<h4 id="k3_node.data.Data.inputs" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">inputs</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the tuple of input tensors <code>(x, edge_index)</code> or <code>(x, edge_index, edge_attr)</code>.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.data.Data.accuracy" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">accuracy</span><span class="p">(</span><span class="n">logits_or_pred</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="s1">'test_mask'</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Convenience method to calculate classification accuracy.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>logits_or_pred</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Model prediction output (either class logits or predicted labels).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>mask</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The mask attribute (e.g. <code>'test_mask'</code>) to evaluate on.
+If :obj:<code>None</code>, evaluates across all nodes. (default: <code>'test_mask'</code>)</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;test_mask&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
@@ -1778,6 +1899,75 @@
     <div class="doc doc-contents ">
 
         <p>Returns the induced subgraph for subset nodes.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.data.Data.to_generator" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">to_generator</span><span class="p">(</span><span class="n">mask</span><span class="o">=</span><span class="s1">'train_mask'</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Generates tuples of ((x, edge_index), y, mask) or ((x, edge_index, edge_attr), y, mask)
+ready for training directly with Keras <code>model.fit()</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>mask</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the mask attribute (e.g. <code>'train_mask'</code>,
+<code>'val_mask'</code>, <code>'test_mask'</code>) to use as sample_weight for loss masking.
+If :obj:<code>None</code>, no mask is applied. (default: <code>'train_mask'</code>)</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;train_mask&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>repeat</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to yield infinitely for Keras generator training.
+(default: :obj:<code>True</code>)</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
