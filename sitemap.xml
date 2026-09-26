@@ -45,6 +45,10 @@
          <lastmod>2026-09-26</lastmod>
     </url>
     <url>
+         <loc>https://anas-rz.github.io/k3-node/api/etl/</loc>
+         <lastmod>2026-09-26</lastmod>
+    </url>
+    <url>
          <loc>https://anas-rz.github.io/k3-node/api/kge/</loc>
          <lastmod>2026-09-26</lastmod>
     </url>
@@ -74,6 +78,10 @@
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/api/pretrained/</loc>
+         <lastmod>2026-09-26</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/api/tasks/</loc>
          <lastmod>2026-09-26</lastmod>
     </url>
     <url>
@@ -226,6 +234,10 @@
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/examples/hierarchical_sampling/</loc>
+         <lastmod>2026-09-26</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/examples/high_level_tasks/</loc>
          <lastmod>2026-09-26</lastmod>
     </url>
     <url>
@@ -497,7 +509,15 @@
          <lastmod>2026-09-26</lastmod>
     </url>
     <url>
+         <loc>https://anas-rz.github.io/k3-node/guides/etl/</loc>
+         <lastmod>2026-09-26</lastmod>
+    </url>
+    <url>
          <loc>https://anas-rz.github.io/k3-node/guides/finetuning/</loc>
+         <lastmod>2026-09-26</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/guides/tasks/</loc>
          <lastmod>2026-09-26</lastmod>
     </url>
 </urlset>
