@@ -22,8 +22,10 @@ from k3_node import ...
 """
 
 from k3_node import data
+from k3_node.data import Data, Batch
 from k3_node import datasets
 from k3_node import io
+from k3_node import layers
 from k3_node import loader
 from k3_node import transforms
 from k3_node import models
@@ -33,8 +35,11 @@ from k3_node import chemistry
 
 __all__ = [
     "data",
+    "Data",
+    "Batch",
     "datasets",
     "io",
+    "layers",
     "loader",
     "transforms",
     "models",

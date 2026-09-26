@@ -433,8 +433,73 @@ class Data(BaseData):
                     return False
         return True
 
+    @property
+    def inputs(self):
+        r"""Returns the tuple of input tensors ``(x, edge_index)`` or ``(x, edge_index, edge_attr)``."""
+        if hasattr(self, "edge_attr") and self.edge_attr is not None:
+            return (self.x, self.edge_index, self.edge_attr)
+        return (self.x, self.edge_index)
+
+    def to_generator(self, mask: Optional[str] = "train_mask", repeat: bool = True):
+        r"""Generates tuples of ((x, edge_index), y, mask) or ((x, edge_index, edge_attr), y, mask)
+        ready for training directly with Keras `model.fit()`.
+
+        Args:
+            mask (str, optional): The name of the mask attribute (e.g. ``'train_mask'``,
+                ``'val_mask'``, ``'test_mask'``) to use as sample_weight for loss masking.
+                If :obj:`None`, no mask is applied. (default: ``'train_mask'``)
+            repeat (bool, optional): Whether to yield infinitely for Keras generator training.
+                (default: :obj:`True`)
+        """
+        x = ops.convert_to_tensor(self.x, dtype="float32") if self.x is not None else None
+        edge_index = ops.convert_to_tensor(self.edge_index, dtype="int64") if self.edge_index is not None else None
+
+        inputs = (x, edge_index)
+        if hasattr(self, "edge_attr") and self.edge_attr is not None:
+            edge_attr = ops.convert_to_tensor(self.edge_attr, dtype="float32")
+            inputs = (x, edge_index, edge_attr)
+
+        y = ops.convert_to_tensor(self.y, dtype="int64") if self.y is not None else None
+
+        sample_weight = None
+        if mask is not None and hasattr(self, mask) and getattr(self, mask) is not None:
+            sample_weight = ops.cast(getattr(self, mask), "float32")
+
+        while True:
+            if sample_weight is not None:
+                yield inputs, y, sample_weight
+            elif y is not None:
+                yield inputs, y
+            else:
+                yield inputs
+            if not repeat:
+                break
+
+    def accuracy(self, logits_or_pred: Any, mask: Optional[str] = "test_mask") -> float:
+        r"""Convenience method to calculate classification accuracy.
+
+        Args:
+            logits_or_pred: Model prediction output (either class logits or predicted labels).
+            mask (str, optional): The mask attribute (e.g. ``'test_mask'``) to evaluate on.
+                If :obj:`None`, evaluates across all nodes. (default: ``'test_mask'``)
+        """
+        pred = logits_or_pred
+        shape = ops.shape(pred)
+        if len(shape) > 1 and shape[-1] > 1:
+            pred = ops.argmax(pred, axis=-1)
+
+        y = self.y
+        if mask is not None and hasattr(self, mask) and getattr(self, mask) is not None:
+            m = getattr(self, mask)
+            pred = pred[m]
+            y = y[m]
+
+        correct = ops.cast(ops.cast(pred, "int64") == ops.cast(y, "int64"), "float32")
+        return float(ops.convert_to_numpy(ops.mean(correct)))
+
     def __repr__(self) -> str:
         cls = self.__class__.__name__
         attrs = [size_repr(k, v) for k, v in self._store.items()]
         info = ", ".join(attrs)
         return f"{cls}({info})"
+

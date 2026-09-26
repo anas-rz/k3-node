@@ -168,13 +168,26 @@ class BasicGNN(keras.Model):
     def call(
         self,
         x,
-        edge_index,
+        edge_index=None,
         edge_weight=None,
         edge_attr=None,
         batch=None,
         batch_size=None,
         training=None,
     ):
+        if hasattr(x, "edge_index") and edge_index is None:
+            edge_index = getattr(x, "edge_index", None)
+            edge_weight = getattr(x, "edge_weight", None) if edge_weight is None else edge_weight
+            edge_attr = getattr(x, "edge_attr", None) if edge_attr is None else edge_attr
+            batch = getattr(x, "batch", None) if batch is None else batch
+            x = x.x
+        elif isinstance(x, (tuple, list)) and edge_index is None:
+            if len(x) > 1:
+                edge_index = x[1]
+            if len(x) > 2:
+                edge_attr = x[2]
+            x = x[0]
+
         xs: List = []
         for i, (conv, norm) in enumerate(zip(self.convs, self.norms)):
             if self.supports_edge_weight and self.supports_edge_attr:
