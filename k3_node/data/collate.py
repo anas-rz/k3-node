@@ -115,6 +115,8 @@ def collate(
                             if torch is not None and isinstance(val, torch.Tensor):
                                 inc_t = torch.as_tensor(inc, dtype=val.dtype, device=val.device)
                                 offset_values.append(val + inc_t)
+                            elif isinstance(val, np.ndarray):
+                                offset_values.append(val + inc)
                             else:
                                 inc_t = ops.convert_to_tensor(inc, dtype=val.dtype)
                                 offset_values.append(val + inc_t)
@@ -256,9 +258,12 @@ def collate(
                             inc_arr = np.array([[src_incs[i]], [dst_incs[i]]], dtype=np.int64)
                             if torch is not None and isinstance(val, torch.Tensor):
                                 inc_t = torch.as_tensor(inc_arr, dtype=val.dtype, device=val.device)
+                                offset_values.append(val + inc_t)
+                            elif isinstance(val, np.ndarray):
+                                offset_values.append(val + inc_arr)
                             else:
                                 inc_t = ops.convert_to_tensor(inc_arr, dtype=val.dtype)
-                            offset_values.append(val + inc_t)
+                                offset_values.append(val + inc_t)
                         values = offset_values
                         incs = np.stack([src_incs, dst_incs], axis=1)
                     else:

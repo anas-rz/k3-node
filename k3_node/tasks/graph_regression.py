@@ -26,15 +26,18 @@ class GraphRegressionModel(keras.Model):
         self.pooling = pooling
         self.dropout = layers.Dropout(dropout) if dropout > 0 else None
         self.head = layers.Dense(out_channels)
+        self.num_graphs = None
 
     def call(self, inputs, training=False):
         if isinstance(inputs, (tuple, list)):
             x, edge_index = inputs[0], inputs[1]
             batch = inputs[2] if len(inputs) > 2 else None
+            size = inputs[3] if len(inputs) > 3 else self.num_graphs
         else:
             x = inputs
             edge_index = getattr(x, "edge_index", None)
             batch = getattr(x, "batch", None)
+            size = getattr(x, "num_graphs", self.num_graphs)
             x = getattr(x, "x", x)
 
         if batch is None:
@@ -43,13 +46,13 @@ class GraphRegressionModel(keras.Model):
         h = self.backbone((x, edge_index), training=training)
 
         if self.pooling in ("add", "sum", "global_add_pool"):
-            g = k3_pool.global_add_pool(h, batch)
+            g = k3_pool.global_add_pool(h, batch, size=size)
         elif self.pooling in ("mean", "global_mean_pool"):
-            g = k3_pool.global_mean_pool(h, batch)
+            g = k3_pool.global_mean_pool(h, batch, size=size)
         elif self.pooling in ("max", "global_max_pool"):
-            g = k3_pool.global_max_pool(h, batch)
+            g = k3_pool.global_max_pool(h, batch, size=size)
         else:
-            g = k3_pool.global_add_pool(h, batch)
+            g = k3_pool.global_add_pool(h, batch, size=size)
 
         if self.dropout is not None:
             g = self.dropout(g, training=training)
@@ -156,6 +159,22 @@ class GraphRegressor(BaseTask):
                 edge_index = ops.convert_to_tensor(batch.edge_index, dtype="int64")
                 batch_vec = ops.convert_to_tensor(batch.batch, dtype="int64")
                 y = ops.cast(ops.convert_to_tensor(batch.y), "float32")
+                if len(ops.shape(y)) == 1:
+                    y = ops.expand_dims(y, axis=-1)
+                num_g = int(ops.shape(y)[0])
+                if hasattr(self.model, "num_graphs"):
+                    self.model.num_graphs = num_g
+
+                if not self.model.built:
+                    y_pred = self.model((x, edge_index, batch_vec), training=False)
+                    self.model.built = True
+                    if hasattr(self.model, "_compile_loss") and self.model._compile_loss is not None:
+                        self.model._compile_loss.build(y, y_pred)
+                    if hasattr(self.model, "_compile_metrics") and self.model._compile_metrics is not None:
+                        self.model._compile_metrics.build(y, y_pred)
+                    if self.model.optimizer is not None and not self.model.optimizer.built:
+                        self.model.optimizer.build(self.model.trainable_variables)
+
                 res = self.model.train_on_batch((x, edge_index, batch_vec), y)
                 if isinstance(res, (list, tuple)):
                     batch_losses.append(float(res[0]))
@@ -185,6 +204,9 @@ class GraphRegressor(BaseTask):
             x = ops.convert_to_tensor(batch.x, dtype="float32")
             edge_index = ops.convert_to_tensor(batch.edge_index, dtype="int64")
             batch_vec = ops.convert_to_tensor(batch.batch, dtype="int64")
+            num_g = int(ops.convert_to_numpy(ops.max(batch_vec))) + 1 if ops.shape(batch_vec)[0] > 0 else 1
+            if hasattr(self.model, "num_graphs"):
+                self.model.num_graphs = num_g
             pred = self.model((x, edge_index, batch_vec), training=False)
             preds.append(pred)
         return ops.concatenate(preds, axis=0)
@@ -195,7 +217,10 @@ class GraphRegressor(BaseTask):
         ys = []
         loader = dataset_or_loader if isinstance(dataset_or_loader, DataLoader) else DataLoader(dataset_or_loader, batch_size=batch_size, shuffle=False)
         for batch in loader:
-            ys.append(ops.cast(batch.y, "float32"))
+            y_b = ops.cast(batch.y, "float32")
+            if len(ops.shape(y_b)) == 1:
+                y_b = ops.expand_dims(y_b, axis=-1)
+            ys.append(y_b)
         y_all = ops.concatenate(ys, axis=0)
         diff = ops.abs(preds - y_all)
         mae = float(ops.convert_to_numpy(ops.mean(diff)))

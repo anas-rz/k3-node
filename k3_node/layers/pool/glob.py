@@ -9,6 +9,9 @@ def _infer_size(batch, size=None):
     if size is not None:
         return size
     if is_tracing(batch) or (hasattr(batch, "is_meta") and batch.is_meta):
+        import keras
+        if keras.config.backend() == "jax":
+            return 1
         return None
     try:
         if hasattr(batch, "numpy") and not hasattr(batch, "_has_symbolic_representation"):

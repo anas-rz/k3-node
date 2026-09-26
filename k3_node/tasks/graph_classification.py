@@ -29,15 +29,18 @@ class GraphClassificationModel(keras.Model):
         self.pooling = pooling
         self.dropout = layers.Dropout(dropout) if dropout > 0 else None
         self.head = layers.Dense(num_classes)
+        self.num_graphs = None
 
     def call(self, inputs, training=False):
         if isinstance(inputs, (tuple, list)):
             x, edge_index = inputs[0], inputs[1]
             batch = inputs[2] if len(inputs) > 2 else None
+            size = inputs[3] if len(inputs) > 3 else self.num_graphs
         else:
             x = inputs
             edge_index = getattr(x, "edge_index", None)
             batch = getattr(x, "batch", None)
+            size = getattr(x, "num_graphs", self.num_graphs)
             x = getattr(x, "x", x)
 
         if batch is None:
@@ -46,13 +49,13 @@ class GraphClassificationModel(keras.Model):
         h = self.backbone((x, edge_index), training=training)
 
         if self.pooling in ("mean", "global_mean_pool"):
-            g = k3_pool.global_mean_pool(h, batch)
+            g = k3_pool.global_mean_pool(h, batch, size=size)
         elif self.pooling in ("add", "sum", "global_add_pool"):
-            g = k3_pool.global_add_pool(h, batch)
+            g = k3_pool.global_add_pool(h, batch, size=size)
         elif self.pooling in ("max", "global_max_pool"):
-            g = k3_pool.global_max_pool(h, batch)
+            g = k3_pool.global_max_pool(h, batch, size=size)
         else:
-            g = k3_pool.global_mean_pool(h, batch)
+            g = k3_pool.global_mean_pool(h, batch, size=size)
 
         if self.dropout is not None:
             g = self.dropout(g, training=training)
@@ -186,6 +189,20 @@ class GraphClassifier(BaseTask):
                 edge_index = ops.convert_to_tensor(batch.edge_index, dtype="int64")
                 batch_vec = ops.convert_to_tensor(batch.batch, dtype="int64")
                 y = ops.convert_to_tensor(batch.y, dtype="int64")
+                num_g = int(ops.shape(y)[0])
+                if hasattr(self.model, "num_graphs"):
+                    self.model.num_graphs = num_g
+
+                if not self.model.built:
+                    y_pred = self.model((x, edge_index, batch_vec), training=False)
+                    self.model.built = True
+                    if hasattr(self.model, "_compile_loss") and self.model._compile_loss is not None:
+                        self.model._compile_loss.build(y, y_pred)
+                    if hasattr(self.model, "_compile_metrics") and self.model._compile_metrics is not None:
+                        self.model._compile_metrics.build(y, y_pred)
+                    if self.model.optimizer is not None and not self.model.optimizer.built:
+                        self.model.optimizer.build(self.model.trainable_variables)
+
                 res = self.model.train_on_batch((x, edge_index, batch_vec), y)
                 if isinstance(res, (list, tuple)):
                     batch_losses.append(float(res[0]))
@@ -215,6 +232,9 @@ class GraphClassifier(BaseTask):
             x = ops.convert_to_tensor(batch.x, dtype="float32")
             edge_index = ops.convert_to_tensor(batch.edge_index, dtype="int64")
             batch_vec = ops.convert_to_tensor(batch.batch, dtype="int64")
+            num_g = int(ops.convert_to_numpy(ops.max(batch_vec))) + 1 if ops.shape(batch_vec)[0] > 0 else 1
+            if hasattr(self.model, "num_graphs"):
+                self.model.num_graphs = num_g
             logits = self.model((x, edge_index, batch_vec), training=False)
             probs.append(ops.softmax(logits, axis=-1))
         return ops.concatenate(probs, axis=0)
@@ -237,6 +257,9 @@ class GraphClassifier(BaseTask):
             x = ops.convert_to_tensor(batch.x, dtype="float32")
             edge_index = ops.convert_to_tensor(batch.edge_index, dtype="int64")
             batch_vec = ops.convert_to_tensor(batch.batch, dtype="int64")
+            num_g = int(ops.convert_to_numpy(ops.max(batch_vec))) + 1 if ops.shape(batch_vec)[0] > 0 else 1
+            if hasattr(self.model, "num_graphs"):
+                self.model.num_graphs = num_g
             logits = self.model((x, edge_index, batch_vec), training=False)
             pred = ops.argmax(logits, axis=-1)
             pred_np = ops.convert_to_numpy(ops.cast(pred, "int64"))

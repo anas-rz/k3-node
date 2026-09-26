@@ -211,6 +211,16 @@ class LinkPredictor(BaseTask):
                     dtype="float32",
                 )
 
+            if not self.model.built:
+                y_pred = self.model((graph_inputs, total_edges), training=False)
+                self.model.built = True
+                if hasattr(self.model, "_compile_loss") and self.model._compile_loss is not None:
+                    self.model._compile_loss.build(labels, y_pred)
+                if hasattr(self.model, "_compile_metrics") and self.model._compile_metrics is not None:
+                    self.model._compile_metrics.build(labels, y_pred)
+                if self.model.optimizer is not None and not self.model.optimizer.built:
+                    self.model.optimizer.build(self.model.trainable_variables)
+
             res = self.model.train_on_batch((graph_inputs, total_edges), labels)
             if isinstance(res, (list, tuple)):
                 l, a = float(res[0]), float(res[1]) if len(res) > 1 else 0.0
