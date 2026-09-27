@@ -2,3 +2,4 @@ keras>=3.0
 scipy
 pynndescent
 sympy
+pandas

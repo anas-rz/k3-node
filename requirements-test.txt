@@ -18,4 +18,5 @@ scikit-learn
 tqdm
 fsspec
 requests
+pandas
 
