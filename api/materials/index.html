@@ -2415,7 +2415,7 @@
 
 
 <h1 id="materials-crystal-graph-neural-networks">Materials &amp; Crystal Graph Neural Networks</h1>
-<p>The <code>k3_node.materials</code> module (backed by <code>k3_node.models.materials</code>) provides multi-backend Keras 3 ports of the <a href="https://github.com/materialsvirtuallab/matgl">MatGL</a> family of interatomic potentials and crystal property predictors, plus built-in checkpoint downloaders that load official pretrained PyTorch weights (hosted on the Hugging Face Hub under the <code>materialyze</code> organization) directly into the Keras models.</p>
+<p>The <code>k3_node.applications.materials</code> module provides multi-backend Keras 3 ports of the <a href="https://github.com/materialsvirtuallab/matgl">MatGL</a> family of interatomic potentials and crystal property predictors, plus built-in checkpoint downloaders that load official pretrained PyTorch weights (hosted on the Hugging Face Hub under the <code>materialyze</code> organization) directly into the Keras models.</p>
 <p>All models consume a <strong>crystal graph</strong> input — a <code>dict</code> (or <code>k3_node.data.Data</code>-like object) with the following keys:</p>
 <table>
 <thead>
@@ -2792,7 +2792,7 @@
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="k3_node.models.materials.tensornet.TensorNet" href="#k3_node.models.materials.tensornet.TensorNet">TensorNet</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="k3_node.models.materials.tensornet.TensorNet (k3_node.applications.materials.tensornet.TensorNet)" href="#k3_node.models.materials.tensornet.TensorNet">TensorNet</a></code></p>
 
 
 
