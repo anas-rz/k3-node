@@ -509,7 +509,7 @@ class GPSENodeEncoder(keras.layers.Layer):
             self.linear_x = None
 
         if norm_type == "batchnorm":
-            self.raw_norm = keras.layers.BatchNormalization()
+            self.raw_norm = keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)
         else:
             self.raw_norm = None
 

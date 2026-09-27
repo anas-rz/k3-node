@@ -60,8 +60,8 @@ class NodeBlock(keras.layers.Layer):
         super().__init__(**kwargs)
         self.hidden_node_channels = hidden_node_channels
         self.lin_c1 = keras.layers.Dense(2 * hidden_node_channels)
-        self.bn_c1 = keras.layers.BatchNormalization()
-        self.bn = keras.layers.BatchNormalization()
+        self.bn_c1 = keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)
+        self.bn = keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)
         self.sum_aggr = SumAggregation()
 
     def build(self, input_shape=None):
@@ -102,10 +102,10 @@ class EdgeBlock(keras.layers.Layer):
         self.hidden_edge_channels = hidden_edge_channels
         self.lin_c2 = keras.layers.Dense(2 * hidden_edge_channels)
         self.lin_c3 = keras.layers.Dense(2 * hidden_edge_channels)
-        self.bn_c2 = keras.layers.BatchNormalization()
-        self.bn_c3 = keras.layers.BatchNormalization()
-        self.bn_c2_2 = keras.layers.BatchNormalization()
-        self.bn_c3_2 = keras.layers.BatchNormalization()
+        self.bn_c2 = keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)
+        self.bn_c3 = keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)
+        self.bn_c2_2 = keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)
+        self.bn_c3_2 = keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)
         self.sum_aggr = SumAggregation()
 
     def build(self, input_shape=None):

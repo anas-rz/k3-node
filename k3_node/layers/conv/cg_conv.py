@@ -60,7 +60,7 @@ class CGConv(MessagePassing):
         in_dim = self.in_channels_src + self.in_channels_dst + dim
         self.lin_f = layers.Dense(self.in_channels_dst, use_bias=bias)
         self.lin_s = layers.Dense(self.in_channels_dst, use_bias=bias)
-        self.bn = layers.BatchNormalization() if batch_norm else None
+        self.bn = layers.BatchNormalization(momentum=0.9, epsilon=1e-5) if batch_norm else None
 
     def build(self, input_shape):
         in_dim = self.in_channels_src + self.in_channels_dst + self.dim

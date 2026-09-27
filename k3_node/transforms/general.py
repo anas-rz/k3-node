@@ -591,3 +591,65 @@ class ToSparseTensor(BaseTransform):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
+
+
+class AttentiveFPFeatures(BaseTransform):
+    r"""Computes the atom and bond features of AttentiveFP (Table 1 of `"Pushing the Boundaries of
+    Molecular Representation for Drug Discovery with the Graph Attention Mechanism"
+    <https://pubs.acs.org/doi/10.1021/acs.jmedchem.9b00959>`_) from ``data.smiles``: 39 features
+    per atom in ``x`` and 10 per bond in ``edge_attr``. Requires RDKit.
+    """
+
+    def __init__(self):
+        from rdkit import Chem
+
+        self.Chem = Chem
+        self.symbols = ['B', 'C', 'N', 'O', 'F', 'Si', 'P', 'S', 'Cl', 'As', 'Se', 'Br', 'Te', 'I', 'At', 'other']
+        H = Chem.rdchem.HybridizationType
+        self.hybridizations = [H.SP, H.SP2, H.SP3, H.SP3D, H.SP3D2, 'other']
+        S = Chem.rdchem.BondStereo
+        self.stereos = [S.STEREONONE, S.STEREOANY, S.STEREOZ, S.STEREOE]
+
+    @staticmethod
+    def _one_hot(value, choices):
+        out = [0.0] * len(choices)
+        out[choices.index(value) if value in choices else len(choices) - 1] = 1.0
+        return out
+
+    def forward(self, data):
+        Chem = self.Chem
+        mol = Chem.MolFromSmiles(data.smiles)
+        xs = []
+        for atom in mol.GetAtoms():
+            chirality_type = [0.0, 0.0]
+            if atom.HasProp('_CIPCode'):
+                chirality_type[['R', 'S'].index(atom.GetProp('_CIPCode'))] = 1.0
+            xs.append(
+                self._one_hot(atom.GetSymbol(), self.symbols)
+                + self._one_hot(atom.GetDegree(), list(range(6)))
+                + [float(atom.GetFormalCharge()), float(atom.GetNumRadicalElectrons())]
+                + self._one_hot(atom.GetHybridization(), self.hybridizations)
+                + [1.0 if atom.GetIsAromatic() else 0.0]
+                + self._one_hot(atom.GetTotalNumHs(), list(range(5)))
+                + [1.0 if atom.HasProp('_ChiralityPossible') else 0.0]
+                + chirality_type
+            )
+        edge_indices, edge_attrs = [], []
+        B = Chem.rdchem.BondType
+        for bond in mol.GetBonds():
+            i, j = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+            bond_type = bond.GetBondType()
+            attr = [float(bond_type == B.SINGLE), float(bond_type == B.DOUBLE), float(bond_type == B.TRIPLE),
+                    float(bond_type == B.AROMATIC), float(bond.GetIsConjugated()), float(bond.IsInRing())]
+            attr += self._one_hot(bond.GetStereo(), self.stereos)
+            edge_indices += [[i, j], [j, i]]
+            edge_attrs += [attr, attr]
+
+        data.x = np.array(xs, dtype=np.float32)
+        if edge_indices:
+            data.edge_index = np.array(edge_indices, dtype=np.int64).T
+            data.edge_attr = np.array(edge_attrs, dtype=np.float32)
+        else:
+            data.edge_index = np.zeros((2, 0), dtype=np.int64)
+            data.edge_attr = np.zeros((0, 10), dtype=np.float32)
+        return data

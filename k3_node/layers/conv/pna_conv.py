@@ -27,6 +27,22 @@ class PNAConv(MessagePassing):
         print(tuple(out.shape))  # (10, 16)
         ```
     """
+    @staticmethod
+    def get_degree_histogram(graphs):
+        r"""Returns the histogram of in-degrees over ``graphs`` (a dataset, a list of graphs or a
+        loader), which PNA uses to normalize its degree scalers:
+        ``deg[d]`` is the number of nodes with ``d`` incoming edges."""
+        import numpy as np
+
+        counts = []
+        for graph in graphs:
+            target = np.asarray(ops.convert_to_numpy(graph.edge_index))[1]
+            counts.append(np.bincount(np.bincount(target, minlength=graph.num_nodes)))
+        hist = np.zeros(max(len(c) for c in counts), dtype=np.int64)
+        for c in counts:
+            hist[: len(c)] += c
+        return hist
+
     def __init__(
         self,
         in_channels: int,

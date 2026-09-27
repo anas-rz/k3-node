@@ -91,7 +91,7 @@ class GENConv(MessagePassing):
             self.mlp_layers.append(Dense(channels[i + 1], use_bias=bias))
             if i < len(channels) - 2:
                 if norm == "batch":
-                    self.mlp_layers.append(BatchNormalization())
+                    self.mlp_layers.append(BatchNormalization(momentum=0.9, epsilon=1e-5))
                 elif norm == "layer":
                     self.mlp_layers.append(LayerNormalization())
                 self.mlp_layers.append(keras.layers.ReLU())

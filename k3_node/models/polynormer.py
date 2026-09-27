@@ -2,40 +2,12 @@ from typing import Optional
 
 import keras
 from keras import ops
+
+from k3_node.layers.aggr.base import from_dense_batch, to_dense_batch
 import numpy as np
 
 from k3_node.layers.conv import GATConv, GCNConv
 from k3_node.layers.attention import PolynormerAttention
-
-
-def _to_dense_batch_sorted(x, batch):
-    """Convert sparse node features to dense [B, N_max, F] representation.
-
-    Assumes batch is sorted (ascending). Returns (dense_x, mask).
-    Uses ops.scatter_update for full multi-backend compatibility.
-    """
-    batch_np = ops.convert_to_numpy(batch).astype(np.int64)
-    N = len(batch_np)
-    B = int(np.max(batch_np)) + 1 if N > 0 else 1
-    counts = np.bincount(batch_np, minlength=B)
-    max_nodes = int(np.max(counts)) if len(counts) > 0 else 0
-
-    x_np = ops.convert_to_numpy(x)
-    F = x_np.shape[-1]
-
-    dense_np = np.zeros((B, max_nodes, F), dtype=np.float32)
-    mask_np = np.zeros((B, max_nodes), dtype=bool)
-    offsets = np.zeros(B, dtype=np.int64)
-    for i, b in enumerate(batch_np):
-        off = offsets[b]
-        dense_np[b, off] = x_np[i]
-        mask_np[b, off] = True
-        offsets[b] += 1
-
-    return (
-        ops.convert_to_tensor(dense_np, dtype=x.dtype),
-        ops.convert_to_tensor(mask_np, dtype="bool"),
-    )
 
 
 class Polynormer(keras.layers.Layer):
@@ -231,22 +203,18 @@ class Polynormer(keras.layers.Layer):
         # ---- Equivariant global attention ----
         if self._global:
             # Sort nodes by batch assignment (required by to_dense_batch)
-            batch_np = ops.convert_to_numpy(batch).astype(np.int64)
-            indices = np.argsort(batch_np, kind='stable')
-            rev_perm = np.empty_like(indices)
-            rev_perm[indices] = np.arange(len(indices))
+            batch_i = ops.cast(batch, "int32")
+            indices = ops.argsort(batch_i)
+            rev_perm = ops.argsort(indices)
+            batch_sorted = ops.take(batch_i, indices, axis=0)
+            x_local_sorted = self.ln(ops.take(x_local, indices, axis=0))
 
-            batch_sorted = ops.convert_to_tensor(batch_np[indices], dtype="int32")
-            x_local_sorted = ops.take(x_local, ops.convert_to_tensor(indices, dtype="int32"), axis=0)
-            x_local_sorted = self.ln(x_local_sorted)
-
-            x_global, mask = _to_dense_batch_sorted(x_local_sorted, batch_sorted)
+            x_global, mask = to_dense_batch(x_local_sorted, batch_sorted)
             for attn in self.global_attn:
                 x_global = attn(x_global, mask=mask, training=training)
 
-            # Flatten and undo sort
-            x_global_flat = x_global[mask]  # [N, F]
-            x = ops.take(x_global_flat, ops.convert_to_tensor(rev_perm, dtype="int32"), axis=0)
+            # Flatten and undo the sort
+            x = ops.take(from_dense_batch(x_global, batch_sorted), rev_perm, axis=0)
             x = self.pred_global(x)
         else:
             x = self.pred_local(x_local)

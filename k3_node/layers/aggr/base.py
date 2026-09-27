@@ -121,6 +121,33 @@ def to_dense_batch(
     return dense_x, mask
 
 
+def from_dense_batch(x_dense, index):
+    r"""The inverse of :func:`to_dense_batch`: turns ``[batch_size, max_nodes, *dims]`` back into
+    one row per node, in the order given by the sorted ``index``. Static shapes, differentiable.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import from_dense_batch, to_dense_batch
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.array([0, 0, 0, 1, 1, 1, 1, 1, 2, 2])  # three graphs of different sizes
+
+        x_dense, mask = to_dense_batch(x, batch)
+        print(np.allclose(from_dense_batch(x_dense, batch), x))  # True
+        ```
+    """
+    from k3_node.ops.segment import segment_sum
+
+    index = ops.cast(ops.convert_to_tensor(index), "int32")
+    num_graphs, max_nodes = ops.shape(x_dense)[0], ops.shape(x_dense)[1]
+    counts = segment_sum(ops.ones_like(index), index, num_segments=num_graphs)
+    starts = ops.cumsum(counts) - counts
+    position = ops.arange(ops.shape(index)[0], dtype="int32") - ops.take(starts, index, axis=0)
+    flat = ops.reshape(x_dense, (-1,) + tuple(x_dense.shape[2:]))
+    return ops.take(flat, index * max_nodes + position, axis=0)
+
+
 def to_dense_adj(edge_index, batch=None, edge_attr=None, max_num_nodes: Optional[int] = None,
                  batch_size: Optional[int] = None):
     r"""Converts a batch of graphs into dense adjacency matrices of shape

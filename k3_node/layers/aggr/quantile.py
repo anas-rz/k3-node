@@ -55,61 +55,45 @@ class QuantileAggregation(Aggregation):
         **kwargs,
     ):
         self.assert_index_present(index)
-        from k3_node.layers.conv.utils import is_tracing
-        if is_tracing(x) or is_tracing(index):
-            batch_x, mask = self.to_dense_batch(
-                x, index=index, ptr=ptr, dim_size=dim_size, dim=dim, fill_value=self.fill_value
-            )
-            sorted_x = ops.sort(batch_x, axis=1)
-            N_max = ops.shape(sorted_x)[1]
-            outs = []
-            for q_val in self.q:
-                q_idx = ops.cast(ops.round(q_val * ops.cast(N_max - 1, "float32")), "int32")
-                q_out = ops.take(sorted_x, q_idx, axis=1)
-                outs.append(q_out)
-            return ops.concatenate(outs, axis=-1)
+        from k3_node.ops.segment import segment_sum
 
-        x_np = ops.convert_to_numpy(x)
-        idx_np = ops.convert_to_numpy(index).astype(np.int64)
+        # Sort every set's values in a dense [sets, max_size, features] tensor; the padding sorts
+        # last (+inf) and is then zeroed. Static shapes and differentiable, like PyG's version.
+        dense, _ = self.to_dense_batch(x, index=index, ptr=ptr, dim_size=dim_size, dim=dim,
+                                       fill_value=float("inf"))
+        dense = ops.sort(dense, axis=1)
+        dense = ops.where(ops.isinf(dense), ops.zeros_like(dense), dense)
 
-        B = int(np.max(idx_np)) + 1 if len(idx_np) > 0 else 0
-        if dim_size is not None:
-            B = max(B, dim_size)
+        index_i = ops.cast(index, "int32")
+        count = segment_sum(ops.ones_like(index_i), index_i, num_segments=ops.shape(dense)[0])
+        count_f = ops.cast(count, dense.dtype)
+        last = ops.maximum(count - 1, 0)
+
+        def gather(position):  # the value at `position` of every set, per feature
+            position = ops.minimum(ops.maximum(ops.cast(position, "int32"), 0), last)
+            position = ops.broadcast_to(ops.reshape(position, (-1, 1, 1)),
+                                        (ops.shape(dense)[0], 1, ops.shape(dense)[2]))
+            return ops.take_along_axis(dense, position, axis=1)[:, 0]
 
         outs = []
         for q_val in self.q:
-            q_out = np.full((B, *x_np.shape[1:]), self.fill_value, dtype=x_np.dtype)
-            for b in range(B):
-                mask = idx_np == b
-                if not np.any(mask):
-                    continue
-                group_x = x_np[mask]
-                # Sort along axis 0
-                sorted_x = np.sort(group_x, axis=0)
-                n = sorted_x.shape[0]
-                q_pos = q_val * (n - 1)
-                i_low = int(np.floor(q_pos))
-                i_high = int(np.ceil(q_pos))
-
-                if self.interpolation == "lower":
-                    q_out[b] = sorted_x[i_low]
-                elif self.interpolation == "higher":
-                    q_out[b] = sorted_x[i_high]
-                elif self.interpolation == "nearest":
-                    idx_round = int(round(q_pos))
-                    q_out[b] = sorted_x[idx_round]
-                elif self.interpolation == "midpoint":
-                    q_out[b] = 0.5 * sorted_x[i_low] + 0.5 * sorted_x[i_high]
-                else:  # linear
-                    frac = q_pos - i_low
-                    q_out[b] = sorted_x[i_low] + frac * (sorted_x[i_high] - sorted_x[i_low])
-            outs.append(q_out)
-
-        if len(outs) == 1:
-            return ops.convert_to_tensor(outs[0], dtype=x.dtype)
-        else:
-            cat_out = np.concatenate(outs, axis=-1)
-            return ops.convert_to_tensor(cat_out, dtype=x.dtype)
+            q_point = q_val * (count_f - 1.0)
+            if self.interpolation == "lower":
+                quantile = gather(ops.floor(q_point))
+            elif self.interpolation == "higher":
+                quantile = gather(ops.ceil(q_point))
+            elif self.interpolation == "nearest":
+                quantile = gather(ops.round(q_point))
+            else:
+                low, high = gather(ops.floor(q_point)), gather(ops.ceil(q_point))
+                if self.interpolation == "linear":
+                    frac = ops.expand_dims(q_point - ops.floor(q_point), -1)
+                    quantile = low + (high - low) * frac
+                else:  # midpoint
+                    quantile = 0.5 * low + 0.5 * high
+            empty = ops.expand_dims(count == 0, -1)
+            outs.append(ops.where(empty, ops.cast(self.fill_value, quantile.dtype), quantile))
+        return outs[0] if len(outs) == 1 else ops.concatenate(outs, axis=-1)
 
     def __repr__(self) -> str:
         q_str = self.q[0] if len(self.q) == 1 else self.q

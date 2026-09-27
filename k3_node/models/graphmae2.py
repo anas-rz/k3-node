@@ -61,7 +61,7 @@ def _get_norm(name: Optional[str], dim: int):
     if name_lower in ("layernorm", "layer_norm"):
         return layers.LayerNormalization(axis=-1, epsilon=1e-5)
     elif name_lower in ("batchnorm", "batch_norm"):
-        return layers.BatchNormalization(axis=-1)
+        return layers.BatchNormalization(axis=-1, momentum=0.9, epsilon=1e-5)
     return None
 
 

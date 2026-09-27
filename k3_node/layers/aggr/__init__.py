@@ -1,6 +1,6 @@
 r"""Aggregation operators for graph neural networks."""
 
-from .base import Aggregation, ptr2index, to_dense_adj, to_dense_batch
+from .base import Aggregation, from_dense_batch, ptr2index, to_dense_adj, to_dense_batch
 from .basic import (
     MaxAggregation,
     MeanAggregation,
@@ -35,6 +35,7 @@ __all__ = [
     "Aggregation",
     "ptr2index",
     "to_dense_batch",
+    "from_dense_batch",
     "to_dense_adj",
     "SumAggregation",
     "MeanAggregation",

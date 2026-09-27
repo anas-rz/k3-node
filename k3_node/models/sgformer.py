@@ -3,36 +3,10 @@ import numpy as np
 import keras
 from keras import ops
 
+from k3_node.layers.aggr.base import from_dense_batch, to_dense_batch
+
 from k3_node.layers.conv import GCNConv
 from k3_node.layers.attention import SGFormerAttention
-
-
-def _to_dense_batch_sorted(x, batch):
-    """Convert sorted sparse node features to dense [B, N_max, F] representation.
-    Assumes batch is sorted (ascending). Returns (dense_x, mask).
-    """
-    batch_np = ops.convert_to_numpy(batch).astype(np.int64)
-    N = len(batch_np)
-    B = int(np.max(batch_np)) + 1 if N > 0 else 1
-    counts = np.bincount(batch_np, minlength=B)
-    max_nodes = int(np.max(counts)) if len(counts) > 0 else 0
-
-    x_np = ops.convert_to_numpy(x)
-    F = x_np.shape[-1]
-
-    dense_np = np.zeros((B, max_nodes, F), dtype=np.float32)
-    mask_np = np.zeros((B, max_nodes), dtype=bool)
-    offsets = np.zeros(B, dtype=np.int64)
-    for i, b in enumerate(batch_np):
-        off = offsets[b]
-        dense_np[b, off] = x_np[i]
-        mask_np[b, off] = True
-        offsets[b] += 1
-
-    return (
-        ops.convert_to_tensor(dense_np, dtype=x.dtype),
-        ops.convert_to_tensor(mask_np, dtype="bool"),
-    )
 
 
 class GraphModule(keras.layers.Layer):
@@ -47,11 +21,11 @@ class GraphModule(keras.layers.Layer):
         super().__init__(**kwargs)
         self.convs = []
         self.fcs = [keras.layers.Dense(hidden_channels)]
-        self.bns = [keras.layers.BatchNormalization()]
+        self.bns = [keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5)]
 
         for _ in range(num_layers):
             self.convs.append(GCNConv(hidden_channels, hidden_channels))
-            self.bns.append(keras.layers.BatchNormalization())
+            self.bns.append(keras.layers.BatchNormalization(momentum=0.9, epsilon=1e-5))
 
         self.drop = keras.layers.Dropout(dropout)
         self.dropout_rate = dropout
@@ -100,14 +74,12 @@ class SGModule(keras.layers.Layer):
         if batch is None:
             batch = ops.zeros((ops.shape(x)[0],), dtype="int64")
 
-        batch_np = ops.convert_to_numpy(batch).astype(np.int64)
-        indices = np.argsort(batch_np, kind="stable")
-        rev_perm = np.empty_like(indices)
-        rev_perm[indices] = np.arange(len(indices))
-
-        x_sorted = ops.take(x, ops.convert_to_tensor(indices, dtype="int64"), axis=0)
-        batch_sorted = ops.take(batch, ops.convert_to_tensor(indices, dtype="int64"), axis=0)
-        x_dense, mask = _to_dense_batch_sorted(x_sorted, batch_sorted)
+        # Group the nodes by graph (static shapes: works under jit)
+        batch = ops.cast(batch, "int32")
+        indices = ops.argsort(batch)
+        rev_perm = ops.argsort(indices)
+        batch_sorted = ops.take(batch, indices, axis=0)
+        x_dense, mask = to_dense_batch(ops.take(x, indices, axis=0), batch_sorted)
 
         layer_ = []
 
@@ -127,11 +99,7 @@ class SGModule(keras.layers.Layer):
             x = self.drop(x, training=training)
             layer_.append(x)
 
-        dense_out_np = ops.convert_to_numpy(x)
-        mask_np = ops.convert_to_numpy(mask)
-        flat_np = dense_out_np[mask_np]
-        flat_sorted = ops.convert_to_tensor(flat_np, dtype=x.dtype)
-        unsorted_x_mask = ops.take(flat_sorted, ops.convert_to_tensor(rev_perm, dtype="int64"), axis=0)
+        unsorted_x_mask = ops.take(from_dense_batch(x, batch_sorted), rev_perm, axis=0)
         return unsorted_x_mask
 
 

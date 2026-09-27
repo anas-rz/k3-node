@@ -98,17 +98,17 @@ class XConv(keras.layers.Layer):
 
         # mlp1
         self.mlp1_l1 = keras.layers.Dense(C_delta)
-        self.mlp1_bn1 = keras.layers.BatchNormalization(axis=-1)
+        self.mlp1_bn1 = keras.layers.BatchNormalization(axis=-1, momentum=0.9, epsilon=1e-5)
         self.mlp1_l2 = keras.layers.Dense(C_delta)
-        self.mlp1_bn2 = keras.layers.BatchNormalization(axis=-1)
+        self.mlp1_bn2 = keras.layers.BatchNormalization(axis=-1, momentum=0.9, epsilon=1e-5)
 
         # mlp2
         self.mlp2_l1 = keras.layers.Dense(K * K)
-        self.mlp2_bn1 = keras.layers.BatchNormalization(axis=-1)
+        self.mlp2_bn1 = keras.layers.BatchNormalization(axis=-1, momentum=0.9, epsilon=1e-5)
         self.mlp2_conv1 = GroupedConv1dFlat(K, K * K, K)
-        self.mlp2_bn2 = keras.layers.BatchNormalization(axis=-1)
+        self.mlp2_bn2 = keras.layers.BatchNormalization(axis=-1, momentum=0.9, epsilon=1e-5)
         self.mlp2_conv2 = GroupedConv1dFlat(K, K * K, K)
-        self.mlp2_bn3 = keras.layers.BatchNormalization(axis=-1)
+        self.mlp2_bn3 = keras.layers.BatchNormalization(axis=-1, momentum=0.9, epsilon=1e-5)
 
         # conv
         C_total = C_in + C_delta

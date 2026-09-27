@@ -2,32 +2,16 @@ from typing import Optional
 import numpy as np
 import keras
 from keras import ops
+from k3_node.ops.segment import segment_sum
 
 
 def to_dense_batch(x, batch=None):
+    """Differentiable dense batching; see :func:`k3_node.layers.aggr.to_dense_batch`."""
+    from k3_node.layers.aggr.base import to_dense_batch as _to_dense_batch
+
     if batch is None:
-        mask = ops.ones((1, ops.shape(x)[0]), dtype="bool")
-        return ops.expand_dims(x, axis=0), mask
-
-    batch_np = ops.convert_to_numpy(batch).astype(np.int64)
-    N = len(batch_np)
-    B = int(np.max(batch_np)) + 1 if N > 0 else 1
-    counts = np.bincount(batch_np, minlength=B)
-    max_nodes = int(np.max(counts)) if len(counts) > 0 else 0
-
-    x_np = ops.convert_to_numpy(x)
-    C = x_np.shape[-1]
-    dense_out = np.zeros((B, max_nodes, C), dtype=np.float32)
-    mask = np.zeros((B, max_nodes), dtype=bool)
-
-    offsets = np.zeros(B, dtype=np.int64)
-    for b, feat in zip(batch_np, x_np):
-        off = offsets[b]
-        dense_out[b, off] = feat
-        mask[b, off] = True
-        offsets[b] += 1
-
-    return ops.convert_to_tensor(dense_out, dtype=x.dtype), ops.convert_to_tensor(mask)
+        return ops.expand_dims(x, axis=0), ops.ones((1, ops.shape(x)[0]), dtype="bool")
+    return _to_dense_batch(x, batch)
 
 
 class GPSConv(keras.layers.Layer):
@@ -90,9 +74,9 @@ class GPSConv(keras.layers.Layer):
         self.dropout = keras.layers.Dropout(dropout)
 
         if norm == "batch_norm":
-            self.norm1 = keras.layers.BatchNormalization(axis=-1) if conv is not None else None
-            self.norm2 = keras.layers.BatchNormalization(axis=-1)
-            self.norm3 = keras.layers.BatchNormalization(axis=-1)
+            self.norm1 = keras.layers.BatchNormalization(axis=-1, momentum=0.9, epsilon=1e-5) if conv is not None else None
+            self.norm2 = keras.layers.BatchNormalization(axis=-1, momentum=0.9, epsilon=1e-5)
+            self.norm3 = keras.layers.BatchNormalization(axis=-1, momentum=0.9, epsilon=1e-5)
         elif norm == "layer_norm":
             self.norm1 = keras.layers.LayerNormalization(axis=-1) if conv is not None else None
             self.norm2 = keras.layers.LayerNormalization(axis=-1)
@@ -133,14 +117,13 @@ class GPSConv(keras.layers.Layer):
         attn_mask = ops.expand_dims(mask, axis=1)
         attn_out = self.attn(h_dense, h_dense, attention_mask=attn_mask, training=training)
 
-        # Unpack dense batch to original flat shape
+        # Unpack dense batch to original flat shape (static shapes: jit-friendly)
         if batch is None:
             h_global = attn_out[0]
         else:
-            mask_flat = ops.reshape(mask, (-1,))
-            out_flat = ops.reshape(attn_out, (-1, self.channels))
-            idx = ops.where(mask_flat)[0]
-            h_global = ops.take(out_flat, idx, axis=0)
+            from k3_node.layers.aggr.base import from_dense_batch
+
+            h_global = from_dense_batch(attn_out, batch)
 
         h_global = self.dropout(h_global, training=training)
         h_global = h_global + x

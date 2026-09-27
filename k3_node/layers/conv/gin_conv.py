@@ -68,7 +68,7 @@ class GINConv(MessagePassing):
             for h in mlp_hidden:
                 seq_layers.append(layers.Dense(h, activation=act))
                 if mlp_batchnorm:
-                    seq_layers.append(layers.BatchNormalization())
+                    seq_layers.append(layers.BatchNormalization(momentum=0.9, epsilon=1e-5))
             seq_layers.append(layers.Dense(channels, activation=kwargs.get("activation", None)))
             self.nn = keras.Sequential(seq_layers)
         else:
