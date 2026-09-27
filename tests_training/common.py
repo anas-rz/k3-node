@@ -1097,6 +1097,7 @@ NO_GRADIENT_ALLOWED = {
     "FilterEdges": ["*"],  # parameter-free; trainable weights belong to the test's selector
     "Set2Set": ["recurrent_kernel"],  # one processing step starts from a zero hidden state
     "EdgePooling": ["lin/bias"],  # per-node softmax edge scores are invariant to a constant bias
+    "AttentionalAggregation": ["bias"],  # per-graph softmax gate is invariant to the gate's bias
 }
 
 

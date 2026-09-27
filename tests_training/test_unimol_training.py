@@ -46,10 +46,11 @@ def test_unimol_model_training():
     }
     target = np.random.randn(bsz, 2).astype("float32")
 
-    l0 = float(model.train_on_batch(inputs, target))
-    l_last = l0
-    for _ in range(epochs - 1):
-        l_last = float(model.train_on_batch(inputs, target))
+    # Compare inference-mode losses: training-mode losses include dropout noise.
+    l0 = float(model.test_on_batch(inputs, target))
+    for _ in range(epochs):
+        model.train_on_batch(inputs, target)
+    l_last = float(model.test_on_batch(inputs, target))
 
     assert l_last < l0, f"UniMolModel loss did not decrease: initial={l0:.4f}, final={l_last:.4f}"
 
@@ -94,10 +95,11 @@ def test_unimol_conf_gen_training():
     target_dist = np.random.randn(bsz, seq_len * seq_len).astype("float32")
     target = np.concatenate([target_coord, target_dist], axis=-1)
 
-    l0 = float(wrapper.train_on_batch(inputs, target))
-    l_last = l0
-    for _ in range(epochs - 1):
-        l_last = float(wrapper.train_on_batch(inputs, target))
+    # Compare inference-mode losses: training-mode losses include dropout noise.
+    l0 = float(wrapper.test_on_batch(inputs, target))
+    for _ in range(epochs):
+        wrapper.train_on_batch(inputs, target)
+    l_last = float(wrapper.test_on_batch(inputs, target))
 
     assert l_last < l0, f"UniMolConfGenModel loss did not decrease: initial={l0:.4f}, final={l_last:.4f}"
 
@@ -141,10 +143,11 @@ def test_unimol_docking_training():
     target_dist = np.random.randn(bsz, seq_len * seq_len).astype("float32")
     target = np.concatenate([target_pose, target_dist], axis=-1)
 
-    l0 = float(wrapper.train_on_batch(inputs, target))
-    l_last = l0
-    for _ in range(epochs - 1):
-        l_last = float(wrapper.train_on_batch(inputs, target))
+    # Compare inference-mode losses: training-mode losses include dropout noise.
+    l0 = float(wrapper.test_on_batch(inputs, target))
+    for _ in range(epochs):
+        wrapper.train_on_batch(inputs, target)
+    l_last = float(wrapper.test_on_batch(inputs, target))
 
     assert l_last < l0, f"UniMolDockingModel loss did not decrease: initial={l0:.4f}, final={l_last:.4f}"
 
@@ -175,10 +178,11 @@ def test_unimol2_model_training():
     }
     target = np.random.randn(bsz, 2).astype("float32")
 
-    l0 = float(model.train_on_batch(inputs, target))
-    l_last = l0
-    for _ in range(epochs - 1):
-        l_last = float(model.train_on_batch(inputs, target))
+    # Compare inference-mode losses: training-mode losses include dropout noise.
+    l0 = float(model.test_on_batch(inputs, target))
+    for _ in range(epochs):
+        model.train_on_batch(inputs, target)
+    l_last = float(model.test_on_batch(inputs, target))
 
     assert l_last < l0, f"UniMol2Model loss did not decrease: initial={l0:.4f}, final={l_last:.4f}"
 
@@ -206,10 +210,11 @@ def test_unimol_plus_pcq_training():
     }
     target = np.random.randn(bsz, 1).astype("float32")
 
-    l0 = float(model.train_on_batch(inputs, target))
-    l_last = l0
-    for _ in range(epochs - 1):
-        l_last = float(model.train_on_batch(inputs, target))
+    # Compare inference-mode losses: training-mode losses include dropout noise.
+    l0 = float(model.test_on_batch(inputs, target))
+    for _ in range(epochs):
+        model.train_on_batch(inputs, target)
+    l_last = float(model.test_on_batch(inputs, target))
 
     assert l_last < l0, f"UniMolPlusPCQModel loss did not decrease: initial={l0:.4f}, final={l_last:.4f}"
 
@@ -237,10 +242,11 @@ def test_unimol_plus_oc20_training():
     }
     target = np.random.randn(bsz, 1).astype("float32")
 
-    l0 = float(model.train_on_batch(inputs, target))
-    l_last = l0
-    for _ in range(epochs - 1):
-        l_last = float(model.train_on_batch(inputs, target))
+    # Compare inference-mode losses: training-mode losses include dropout noise.
+    l0 = float(model.test_on_batch(inputs, target))
+    for _ in range(epochs):
+        model.train_on_batch(inputs, target)
+    l_last = float(model.test_on_batch(inputs, target))
 
     assert l_last < l0, f"UniMolPlusOC20Model loss did not decrease: initial={l0:.4f}, final={l_last:.4f}"
 
@@ -287,10 +293,11 @@ def test_unimol_docking_v2_training():
     target_d = np.random.randn(bsz, (n_mol + n_pkt) ** 2).astype("float32")
     target = np.concatenate([target_c, target_d], axis=-1)
 
-    l0 = float(wrapper.train_on_batch(inputs, target))
-    l_last = l0
-    for _ in range(epochs - 1):
-        l_last = float(wrapper.train_on_batch(inputs, target))
+    # Compare inference-mode losses: training-mode losses include dropout noise.
+    l0 = float(wrapper.test_on_batch(inputs, target))
+    for _ in range(epochs):
+        wrapper.train_on_batch(inputs, target)
+    l_last = float(wrapper.test_on_batch(inputs, target))
 
     assert l_last < l0, f"DockingPoseModelV2 loss did not decrease: initial={l0:.4f}, final={l_last:.4f}"
 
