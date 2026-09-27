@@ -184,14 +184,6 @@ load_mole_bert_weights(model, "checkpoints/Mole-BERT.pth")
 
 ---
 
-## Interactive Examples
-
-| Backend | Notebook | Description | Link |
-|---|---|---|---|
-| **TensorFlow** | `ogb_arxiv_spektral_dataset.ipynb` | Node classification on OGB-Arxiv with `ARMAConv` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anas-rz/k3-node/blob/main/examples/tensorflow/ogb_arxiv_spektral_dataset.ipynb) |
-| **PyTorch** | `planetoid_PyTorch_Geometric.ipynb` | Node classification on Cora with `GatedGraphConv` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/anas-rz/k3-node/blob/main/examples/torch/planetoid_PyTorch_Geometric.ipynb) |
-
----
 
 ## Testing & Verification
 
