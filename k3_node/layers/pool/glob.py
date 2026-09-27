@@ -13,21 +13,16 @@ def _infer_size(batch, size=None):
         if keras.config.backend() == "jax":
             return 1
         return None
+    # Use the maximum (as PyG does), not the last entry: pooling layers such as EdgePooling
+    # return batch vectors that are not sorted by graph.
     try:
-        if hasattr(batch, "numpy") and not hasattr(batch, "_has_symbolic_representation"):
-            import torch
-            if not isinstance(batch, torch.Tensor):
-                return int(batch[-1]) + 1
-        if hasattr(batch, "__getitem__"):
-            val = batch[-1]
-            if hasattr(val, "item"):
-                return int(val.item()) + 1
-            return int(val) + 1
-        return int(ops.convert_to_numpy(batch[-1])) + 1
+        if ops.shape(batch)[0] == 0:
+            return 0
+        return int(ops.convert_to_numpy(ops.max(batch))) + 1
     except Exception:
         pass
     try:
-        return ops.cast(batch[-1], "int32") + 1
+        return ops.cast(ops.max(batch), "int32") + 1
     except Exception:
         return None
 

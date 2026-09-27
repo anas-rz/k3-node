@@ -386,3 +386,15 @@ def test_point_cloud():
     # nearest
     near = nearest(pos, pos)
     assert ops.shape(near)[0] == 4
+
+
+def test_global_pool_with_unsorted_batch():
+    # Pooling layers (e.g. EdgePooling) can return batch vectors that are not sorted by graph.
+    import numpy as np
+    from keras import ops
+    from k3_node.layers import global_add_pool, global_mean_pool
+
+    x = np.arange(8, dtype="float32").reshape(4, 2)
+    batch = np.array([1, 0, 1, 0], dtype="int32")
+    np.testing.assert_allclose(ops.convert_to_numpy(global_add_pool(x, batch)), [[8, 10], [4, 6]])
+    np.testing.assert_allclose(ops.convert_to_numpy(global_mean_pool(x, batch)), [[4, 5], [2, 3]])
