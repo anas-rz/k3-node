@@ -81,3 +81,16 @@ def test_neighbor_loader_weights_seed_nodes_only():
     inputs, y, weight = loader[0]
     assert y.shape[0] == inputs.x.shape[0]
     assert (weight[:4] > 0).all() and (weight[4:] == 0).all()
+
+
+def test_full_graph_dataset_index_split():
+    import numpy as np
+    from k3_node.data import Data
+    from k3_node.loader import FullGraphDataset
+
+    data = Data(x=np.ones((5, 2), "float32"), edge_index=np.array([[0, 1], [1, 2]]),
+                train_idx=np.array([3, 1]), train_y=np.array([2, 1]), num_nodes=5)
+    inputs, y, weight = FullGraphDataset(data, index="train_idx", target="train_y")[0]
+    assert "train_idx" not in inputs._fields and "train_y" not in inputs._fields
+    np.testing.assert_array_equal(y, [0, 1, 0, 2, 0])
+    np.testing.assert_allclose(weight, [0, 2.5, 0, 2.5, 0])  # mean over the 2 indexed nodes

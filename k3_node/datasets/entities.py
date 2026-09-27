@@ -60,7 +60,7 @@ class Entities(InMemoryDataset):
         return "hetero_data.pt" if self.hetero else "data.pt"
 
     def download(self):
-        tgz_path = osp.join(self.root, f"{self.name}.tgz")
+        tgz_path = osp.join(self.raw_dir, f"{self.name}.tgz")  # extracted next to it, into raw_dir
         fs.cp(self.url.format(self.name), tgz_path, extract=True)
         if osp.exists(tgz_path):
             fs.rm(tgz_path)

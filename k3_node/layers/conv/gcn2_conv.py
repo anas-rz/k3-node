@@ -39,6 +39,8 @@ class GCN2Conv(MessagePassing):
         ```
     """
 
+    weighted_sum_message = True
+
     def __init__(
         self,
         channels: int,

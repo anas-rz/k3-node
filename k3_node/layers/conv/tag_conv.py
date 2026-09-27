@@ -31,6 +31,8 @@ class TAGConv(MessagePassing):
         ```
     """
 
+    weighted_sum_message = True
+
     def __init__(
         self,
         in_channels: int,

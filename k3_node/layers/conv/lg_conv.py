@@ -26,6 +26,8 @@ class LGConv(MessagePassing):
         ```
     """
 
+    weighted_sum_message = True
+
     def __init__(self, normalize: bool = True, **kwargs):
         super().__init__(aggr="add", **kwargs)
         self.normalize = normalize

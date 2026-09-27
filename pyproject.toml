@@ -26,6 +26,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+examples = [
+    "scikit-learn",
+    "rdflib",
+    "matplotlib",
+]
 test = [
     "pytest>=8.0.0",
     "pytest-cov",

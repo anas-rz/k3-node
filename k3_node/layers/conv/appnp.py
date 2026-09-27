@@ -35,6 +35,8 @@ class APPNP(MessagePassing):
         ```
     """
 
+    weighted_sum_message = True
+
     def __init__(
         self,
         K: int,

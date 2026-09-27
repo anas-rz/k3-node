@@ -67,6 +67,7 @@ def to_keras_batch(
     target: Optional[str] = None,
     mask: Optional[str] = None,
     normalize_mask: bool = True,
+    index: Optional[str] = None,
 ):
     r"""Converts a :class:`~k3_node.data.Data` / :class:`~k3_node.data.Batch` into Keras' format.
 
@@ -80,6 +81,9 @@ def to_keras_batch(
         mask (str, optional): Node mask attribute (e.g. ``"train_mask"``) used as sample weights.
         normalize_mask (bool): Scale sample weights so the loss is the mean over the weighted
             nodes (as in PyG), not Keras' sum divided by the number of all nodes.
+        index (str, optional): Node index attribute (e.g. ``"train_idx"``) for datasets that store
+            splits as node indices, with ``target`` holding the labels of exactly those nodes
+            (e.g. ``"train_y"``). The labels are placed at their nodes and only these nodes count.
     """
     attrs = data.to_dict() if hasattr(data, "to_dict") else dict(vars(data))
     if target is None:
@@ -87,7 +91,7 @@ def to_keras_batch(
 
     fields = {}
     for key in sorted(attrs):
-        if key == target or key.endswith("_mask"):
+        if key == target or key.endswith(("_mask", "_idx")):
             continue
         array = _as_array(attrs[key])
         if array is not None:
@@ -103,7 +107,16 @@ def to_keras_batch(
         return (inputs,)
 
     weight = None
-    if mask is not None:
+    if index is not None:
+        if attrs.get(index) is None:
+            raise ValueError(f"The graph has no index attribute '{index}'")
+        idx = np.asarray(ops.convert_to_numpy(attrs[index])).astype(np.int64)
+        num_nodes = attrs.get("num_nodes") or data.num_nodes
+        y_full = np.zeros((num_nodes,) + y.shape[1:], dtype=y.dtype)
+        y_full[idx] = y
+        y, weight = y_full, np.zeros(num_nodes, dtype=np.float32)
+        weight[idx] = 1.0
+    elif mask is not None:
         if attrs.get(mask) is None:
             raise ValueError(f"The graph has no mask attribute '{mask}'")
         weight = np.asarray(ops.convert_to_numpy(attrs[mask])).astype(np.float32)
@@ -177,6 +190,8 @@ class FullGraphDataset(keras.utils.PyDataset):
         mask (str, optional): Node mask attribute (e.g. ``"train_mask"``) whose nodes are used in
             the loss and in ``weighted_metrics``. (default: :obj:`None`, all nodes)
         target (str, optional): Attribute to predict. (default: ``"y"``)
+        index (str, optional): For splits stored as node indices: the index attribute (e.g.
+            ``"train_idx"``), with ``target`` giving the labels of those nodes (e.g. ``"train_y"``).
 
     Example:
         ```python
@@ -186,9 +201,10 @@ class FullGraphDataset(keras.utils.PyDataset):
         ```
     """
 
-    def __init__(self, data, mask: Optional[str] = None, target: Optional[str] = None, **kwargs):
+    def __init__(self, data, mask: Optional[str] = None, target: Optional[str] = None,
+                 index: Optional[str] = None, **kwargs):
         super().__init__(**kwargs)
-        self._batch = to_keras_batch(data, target=target, mask=mask)
+        self._batch = to_keras_batch(data, target=target, mask=mask, index=index)
 
     def __len__(self):
         return 1

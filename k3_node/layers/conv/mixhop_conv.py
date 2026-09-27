@@ -25,6 +25,8 @@ class MixHopConv(MessagePassing):
         print(tuple(out.shape))  # (10, 48)
         ```
     """
+
+    weighted_sum_message = True
     def __init__(
         self,
         in_channels: int,

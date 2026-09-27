@@ -1,3 +1,4 @@
+import keras
 import inspect
 from typing import Any, List, Optional, Tuple, Union
 from keras import layers, ops
@@ -263,6 +264,11 @@ class MessagePassing(layers.Layer):
         dim_size = size[1] if size is not None and size[1] is not None else self._get_dim_size(kwargs, i, size)
         self.n_nodes = dim_size
 
+        # Layers whose message is `edge_weight * x_j`, summed, can skip per-edge messages
+        fused = self._fused_weighted_sum(i, j, dim_size, size, kwargs)
+        if fused is not None:
+            return self.update(fused, **self._update_kwargs(kwargs))
+
         # Construct message arguments
         msg_kwargs = {}
         for param_name in self.msg_signature.keys():
@@ -313,7 +319,9 @@ class MessagePassing(layers.Layer):
             **agg_kwargs,
         )
 
-        # Update
+        return self.update(out, **self._update_kwargs(kwargs))
+
+    def _update_kwargs(self, kwargs):
         upd_kwargs = {}
         for param_name in self.upd_signature.keys():
             if param_name in kwargs and param_name not in ["inputs", "aggr_out", "embeddings"]:
@@ -324,9 +332,25 @@ class MessagePassing(layers.Layer):
                     val = kwargs[root]
                     val = val[1] if isinstance(val, (tuple, list)) else val
                     upd_kwargs[param_name] = val
+        return upd_kwargs
 
-        out = self.update(out, **upd_kwargs)
-        return out
+    #: Set to ``True`` in layers whose ``message`` is ``edge_weight * x_j`` (or ``x_j``) and that
+    #: sum the messages; ``propagate`` then uses a sparse matrix product (see ``k3_node.ops.spmm``).
+    weighted_sum_message = False
+
+    def _fused_weighted_sum(self, i, j, dim_size, size, kwargs):
+        if not self.weighted_sum_message or keras.config.backend() != "torch":
+            return None
+        if not (self.aggr in ("add", "sum") and type(self.aggr_module).__name__ == "SumAggregation"):
+            return None
+        x = kwargs.get("x")
+        if x is None or isinstance(x, (tuple, list)) or len(getattr(x, "shape", ())) != 2 or self.node_dim not in (0, -2):
+            return None
+        if set(kwargs) - {"x", "edge_weight"}:
+            return None
+        from k3_node.ops.sparse import spmm
+
+        return spmm(i, j, kwargs.get("edge_weight"), x, dim_size)
 
     def message(self, x=None, x_j=None, **kwargs):
         r"""Constructs messages from node :math:`j` to node :math:`i`."""
