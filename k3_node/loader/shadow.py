@@ -14,7 +14,7 @@ except ImportError:
     BaseDataLoader = object
 
 from k3_node.data import Batch, Data
-from k3_node.loader.sampler_utils import sample_neighbors_homo
+from k3_node.loader.sampler_utils import FastGraph, sample_neighbors_homo
 
 
 class ShaDowKHopSampler(BaseDataLoader):
@@ -62,6 +62,12 @@ class ShaDowKHopSampler(BaseDataLoader):
             self.dataset = idx_list
             self.collate_fn = self.__collate__
 
+    def _cached_graph(self):
+        # The CSR index depends only on the graph; build it once instead of per batch.
+        if getattr(self, "_graph", None) is None:
+            self._graph = FastGraph(self.data.edge_index, num_nodes=self.data.num_nodes)
+        return self._graph
+
     def __collate__(self, n_id: List[int]) -> Batch:
         subgraphs = []
         is_torch = torch is not None and isinstance(self.data.edge_index, Tensor)
@@ -77,6 +83,7 @@ class ShaDowKHopSampler(BaseDataLoader):
                 seed_nodes=root_seeds,
                 num_neighbors=num_neighbors_list,
                 num_nodes=self.data.num_nodes,
+                graph=self._cached_graph(),
                 replace=self.replace,
                 subgraph_type='directional',
             )

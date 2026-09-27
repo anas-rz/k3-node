@@ -304,7 +304,13 @@ class K3NodeHubMixin:
 
         # Extract arguments compatible with target_cls.__init__
         sig = inspect.signature(target_cls.__init__)
-        accepted_params = set(sig.parameters.keys()) - {"self"}
+        # Exclude *args/**kwargs: for tasks, ``**backbone_kwargs`` is a var-keyword parameter, and
+        # passing ``backbone_kwargs={...}`` would nest the options instead of forwarding them.
+        accepted_params = {
+            name
+            for name, p in sig.parameters.items()
+            if name != "self" and p.kind not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
+        }
 
         init_kwargs = {}
         for k, v in config.items():

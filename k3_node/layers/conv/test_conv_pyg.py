@@ -345,7 +345,7 @@ def test_point_cloud_convs():
     assert ops.shape(out_pconv) == (5, 16)
 
     # PointTransformerConv
-    pt_conv = conv.PointTransformerConv(in_channels=8, out_channels=16, dim=3)
+    pt_conv = conv.PointTransformerConv(in_channels=8, out_channels=16)
     out_pt = pt_conv(x, pos, edge_index)
     assert ops.shape(out_pt) == (5, 16)
 

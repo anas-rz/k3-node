@@ -575,13 +575,13 @@ class SANGraphHead(layers.Layer):
             curr_dim = layer.units
         super().build(input_shape)
 
-    def call(self, x, batch=None, training=False):
+    def call(self, x, batch=None, training=False, batch_size=None):
         if self.pooling in ["mean", "avg"]:
-            graph_emb = global_mean_pool(x, batch)
+            graph_emb = global_mean_pool(x, batch, size=batch_size)
         elif self.pooling in ["add", "sum"]:
-            graph_emb = global_add_pool(x, batch)
+            graph_emb = global_add_pool(x, batch, size=batch_size)
         elif self.pooling == "max":
-            graph_emb = global_max_pool(x, batch)
+            graph_emb = global_max_pool(x, batch, size=batch_size)
         else:
             raise ValueError(f"Unknown pooling method '{self.pooling}'")
 
@@ -755,6 +755,7 @@ class GPSModel(keras.Model):
         pestat_RWSE=None,
         batch=None,
         training=False,
+        batch_size=None,
     ):
         # Node encoding
         if self.node_encoder_type == "Atom+RWSE":
@@ -782,7 +783,7 @@ class GPSModel(keras.Model):
             )
 
         # Head
-        pred = self.post_mp(x, batch=batch, training=training)
+        pred = self.post_mp(x, batch=batch, training=training, batch_size=batch_size)
         return pred
 
 

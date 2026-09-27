@@ -15,3 +15,7 @@ build/
 .cache/
 data/
 logs
+# Local virtualenv and reference checkouts used by tests_reference (skipped when absent)
+env/
+Uni-Mol/
+matgl/

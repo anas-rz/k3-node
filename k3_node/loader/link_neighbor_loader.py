@@ -12,7 +12,7 @@ except ImportError:
 from k3_node.data import Data, HeteroData
 from k3_node.loader.link_loader import EdgeSamplerInput, LinkLoader
 from k3_node.loader.node_loader import HeteroSamplerOutput, SamplerOutput
-from k3_node.loader.sampler_utils import sample_neighbors_hetero, sample_neighbors_homo
+from k3_node.loader.sampler_utils import FastGraph, sample_neighbors_hetero, sample_neighbors_homo
 
 
 class InternalLinkNeighborSampler:
@@ -33,6 +33,12 @@ class InternalLinkNeighborSampler:
         self.disjoint = disjoint
         self.neg_sampling_ratio = neg_sampling_ratio
         self.edge_permutation = None
+
+    def _cached_graph(self):
+        # The CSR index depends only on the graph; build it once instead of per batch.
+        if getattr(self, "_graph", None) is None:
+            self._graph = FastGraph(self.data.edge_index, num_nodes=self.data.num_nodes)
+        return self._graph
 
     def sample_from_edges(self, input_data: EdgeSamplerInput) -> Union[SamplerOutput, HeteroSamplerOutput]:
         is_torch = torch is not None and isinstance(input_data.row, Tensor)
@@ -75,6 +81,7 @@ class InternalLinkNeighborSampler:
                 seed_nodes=seed_nodes,
                 num_neighbors=self.num_neighbors,
                 num_nodes=self.data.num_nodes,
+                graph=self._cached_graph(),
                 replace=self.replace,
                 subgraph_type=self.subgraph_type,
                 disjoint=self.disjoint,

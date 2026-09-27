@@ -457,7 +457,7 @@ class DimeNet(keras.layers.Layer):
             for _ in range(num_blocks)
         ]
 
-    def call(self, z, pos, batch=None):
+    def call(self, z, pos, batch=None, batch_size=None):
         edge_index = radius_graph(
             pos,
             r=self.cutoff,
@@ -506,7 +506,7 @@ class DimeNet(keras.layers.Layer):
             return ops.sum(P, axis=0)
         else:
             batch = ops.cast(batch, "int32")
-            return global_add_pool(P, batch)
+            return global_add_pool(P, batch, size=batch_size)
 
 
 class DimeNetPlusPlus(DimeNet):

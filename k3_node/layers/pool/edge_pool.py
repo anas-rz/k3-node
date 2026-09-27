@@ -89,66 +89,66 @@ class EdgePooling(layers.Layer):
         batch,
         edge_score,
     ) -> Tuple[any, any, any, UnpoolInfo]:
-        from k3_node.layers.conv.utils import is_tracing
-        if is_tracing(x) or is_tracing(edge_index) or is_tracing(edge_score):
+        from k3_node.layers.conv.utils import eager_only_placeholder, host_callback
+        if eager_only_placeholder("EdgePooling", x, edge_index, edge_score):
             num_nodes = ops.shape(x)[0]
             unpool_info = UnpoolInfo(edge_index, ops.arange(num_nodes, dtype="int32"), batch, ops.ones((num_nodes,), dtype=x.dtype))
             return x, edge_index, batch, unpool_info
 
-        edge_index_np = ops.convert_to_numpy(edge_index).astype(np.int64)
-        edge_score_np = ops.convert_to_numpy(edge_score)
-        num_nodes = ops.shape(x)[0]
+        num_nodes = int(ops.shape(x)[0])
+        num_edges = int(ops.shape(edge_index)[1])
 
-        perm = np.argsort(-edge_score_np).tolist()
-        mask = np.ones(num_nodes, dtype=bool)
-        cluster_np = np.zeros(num_nodes, dtype=np.int64)
+        def contract(edge_index_np, edge_score_np, batch_np):
+            # Greedy contraction on the host; outputs are padded to fixed sizes (N clusters, E edges).
+            cluster_np = np.zeros(num_nodes, dtype=np.int64)
+            cluster_edge = np.full(num_nodes, -1, dtype=np.int64)  # edge merged into each cluster
+            mask = np.ones(num_nodes, dtype=bool)
+            i = 0
+            for edge_idx in np.argsort(-edge_score_np, kind="stable"):
+                source, target = edge_index_np[0, edge_idx], edge_index_np[1, edge_idx]
+                if not mask[source] or not mask[target]:
+                    continue
+                cluster_edge[i] = edge_idx
+                cluster_np[source] = i
+                mask[source] = False
+                if source != target:
+                    cluster_np[target] = i
+                    mask[target] = False
+                i += 1
+            remaining = np.where(mask)[0]
+            cluster_np[remaining] = np.arange(i, i + len(remaining))
+            num_clusters = i + len(remaining)
 
-        i = 0
-        new_edge_indices: List[int] = []
-        for edge_idx in perm:
-            source = edge_index_np[0, edge_idx]
-            if not mask[source]:
-                continue
-            target = edge_index_np[1, edge_idx]
-            if not mask[target]:
-                continue
+            unique_edges = np.unique(cluster_np[edge_index_np.astype(np.int64)], axis=1)
+            edges_pad = np.zeros((2, num_edges), dtype=np.int64)
+            edges_pad[:, : unique_edges.shape[1]] = unique_edges
 
-            new_edge_indices.append(edge_idx)
-            cluster_np[source] = i
-            mask[source] = False
-            if source != target:
-                cluster_np[target] = i
-                mask[target] = False
-            i += 1
+            batch_pad = np.zeros(num_nodes, dtype=np.int64)
+            batch_pad[cluster_np] = batch_np
+            return cluster_np, cluster_edge, num_clusters, edges_pad, unique_edges.shape[1], batch_pad
 
-        remaining = np.where(mask)[0]
-        j = len(remaining)
-        cluster_np[remaining] = np.arange(i, i + j)
-        num_clusters = i + j
+        cluster, cluster_edge, num_clusters, edges_pad, num_new_edges, batch_pad = host_callback(
+            contract,
+            [((num_nodes,), "int32"), ((num_nodes,), "int32"), ((), "int32"),
+             ((2, num_edges), "int32"), ((), "int32"), ((num_nodes,), "int32")],
+            edge_index, edge_score, batch,
+        )
+        num_clusters, num_new_edges = int(num_clusters), int(num_new_edges)
 
-        cluster = ops.convert_to_tensor(cluster_np, dtype="int32")
         new_x = ops.segment_sum(x, cluster, num_segments=num_clusters)
 
-        # Gather from the score tensor (not its numpy copy) so gradients reach the scoring layer.
-        new_edge_score = ops.take(
-            ops.cast(edge_score, x.dtype), ops.convert_to_tensor(np.asarray(new_edge_indices, dtype="int32")), axis=0
-        )
-        if j > 0:
-            new_edge_score = ops.concatenate([new_edge_score, ops.ones((j,), dtype=x.dtype)], axis=0)
+        # Score of the edge merged into each cluster (1 for unmatched nodes), gathered from the score
+        # tensor so gradients reach the scoring layer.
+        cluster_edge = cluster_edge[:num_clusters]
+        if num_edges > 0:
+            gathered = ops.take(ops.cast(edge_score, x.dtype), ops.maximum(cluster_edge, 0), axis=0)
+            new_edge_score = ops.where(cluster_edge >= 0, gathered, ops.ones_like(gathered))
+        else:
+            new_edge_score = ops.ones((num_clusters,), dtype=x.dtype)
         new_x = new_x * ops.reshape(new_edge_score, (-1, 1))
 
-        # Coalesce new edges
-        c_row = cluster_np[edge_index_np[0]]
-        c_col = cluster_np[edge_index_np[1]]
-        edges = np.stack([c_row, c_col], axis=0)
-        unique_edges = np.unique(edges, axis=1)
-        new_edge_index = ops.convert_to_tensor(unique_edges, dtype=edge_index.dtype)
-
-        # New batch
-        batch_np = ops.convert_to_numpy(batch)
-        new_batch_np = np.empty(num_clusters, dtype=batch_np.dtype)
-        new_batch_np[cluster_np] = batch_np
-        new_batch = ops.convert_to_tensor(new_batch_np, dtype=batch.dtype)
+        new_edge_index = ops.cast(edges_pad[:, :num_new_edges], edge_index.dtype)
+        new_batch = ops.cast(batch_pad[:num_clusters], batch.dtype)
 
         unpool_info = UnpoolInfo(
             edge_index=edge_index,

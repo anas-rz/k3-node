@@ -248,21 +248,22 @@ class GNNInductiveHybridMultiHead(keras.layers.Layer):
             final_act=False,
         )
 
-    def call(self, x, batch=None, training=False):
+    def call(self, x, batch=None, training=False, batch_size=None):
         node_feats = [m(x, training=training) for m in self.node_post_mps]
         node_pred = ops.concatenate(node_feats, axis=-1)
 
         if batch is None:
             batch = ops.zeros(ops.shape(x)[:1], dtype="int32")
+            batch_size = 1
         else:
             batch = ops.cast(batch, "int32")
 
         if self.graph_pooling == "max":
-            graph_emb = global_max_pool(x, batch)
+            graph_emb = global_max_pool(x, batch, size=batch_size)
         elif self.graph_pooling == "mean":
-            graph_emb = global_mean_pool(x, batch)
+            graph_emb = global_mean_pool(x, batch, size=batch_size)
         else:
-            graph_emb = global_add_pool(x, batch)
+            graph_emb = global_add_pool(x, batch, size=batch_size)
 
         graph_pred = self.graph_post_mp(graph_emb, training=training)
         return node_pred, graph_pred
@@ -362,7 +363,7 @@ class GPSE(keras.layers.Layer):
     def build(self, input_shape=None):
         self.built = True
 
-    def call(self, x, edge_index=None, batch=None, training=False):
+    def call(self, x, edge_index=None, batch=None, training=False, batch_size=None):
         # Support both (x, edge_index, batch) and batch object with attributes
         if hasattr(x, "x") and hasattr(x, "edge_index"):
             edge_index = x.edge_index
@@ -378,7 +379,7 @@ class GPSE(keras.layers.Layer):
         if self.use_repr:
             return x
 
-        return self.post_mp(x, batch=batch, training=training)
+        return self.post_mp(x, batch=batch, training=training, batch_size=batch_size)
 
 
 class GPSENodeEncoder(keras.layers.Layer):

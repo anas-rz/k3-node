@@ -1286,12 +1286,16 @@ def test_reference_gps_model():
 
     from torch_geometric.data import Batch
     from torch_geometric.graphgym.config import cfg, set_cfg
+
+    # Importing graphgps reads `cfg.mem` at import time; older PyG populated the GraphGym config
+    # when importing it, newer versions require an explicit set_cfg() first.
+    set_cfg(cfg)
     from graphgps.network.gps_model import GPSModel as PyTGPSModel
     from k3_node.models.gps_model import GPSModel as K3GPSModel, load_gps_weights, download_gps_checkpoint
 
     ckpt_path = download_gps_checkpoint("pcqm4m-GPS+RWSE.deep")
     if not os.path.exists(ckpt_path):
-        return
+        pytest.skip("GraphGPS checkpoint not available")
 
     config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(ckpt_path))), "config.yaml")
     if not os.path.exists(config_path):
@@ -1636,10 +1640,10 @@ def test_reference_unimol_self_multihead_attention():
     import importlib.util
     import os.path as osp
 
-    spec = importlib.util.spec_from_file_location(
-        "ref_transformers",
-        osp.join(osp.dirname(osp.dirname(__file__)), "Uni-Mol", "unimol_tools", "unimol_tools", "models", "transformers.py"),
-    )
+    ref_path = osp.join(osp.dirname(osp.dirname(__file__)), "Uni-Mol", "unimol_tools", "unimol_tools", "models", "transformers.py")
+    if not osp.exists(ref_path):
+        pytest.skip("Uni-Mol reference checkout (./Uni-Mol) not found")
+    spec = importlib.util.spec_from_file_location("ref_transformers", ref_path)
     ref_tf = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ref_tf)
 
@@ -1689,10 +1693,10 @@ def test_reference_unimol_transformer_encoder_layer():
     import importlib.util
     import os.path as osp
 
-    spec = importlib.util.spec_from_file_location(
-        "ref_transformers",
-        osp.join(osp.dirname(osp.dirname(__file__)), "Uni-Mol", "unimol_tools", "unimol_tools", "models", "transformers.py"),
-    )
+    ref_path = osp.join(osp.dirname(osp.dirname(__file__)), "Uni-Mol", "unimol_tools", "unimol_tools", "models", "transformers.py")
+    if not osp.exists(ref_path):
+        pytest.skip("Uni-Mol reference checkout (./Uni-Mol) not found")
+    spec = importlib.util.spec_from_file_location("ref_transformers", ref_path)
     ref_tf = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ref_tf)
 

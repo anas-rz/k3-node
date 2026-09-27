@@ -110,7 +110,8 @@ class BatchNorm(layers.Layer):
 
     def call(self, x, training=None):
         num_samples_static = x.shape[0]
-        is_training = training if training is not None else True
+        # Keras semantics: `training=None` means inference; fit() passes training=True via the call context.
+        is_training = bool(training) if training is not None else False
 
         if is_training:
             if num_samples_static is not None and num_samples_static <= 1:
@@ -256,7 +257,8 @@ class HeteroBatchNorm(layers.Layer):
         if type_vec is None and isinstance(x, (tuple, list)):
             x, type_vec = x
 
-        is_training = training if training is not None else True
+        # Keras semantics: `training=None` means inference; fit() passes training=True via the call context.
+        is_training = bool(training) if training is not None else False
         type_vec = ops.cast(type_vec, "int32")
 
         if not is_training and self.track_running_stats:

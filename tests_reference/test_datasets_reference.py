@@ -405,14 +405,20 @@ def test_reference_smiles_parity():
 # ---------------------------------------------------------------------------
 # 10. MoleculeNet Parity Test
 # ---------------------------------------------------------------------------
-def test_reference_molecule_net_parity():
-    # Use existing downloaded data in ./data/MoleculeNet
-    data_dir = osp.join(".", "data", "MoleculeNet")
-    if not osp.exists(data_dir):
+def test_reference_molecule_net_parity(tmp_path):
+    # Use existing downloaded raw data in ./data/MoleculeNet
+    raw_dir = osp.join(".", "data", "MoleculeNet", "esol", "raw")
+    if not osp.exists(raw_dir):
         pytest.skip("MoleculeNet raw files not cached locally")
 
-    k3_dataset = k3_datasets.MoleculeNet(root=data_dir, name="ESOL")
-    pyg_dataset = pyg_datasets.MoleculeNet(root=data_dir, name="ESOL")
+    # Separate roots: both libraries write `processed/` files with the same names but different
+    # formats, so a shared root makes one library load the other's cache.
+    import shutil
+
+    for lib in ("k3", "pyg"):
+        shutil.copytree(raw_dir, tmp_path / lib / "esol" / "raw")
+    k3_dataset = k3_datasets.MoleculeNet(root=str(tmp_path / "k3"), name="ESOL")
+    pyg_dataset = pyg_datasets.MoleculeNet(root=str(tmp_path / "pyg"), name="ESOL")
 
     assert len(k3_dataset) == len(pyg_dataset)
     assert k3_dataset.num_features == pyg_dataset.num_features

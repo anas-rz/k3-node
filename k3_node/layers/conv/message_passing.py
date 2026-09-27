@@ -51,7 +51,11 @@ class MessagePassing(layers.Layer):
                 self.kwargs_keys.append(key)
                 setattr(self, key, attr)
 
-        super().__init__(**{k: v for k, v in kwargs.items() if is_keras_kwarg(k)})
+        unknown = sorted(k for k in kwargs if not is_keras_kwarg(k))
+        if unknown:
+            # Silently dropping these hides typos such as `num_heads=` for `heads=`.
+            raise TypeError(f"{type(self).__name__}() got unexpected keyword argument(s): {', '.join(unknown)}")
+        super().__init__(**kwargs)
         self.aggr = aggr
         self.flow = flow
         self.node_dim = node_dim

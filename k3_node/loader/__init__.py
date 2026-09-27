@@ -5,6 +5,7 @@ from .data_list_loader import DataListLoader
 from .dataloader import Collater, DataLoader
 from .dense_data_loader import DenseDataLoader
 from .dynamic_batch_sampler import DynamicBatchSampler
+from .keras_dataset import FullGraphDataset
 from .graph_saint import (
     GraphSAINTEdgeSampler,
     GraphSAINTNodeSampler,
@@ -56,5 +57,6 @@ __all__ = [
     'LogMemoryMixin',
     'Collater',
     'DataLoaderIterator',
+    'FullGraphDataset',
 ]
 

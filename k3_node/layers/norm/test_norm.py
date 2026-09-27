@@ -220,13 +220,13 @@ def test_batch_norm_single_element():
 
     norm = BatchNorm(16)
     with pytest.raises(ValueError, match="Expected more than 1 value"):
-        norm(x)
+        norm(x, training=True)
 
     with pytest.raises(ValueError, match="requires 'track_running_stats'"):
         BatchNorm(16, track_running_stats=False, allow_single_element=True)
 
     norm = BatchNorm(16, track_running_stats=True, allow_single_element=True)
-    out = norm(x)
+    out = norm(x, training=True)
     assert np.allclose(ops.convert_to_numpy(out), ops.convert_to_numpy(x), atol=1e-5)
 
 
@@ -262,3 +262,14 @@ def test_group_distance_ratio():
     y = ops.convert_to_tensor(np.array([0, 1, 0, 1, 1, 1], dtype=np.int64))
 
     assert DiffGroupNorm.group_distance_ratio(x, y) > 0
+
+
+def test_batch_norm_defaults_to_inference_when_training_is_none():
+    # Keras semantics: without an explicit or propagated `training`, use running statistics
+    # (otherwise `predict` output would depend on the batch).
+    x = random.normal((8, 4)) * 3.0 + 5.0
+    norm = BatchNorm(4)
+    np.testing.assert_allclose(
+        ops.convert_to_numpy(norm(x)), ops.convert_to_numpy(norm(x, training=False)), rtol=1e-6, atol=1e-6
+    )
+    assert not np.allclose(ops.convert_to_numpy(norm(x)), ops.convert_to_numpy(norm(x, training=True)))

@@ -6,7 +6,9 @@
 
 <p align="center">
   <a href="https://anas-rz.github.io/k3-node/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg" alt="Documentation"></a>
-  <a href="https://github.com/anas-rz/k3-node/actions"><img src="https://img.shields.io/badge/tests-564%20passed-brightgreen.svg" alt="Tests"></a>
+  <a href="https://github.com/anas-rz/k3-node/actions/workflows/test_torch.yml"><img src="https://github.com/anas-rz/k3-node/actions/workflows/test_torch.yml/badge.svg" alt="PyTorch tests"></a>
+  <a href="https://github.com/anas-rz/k3-node/actions/workflows/test_tensorflow.yml"><img src="https://github.com/anas-rz/k3-node/actions/workflows/test_tensorflow.yml/badge.svg" alt="TensorFlow tests"></a>
+  <a href="https://github.com/anas-rz/k3-node/actions/workflows/test_jax.yml"><img src="https://github.com/anas-rz/k3-node/actions/workflows/test_jax.yml/badge.svg" alt="JAX tests"></a>
   <a href="https://github.com/anas-rz/k3-node/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
   <a href="https://keras.io/keras_3/"><img src="https://img.shields.io/badge/Keras%203-TensorFlow%20%7C%20PyTorch%20%7C%20JAX-orange.svg" alt="Backends"></a>
   <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code style: black"></a>
@@ -33,7 +35,7 @@ K3-Node achieves **100% public API parity** with [PyTorch Geometric (PyG)](https
 - 🧱 **Dense & Scalable GNNs**: Dense matrix convolutions (`DenseGCNConv`, `DenseGATConv`), spectral pooling (`DMoNPooling`, `dense_diff_pool`, `dense_mincut_pool`), and linear-complexity graph transformers (`SGFormer`, `LPFormer`, `Polynormer`).
 - 🧭 **Knowledge Graph Embeddings**: Multi-relational link prediction with `TransE`, `RotatE`, `DistMult`, `ComplEx`, and framework-agnostic negative sampling loaders.
 - 📦 **Data, Loaders & Transforms**: Full suite of graph data structures (`Data`, `HeteroData`, `Batch`), mini-batch samplers (`NeighborLoader`, `ClusterLoader`, `GraphSAINTSampler`), and 62+ graph and 3D point cloud transforms.
-- ✅ **Rigorous Verification**: Over 560 unit tests and cross-framework numerical parity tests verified against PyTorch reference checkpoints.
+- ✅ **Rigorous Verification**: 700+ unit tests on every backend, training tests that check each layer's weights actually learn, compiled-vs-eager and cross-backend consistency tests, and numerical parity tests against PyTorch Geometric and reference checkpoints.
 
 ---
 

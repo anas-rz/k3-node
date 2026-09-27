@@ -95,7 +95,8 @@ class InstanceNorm(layers.Layer):
             elif len(x) == 3:
                 x, batch, batch_size = x
 
-        is_training = training if training is not None else True
+        # Keras semantics: `training=None` means inference; fit() passes training=True via the call context.
+        is_training = bool(training) if training is not None else False
 
         if batch is None:
             batch = ops.zeros((ops.shape(x)[0],), dtype="int32")

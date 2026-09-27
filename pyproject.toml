@@ -7,7 +7,7 @@ name = "k3-node"
 version = "0.1.0"
 description = "Multi-Backend Graph Neural Networks on Keras 3"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"  # Keras 3 requires Python >= 3.11
 license = { text = "MIT" }
 authors = [
     { name = "Muhammad Anas Raza" }

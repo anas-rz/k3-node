@@ -722,9 +722,10 @@ class ViSNet(keras.layers.Layer):
             self.prior_model.build()
         self.built = True
 
-    def call(self, z, pos, batch=None):
+    def call(self, z, pos, batch=None, batch_size=None):
         if batch is None:
             batch = ops.zeros(ops.shape(z), dtype="int32")
+            batch_size = 1
         else:
             batch = ops.cast(batch, "int32")
 
@@ -736,9 +737,9 @@ class ViSNet(keras.layers.Layer):
             x = self.prior_model(x, z)
 
         if self.reduce_op == "mean":
-            y = global_mean_pool(x, batch)
+            y = global_mean_pool(x, batch, size=batch_size)
         else:
-            y = global_add_pool(x, batch)
+            y = global_add_pool(x, batch, size=batch_size)
 
         y = y + self.mean
         return y, None

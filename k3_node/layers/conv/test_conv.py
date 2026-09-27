@@ -164,3 +164,13 @@ def test_sage_conv(in_channels, out_channels, sparse):
     conv = SAGEConv(out_channels)
     out = conv(x, adj1)
     assert ops.shape(out) == (4, out_channels)
+
+
+def test_unknown_keyword_arguments_raise():
+    import k3_node.layers as L
+
+    with pytest.raises(TypeError, match="num_heads"):
+        L.FeaStConv(8, 4, num_heads=2)  # the argument is `heads`
+    with pytest.raises(TypeError, match="totally_bogus"):
+        L.GCNConv(8, 4, totally_bogus=1)
+    L.GCNConv(8, 4, name="ok")  # Keras kwargs are still accepted

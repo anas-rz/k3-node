@@ -8,11 +8,22 @@ from k3_node.layers.conv.utils import is_tracing
 def _infer_size(batch, size=None):
     if size is not None:
         return size
-    if is_tracing(batch) or (hasattr(batch, "is_meta") and batch.is_meta):
-        import keras
+    import keras
+    from keras.src.backend.common.symbolic_scope import in_symbolic_scope
+
+    if in_symbolic_scope() or (hasattr(batch, "is_meta") and batch.is_meta):
+        # Keras shape inference on placeholder values: any size gives the right output rank.
+        return 1 if keras.config.backend() == "jax" else None
+    if is_tracing(batch):
         if keras.config.backend() == "jax":
-            return 1
-        return None
+            # The number of graphs depends on the values in `batch`, which are unknown inside
+            # jax.jit; guessing would silently merge every graph into one.
+            raise ValueError(
+                "Cannot infer the number of graphs from `batch` inside a compiled JAX function. "
+                "Pass `size=` to the pooling function (or `batch_size=` to the model)."
+            )
+        # TensorFlow graph mode supports a dynamic number of segments.
+        return ops.cast(ops.max(batch), "int32") + 1
     # Use the maximum (as PyG does), not the last entry: pooling layers such as EdgePooling
     # return batch vectors that are not sorted by graph.
     try:

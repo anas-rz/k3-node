@@ -1,3 +1,5 @@
+import keras
+import pytest
 import numpy as np
 from keras import ops
 
@@ -398,3 +400,43 @@ def test_global_pool_with_unsorted_batch():
     batch = np.array([1, 0, 1, 0], dtype="int32")
     np.testing.assert_allclose(ops.convert_to_numpy(global_add_pool(x, batch)), [[8, 10], [4, 6]])
     np.testing.assert_allclose(ops.convert_to_numpy(global_mean_pool(x, batch)), [[4, 5], [2, 3]])
+
+
+@pytest.mark.skipif(keras.backend.backend() != "jax", reason="jax.jit specific")
+def test_global_pool_under_jax_jit_requires_size():
+    import jax
+    import numpy as np
+    from k3_node.layers import global_add_pool
+
+    x = np.arange(8, dtype="float32").reshape(4, 2)
+    batch = np.array([0, 0, 1, 1], dtype="int32")
+    with pytest.raises(ValueError, match="size="):
+        jax.jit(lambda x, b: global_add_pool(x, b))(x, batch)
+    out = jax.jit(lambda x, b: global_add_pool(x, b, size=2))(x, batch)
+    np.testing.assert_allclose(np.asarray(out), [[2, 4], [10, 12]])
+
+
+@pytest.mark.skipif(keras.backend.backend() not in ("tensorflow", "jax"), reason="needs a compiling backend")
+@pytest.mark.parametrize("layer_name", ["EdgePooling", "ClusterPooling"])
+def test_host_side_pooling_refuses_compiled_execution(layer_name):
+    # These layers pick clusters on the host; inside tf.function / jax.jit they used to return
+    # their input unpooled without any error.
+    import numpy as np
+    import k3_node.layers as L
+
+    layer = getattr(L, layer_name)(4)
+    x = np.random.randn(6, 4).astype("float32")
+    edge_index = np.array([[0, 1, 2, 3, 4], [1, 2, 3, 4, 5]], dtype="int32")
+    batch = np.zeros(6, dtype="int32")
+    layer(x, edge_index, batch)  # eager works
+
+    if keras.backend.backend() == "jax":
+        import jax
+
+        compiled = jax.jit(lambda x: layer(x, edge_index, batch)[0])
+    else:
+        import tensorflow as tf
+
+        compiled = tf.function(lambda x: layer(x, edge_index, batch)[0])
+    with pytest.raises(Exception, match="run_eagerly"):
+        compiled(x)

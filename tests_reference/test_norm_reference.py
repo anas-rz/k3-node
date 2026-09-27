@@ -203,7 +203,8 @@ def test_reference_batch_norm(affine):
     k3_norm = BatchNorm(16, affine=affine)
 
     pyg_out = pyg_norm(torch.from_numpy(x_np)).detach().numpy()
-    k3_out = ops.convert_to_numpy(k3_norm(ops.convert_to_tensor(x_np)))
+    # PyG modules default to train mode; Keras layers default to inference when `training` is None.
+    k3_out = ops.convert_to_numpy(k3_norm(ops.convert_to_tensor(x_np), training=True))
     assert np.allclose(pyg_out, k3_out, atol=1e-5)
 
 
@@ -217,7 +218,7 @@ def test_reference_hetero_batch_norm(affine):
     k3_norm = HeteroBatchNorm(16, num_types=4, affine=affine)
 
     pyg_out = pyg_norm(torch.from_numpy(x_np), torch.from_numpy(type_vec_np).long()).detach().numpy()
-    k3_out = ops.convert_to_numpy(k3_norm(ops.convert_to_tensor(x_np), ops.convert_to_tensor(type_vec_np)))
+    k3_out = ops.convert_to_numpy(k3_norm(ops.convert_to_tensor(x_np), ops.convert_to_tensor(type_vec_np), training=True))
     assert np.allclose(pyg_out, k3_out, atol=1e-4)
 
 

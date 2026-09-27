@@ -39,6 +39,9 @@ def _load_ref_module(name, path):
 
 
 REPO_ROOT = osp.dirname(osp.dirname(osp.abspath(__file__)))
+# The Uni-Mol reference implementation is a local checkout, not a dependency; skip without it.
+if not osp.isdir(osp.join(REPO_ROOT, "Uni-Mol", "unimol_tools")):
+    pytest.skip("Uni-Mol reference checkout (./Uni-Mol) not found", allow_module_level=True)
 REF_TRANSFORMERS = _load_ref_module(
     "ref_transformers",
     osp.join(REPO_ROOT, "Uni-Mol", "unimol_tools", "unimol_tools", "models", "transformers.py"),

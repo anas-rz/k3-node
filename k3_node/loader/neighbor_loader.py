@@ -2,7 +2,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from k3_node.data import Data, HeteroData
 from k3_node.loader.node_loader import HeteroSamplerOutput, NodeLoader, NodeSamplerInput, SamplerOutput
-from k3_node.loader.sampler_utils import sample_neighbors_hetero, sample_neighbors_homo
+from k3_node.loader.sampler_utils import FastGraph, sample_neighbors_hetero, sample_neighbors_homo
 
 
 class InternalNeighborSampler:
@@ -21,9 +21,12 @@ class InternalNeighborSampler:
         self.subgraph_type = subgraph_type
         self.disjoint = disjoint
         self.edge_permutation = None
+        self._graph = None  # CSR index, built once and reused for every batch
 
     def sample_from_nodes(self, input_data: NodeSamplerInput) -> Union[SamplerOutput, HeteroSamplerOutput]:
         if isinstance(self.data, Data):
+            if self._graph is None:
+                self._graph = FastGraph(self.data.edge_index, num_nodes=self.data.num_nodes)
             node, row, col, edge, n_counts, e_counts = sample_neighbors_homo(
                 edge_index=self.data.edge_index,
                 seed_nodes=input_data.node,
@@ -32,6 +35,7 @@ class InternalNeighborSampler:
                 replace=self.replace,
                 subgraph_type=self.subgraph_type,
                 disjoint=self.disjoint,
+                graph=self._graph,
             )
             return SamplerOutput(
                 node=node,

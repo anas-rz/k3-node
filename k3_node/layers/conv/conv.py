@@ -16,6 +16,9 @@ from k3_node.utils import (
 
 class Conv(Layer):
     def __init__(self, **kwargs):
+        unknown = sorted(k for k in kwargs if not (is_keras_kwarg(k) or is_layer_kwarg(k)))
+        if unknown:
+            raise TypeError(f"{type(self).__name__}() got unexpected keyword argument(s): {', '.join(unknown)}")
         super().__init__(**{k: v for k, v in kwargs.items() if is_keras_kwarg(k)})
         self.supports_masking = True
         self.kwargs_keys = []

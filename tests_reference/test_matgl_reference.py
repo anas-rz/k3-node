@@ -55,8 +55,15 @@ class AutoMockLoader:
                 def __init__(self, *args, **kwargs): super().__init__()
             module.LightningModule = DummyLM
 
-if not any(isinstance(finder, AutoMockFinder) for finder in sys.meta_path):
-    sys.meta_path.insert(0, AutoMockFinder())
+# The MatGL reference implementation is a local checkout, not a dependency; skip without it
+# (and before installing the import hook below, so a skipped module leaves no global state).
+if not osp.isdir(osp.join(osp.dirname(osp.dirname(osp.abspath(__file__))), "matgl", "src", "matgl")):
+    pytest.skip("MatGL reference checkout (./matgl) not found", allow_module_level=True)
+
+# The mock import hook is only needed while importing MatGL below; it is removed afterwards
+# together with the fake modules it created, so later tests import the real packages.
+_mock_finder = AutoMockFinder()
+sys.meta_path.insert(0, _mock_finder)
 
 REPO_ROOT = osp.dirname(osp.dirname(osp.abspath(__file__)))
 MATGL_SRC = osp.join(REPO_ROOT, "matgl", "src")
@@ -70,6 +77,11 @@ from matgl.layers._activations import SoftPlus2 as RefSoftPlus2, SoftExponential
 from matgl.layers._so3 import RealSphericalHarmonics as RefRSH
 from matgl.layers import MLP as RefMLP, GatedMLP as RefGatedMLP
 from matgl.utils.maths import vector_to_skewtensor as ref_v2skew, vector_to_symtensor as ref_v2sym, decompose_tensor as ref_decomp
+
+sys.meta_path.remove(_mock_finder)
+for _name, _module in list(sys.modules.items()):
+    if isinstance(getattr(getattr(_module, "__spec__", None), "loader", None), AutoMockLoader):
+        del sys.modules[_name]
 
 # K3 imports
 from k3_node.models.materials.basis import BondExpansion as K3BondExpansion, RadialBesselFunction as K3RBF

@@ -402,3 +402,18 @@ def test_hub_injection_keeps_keras_batched_predict():
     gcn = GCN(in_channels=8, hidden_channels=16, num_layers=2, out_channels=3)
     graph = Data(x=x, edge_index=np.array([[0, 1, 2, 3], [1, 2, 3, 0]], dtype="int32"))
     assert tuple(ops.shape(gcn.predict(graph))) == (10, 3)
+
+
+def test_backbone_kwargs_survive_save_and_load():
+    # `**backbone_kwargs` used to be passed back as a nested `backbone_kwargs=` argument on reload,
+    # silently dropping options such as the number of attention heads.
+    data = _create_synthetic_node_data(num_nodes=10, in_channels=8, num_classes=2)
+    clf = NodeClassifier(backbone="gat", in_channels=8, out_channels=2, hidden_channels=16, num_layers=2, heads=4)
+    clf.fit(data, epochs=1, verbose=0)
+    orig_preds = clf.predict(data)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        clf.save_pretrained(tmpdir)
+        loaded = NodeClassifier.from_pretrained(tmpdir)
+        assert loaded.backbone_kwargs == {"heads": 4}
+        np.testing.assert_array_equal(ops.convert_to_numpy(orig_preds), ops.convert_to_numpy(loaded.predict(data)))

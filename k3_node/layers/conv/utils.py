@@ -33,6 +33,74 @@ def is_tracing(x: Any) -> bool:
     return False
 
 
+def _is_compiled_trace(x) -> bool:
+    """True inside compiled functions, where tensor values are unknown.
+
+    On JAX, autodiff tracers created by ``jax.grad`` in eager mode (``run_eagerly=True``)
+    still carry concrete values, so they do not count as compiled.
+    """
+    import keras
+
+    if keras.config.backend() != "jax":
+        return is_tracing(x)
+    import jax
+    import jax.numpy as jnp
+
+    if not isinstance(x, jax.core.Tracer):
+        return False
+    try:
+        int(jnp.sum(jnp.ravel(x)[:1] * 0))  # concretizing fails only inside jit
+        return False
+    except (jax.errors.ConcretizationTypeError, jax.errors.TracerIntegerConversionError):
+        return True
+
+
+def host_callback(fn, out_specs, *args):
+    """Runs the NumPy function ``fn`` on the concrete values of ``args``.
+
+    ``out_specs`` is a sequence of ``(shape, dtype)`` giving the fixed shapes of ``fn``'s outputs.
+    No gradient flows through the outputs. On JAX this uses ``jax.pure_callback``, which also
+    works under ``jax.grad``; elsewhere the arguments are converted to NumPy directly.
+    """
+    import keras
+    import numpy as np
+
+    def run(*values):
+        outs = fn(*[np.asarray(v) for v in values])
+        return tuple(np.asarray(o, dtype=dtype).reshape(shape) for o, (shape, dtype) in zip(outs, out_specs))
+
+    if keras.config.backend() == "jax":
+        import jax
+
+        specs = tuple(jax.ShapeDtypeStruct(shape, dtype) for shape, dtype in out_specs)
+        return jax.pure_callback(run, specs, *[jax.lax.stop_gradient(a) for a in args])
+    outs = run(*[ops.convert_to_numpy(ops.stop_gradient(a)) for a in args])
+    return tuple(ops.convert_to_tensor(o) for o in outs)
+
+
+def eager_only_placeholder(layer_name: str, *tensors) -> bool:
+    """Guards host-side (NumPy) computations with data-dependent output sizes.
+
+    Returns ``True`` during Keras shape inference, where the caller should return a
+    placeholder result. Raises inside compiled functions (``tf.function`` / XLA /
+    ``jax.jit``), where the computation cannot run. Returns ``False`` when eager.
+    """
+    try:
+        from keras.src.backend.common.symbolic_scope import in_symbolic_scope
+
+        if in_symbolic_scope():
+            return True
+    except Exception:
+        pass
+    if any(_is_compiled_trace(t) for t in tensors):
+        raise RuntimeError(
+            f"{layer_name} computes a data-dependent number of clusters on the host, so it cannot run "
+            "inside a compiled function (tf.function, XLA or jax.jit). Compile the model with "
+            "`run_eagerly=True`."
+        )
+    return False
+
+
 def degree(index, num_nodes: Optional[int] = None, dtype=None):
     """Computes the (in/out) degree of a given index tensor.
 

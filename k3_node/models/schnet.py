@@ -245,9 +245,10 @@ class SchNet(K3NodeHubMixin, keras.Model):
         else:
             self.atomref = None
 
-    def call(self, z, pos, batch=None):
+    def call(self, z, pos, batch=None, batch_size=None):
         if batch is None:
             batch = ops.zeros(ops.shape(z), dtype="int32")
+            batch_size = 1
         else:
             batch = ops.cast(batch, "int32")
 
@@ -266,8 +267,8 @@ class SchNet(K3NodeHubMixin, keras.Model):
         if self.dipole:
             mass = ops.take(self.atomic_mass, z, axis=0)
             mass = ops.expand_dims(mass, -1)
-            M = global_add_pool(mass, batch)
-            c = global_add_pool(mass * pos, batch) / (M + 1e-8)
+            M = global_add_pool(mass, batch, size=batch_size)
+            c = global_add_pool(mass * pos, batch, size=batch_size) / (M + 1e-8)
             c_per_atom = ops.take(c, batch, axis=0)
             h = h * (pos - c_per_atom)
 
@@ -278,9 +279,9 @@ class SchNet(K3NodeHubMixin, keras.Model):
             h = h + self.atomref(z)
 
         if self.dipole or self.readout in ["add", "sum"]:
-            out = global_add_pool(h, batch)
+            out = global_add_pool(h, batch, size=batch_size)
         else:
-            out = global_mean_pool(h, batch)
+            out = global_mean_pool(h, batch, size=batch_size)
 
         if self.dipole:
             out = ops.sqrt(ops.sum(ops.power(out, 2), axis=-1, keepdims=True))

@@ -767,7 +767,7 @@ def get_layer_test(layer_name):
                     h = self.pre(inputs["x"])
                     res = self.layer(h, inputs["edge_index"], batch=inputs["batch"])
                     x_p, edge_index_p, edge_attr_p, batch_p = res[0], res[1], res[2], res[3]
-                    pooled = k3_layers.global_add_pool(x_p, batch_p)
+                    pooled = k3_layers.global_add_pool(x_p, batch_p, size=2)  # two graphs
                     return self.post(pooled)
             return Model()
         def inputs_factory():
@@ -802,7 +802,7 @@ def get_layer_test(layer_name):
                     h = self.pre(inputs["x"])
                     if layer_name == "EdgePooling":
                         x_p, edge_index_p, batch_p, _ = self.layer(h, inputs["edge_index"], inputs["batch"])
-                        pooled = k3_layers.global_add_pool(x_p, batch_p)
+                        pooled = k3_layers.global_add_pool(x_p, batch_p, size=2)  # two graphs
                         return self.post(pooled)
                     elif layer_name == "MemPooling":
                         out = self.layer(h, inputs["batch"])
@@ -815,12 +815,12 @@ def get_layer_test(layer_name):
                         return self.post(ops.mean(x_p, axis=1))
                     elif layer_name == "ClusterPooling":
                         x_p, edge_index_p, batch_p, _ = self.layer(h, inputs["edge_index"], inputs["batch"])
-                        pooled = k3_layers.global_add_pool(x_p, batch_p)
+                        pooled = k3_layers.global_add_pool(x_p, batch_p, size=2)  # two graphs
                         return self.post(pooled)
                     else:
                         res = self.layer(h, inputs["edge_index"], batch=inputs["batch"])
                         x_p, batch_p = res[0], res[3]
-                        pooled = k3_layers.global_add_pool(x_p, batch_p)
+                        pooled = k3_layers.global_add_pool(x_p, batch_p, size=2)  # two graphs
                         return self.post(pooled)
             return Model()
         def inputs_factory():
@@ -1101,10 +1101,9 @@ NO_GRADIENT_ALLOWED = {
 }
 
 
-# Layers whose pooling is skipped under tracing (tf.function / jax.jit): they currently return
-# their input unpooled because the greedy merge needs dynamic shapes, so their scoring weights
-# never train on these backends. Tracked as expected failures until given a static-shape path.
-UNPOOLED_WHEN_COMPILED = {"EdgePooling", "ClusterPooling"}
+# Layers that contract edges greedily on the host (data-dependent output size) and therefore
+# refuse to run inside compiled functions; they are trained with `run_eagerly=True`.
+EAGER_ONLY_LAYERS = {"EdgePooling", "ClusterPooling"}
 
 
 def _layer_under_test(model):
@@ -1124,10 +1123,6 @@ def _assert_layer_weights_trained(layer_name, layer, before):
         assert any(changed), f"{layer_name}: none of its trainable weights received a gradient"
         return
     unexpected = [p for p in stale if not any(a in p for a in allowed)]
-    if layer_name in UNPOOLED_WHEN_COMPILED and keras.backend.backend() in ("tensorflow", "jax"):
-        if unexpected:
-            pytest.xfail(f"{layer_name} does not pool under tracing, so its weights get no gradient")
-        pytest.fail(f"{layer_name} now trains when compiled; remove it from UNPOOLED_WHEN_COMPILED")
     assert not unexpected, f"{layer_name}: weights received no gradient during training: {unexpected}"
 
 
@@ -1147,7 +1142,11 @@ def train_and_verify_layer(layer_name, epochs=10, lr=0.02):
     if layer is not None:
         before = {w.path: keras.ops.convert_to_numpy(w).copy() for w in layer.trainable_weights}
 
-    model.compile(optimizer=keras.optimizers.Adam(learning_rate=lr), loss="mse")
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=lr),
+        loss="mse",
+        run_eagerly=layer_name in EAGER_ONLY_LAYERS,
+    )
 
     l0 = float(model.train_on_batch(inputs, target))
     l_last = l0

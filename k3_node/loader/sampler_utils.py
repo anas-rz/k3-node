@@ -38,12 +38,60 @@ class FastGraph:
         self.indptr = np.zeros(num_nodes + 1, dtype=np.int64)
         np.cumsum(counts, out=self.indptr[1:])
 
+    def local_map(self, size: int) -> np.ndarray:
+        """A reusable global-to-local node id array filled with -1 (callers must reset what they set)."""
+        local = getattr(self, "_local", None)
+        if local is None or len(local) < size:
+            local = np.full(size, -1, dtype=np.int64)
+            self._local = local
+        return local
+
     def get_neighbors(self, node: int) -> Tuple[np.ndarray, np.ndarray]:
         if node >= self.num_nodes:
             return np.empty(0, dtype=np.int64), np.empty(0, dtype=np.int64)
         start = self.indptr[node]
         end = self.indptr[node + 1]
         return self.sorted_row[start:end], self.sorted_edge_id[start:end]
+
+
+def _csr_ranges(starts: np.ndarray, counts: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Flattens the ranges ``[starts[i], starts[i] + counts[i])``; returns (segment id, position)."""
+    counts = counts.astype(np.int64)
+    segment = np.repeat(np.arange(len(counts), dtype=np.int64), counts)
+    offsets = np.arange(int(counts.sum()), dtype=np.int64) - np.repeat(np.cumsum(counts) - counts, counts)
+    return segment, starts.astype(np.int64)[segment] + offsets
+
+
+def _sample_positions(
+    starts: np.ndarray, counts: np.ndarray, k: int, replace: bool
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Picks up to ``k`` CSR positions per segment (all of them if ``k == -1`` or ``count <= k``).
+
+    Returns (segment id, position), grouped by segment in ascending segment order.
+    """
+    take_all = (counts <= k) | (k == -1)
+    seg_all, pos_all = _csr_ranges(starts[take_all], counts[take_all])
+    seg_all = np.nonzero(take_all)[0][seg_all]
+
+    sampled = np.nonzero(~take_all)[0]
+    if len(sampled) == 0:
+        return seg_all, pos_all
+    if replace:
+        seg_s = np.repeat(sampled, k)
+        pos_s = starts[seg_s] + np.floor(np.random.random(len(seg_s)) * counts[seg_s]).astype(np.int64)
+    else:
+        # Random keys per candidate; the k smallest keys of each segment form a uniform subset.
+        seg_c, pos_c = _csr_ranges(starts[sampled], counts[sampled])
+        order = np.lexsort((np.random.random(len(seg_c)), seg_c))
+        seg_c, pos_c = seg_c[order], pos_c[order]
+        first = np.searchsorted(seg_c, seg_c, side="left")
+        keep = (np.arange(len(seg_c)) - first) < k
+        seg_s, pos_s = sampled[seg_c[keep]], pos_c[keep]
+
+    segment = np.concatenate([seg_all, seg_s])
+    position = np.concatenate([pos_all, pos_s])
+    order = np.argsort(segment, kind="stable")
+    return segment[order], position[order]
 
 
 def sample_neighbors_homo(
@@ -54,8 +102,12 @@ def sample_neighbors_homo(
     replace: bool = False,
     subgraph_type: str = 'directional',
     disjoint: bool = False,
+    graph: Optional[FastGraph] = None,
 ) -> Tuple[Any, Any, Any, Any, List[int], List[int]]:
     r"""Samples multi-hop neighborhoods on a homogeneous graph.
+
+    All steps are vectorized with NumPy. Pass a prebuilt ``graph`` (a :class:`FastGraph` of
+    ``edge_index``) to avoid rebuilding the CSR index for every batch.
 
     Returns:
         (sampled_nodes, local_row, local_col, edge_ids, num_sampled_nodes, num_sampled_edges)
@@ -67,97 +119,89 @@ def sample_neighbors_homo(
     else:
         device = None
         np_seeds = np.asarray(seed_nodes)
+    np_seeds = np_seeds.astype(np.int64).reshape(-1)
 
-    graph = FastGraph(edge_index, num_nodes=num_nodes)
+    if graph is None:
+        graph = FastGraph(edge_index, num_nodes=num_nodes)
 
-    # Initialize sampling state
-    nodes = []
-    visited = {}  # global_node -> local_id
-    batch_ids = []  # for disjoint sampling
+    # Global -> local id map; only the entries touched here are reset afterwards.
+    size = max(graph.num_nodes, int(np_seeds.max()) + 1 if len(np_seeds) else 0)
+    local = graph.local_map(size)
 
-    for i, s in enumerate(np_seeds):
-        s = int(s)
-        if s not in visited:
-            visited[s] = len(nodes)
-            nodes.append(s)
-            if disjoint:
-                batch_ids.append(i)
+    _, first_idx = np.unique(np_seeds, return_index=True)
+    first_idx = np.sort(first_idx)
+    frontier = np_seeds[first_idx]
+    node_chunks = [frontier]
+    local[frontier] = np.arange(len(frontier))
+    num_total = len(frontier)
+    batch_ids = first_idx.astype(np.int64) if disjoint else None
 
-    frontier = list(nodes)
-    num_sampled_nodes = [len(nodes)]
+    num_sampled_nodes = [len(frontier)]
     num_sampled_edges = []
-    sampled_edges_list = []  # (src, dst, edge_id)
+    hop_src, hop_dst, hop_eid = [], [], []
+    try:
+        for k in num_neighbors:
+            in_graph = frontier < graph.num_nodes
+            starts = np.zeros(len(frontier), dtype=np.int64)
+            counts = np.zeros(len(frontier), dtype=np.int64)
+            starts[in_graph] = graph.indptr[frontier[in_graph]]
+            counts[in_graph] = graph.indptr[frontier[in_graph] + 1] - starts[in_graph]
 
-    for hop, k in enumerate(num_neighbors):
-        next_frontier = []
-        hop_edges = 0
+            segment, position = _sample_positions(starts, counts, k, replace)
+            srcs = graph.sorted_row[position].astype(np.int64)
+            dsts = frontier[segment]
+            hop_src.append(srcs)
+            hop_dst.append(dsts)
+            hop_eid.append(graph.sorted_edge_id[position])
+            num_sampled_edges.append(len(srcs))
 
-        for target in frontier:
-            srcs, e_ids = graph.get_neighbors(target)
-            count = len(srcs)
-            if count == 0:
-                continue
+            # Unvisited sources become new nodes, in order of first appearance.
+            is_new = local[srcs] == -1
+            new_srcs = srcs[is_new]
+            uniq, first = np.unique(new_srcs, return_index=True)
+            order = np.argsort(first, kind="stable")
+            new_nodes = uniq[order]
+            local[new_nodes] = num_total + np.arange(len(new_nodes))
+            if disjoint:
+                discoverer = dsts[is_new][first[order]]
+                batch_ids = np.concatenate([batch_ids, batch_ids[local[discoverer]]])
+            num_total += len(new_nodes)
+            node_chunks.append(new_nodes)
+            num_sampled_nodes.append(len(new_nodes))
+            frontier = new_nodes
 
-            if k == -1 or k >= count:
-                chosen_idx = np.arange(count)
-            else:
-                chosen_idx = np.random.choice(count, size=k, replace=replace)
+        nodes = np.concatenate(node_chunks).astype(np.int64)
 
-            chosen_srcs = srcs[chosen_idx]
-            chosen_e_ids = e_ids[chosen_idx]
-
-            for s, e in zip(chosen_srcs, chosen_e_ids):
-                s = int(s)
-                e = int(e)
-                sampled_edges_list.append((s, target, e))
-                hop_edges += 1
-
-                if s not in visited:
-                    visited[s] = len(nodes)
-                    nodes.append(s)
-                    next_frontier.append(s)
-                    if disjoint:
-                        batch_ids.append(batch_ids[visited[target]])
-
-        frontier = next_frontier
-        num_sampled_nodes.append(len(next_frontier))
-        num_sampled_edges.append(hop_edges)
-
-    # Resolve subgraph type
-    if subgraph_type == 'induced':
-        # Include all edges in original graph where both endpoints are in visited
-        local_edges = []
-        edge_ids = []
-        if is_torch:
-            np_edge_index = edge_index.detach().cpu().numpy()
+        if subgraph_type == 'induced':
+            # Every original edge whose endpoints were both visited, in original edge order.
+            targets = nodes[nodes < graph.num_nodes]
+            t_starts = graph.indptr[targets]
+            segment, position = _csr_ranges(t_starts, graph.indptr[targets + 1] - t_starts)
+            srcs = graph.sorted_row[position].astype(np.int64)
+            keep = local[srcs] != -1
+            edge_ids = graph.sorted_edge_id[position][keep]
+            order = np.argsort(edge_ids, kind="stable")
+            edge_ids = edge_ids[order]
+            local_row = local[srcs[keep]][order]
+            local_col = local[targets[segment[keep]]][order]
         else:
-            np_edge_index = np.asarray(edge_index)
-        row_all, col_all = np_edge_index[0], np_edge_index[1]
-        for e_idx, (u, v) in enumerate(zip(row_all, col_all)):
-            u, v = int(u), int(v)
-            if u in visited and v in visited:
-                local_edges.append((visited[u], visited[v]))
-                edge_ids.append(e_idx)
-    else:
-        local_edges = []
-        edge_ids = []
-        for u, v, e in sampled_edges_list:
-            local_edges.append((visited[u], visited[v]))
-            edge_ids.append(e)
+            srcs = np.concatenate(hop_src) if hop_src else np.empty(0, dtype=np.int64)
+            dsts = np.concatenate(hop_dst) if hop_dst else np.empty(0, dtype=np.int64)
+            edge_ids = np.concatenate(hop_eid) if hop_eid else np.empty(0, dtype=np.int64)
+            local_row, local_col = local[srcs], local[dsts]
             if subgraph_type == 'bidirectional':
-                local_edges.append((visited[v], visited[u]))
-                edge_ids.append(e)
+                # Each sampled edge followed by its reverse.
+                local_row, local_col = (
+                    np.stack([local_row, local_col], axis=1).reshape(-1),
+                    np.stack([local_col, local_row], axis=1).reshape(-1),
+                )
+                edge_ids = np.repeat(edge_ids, 2)
+    finally:
+        local[np.concatenate(node_chunks)] = -1
 
-    if len(local_edges) > 0:
-        local_row = np.array([e[0] for e in local_edges], dtype=np.int64)
-        local_col = np.array([e[1] for e in local_edges], dtype=np.int64)
-        edge_ids = np.array(edge_ids, dtype=np.int64)
-    else:
-        local_row = np.empty(0, dtype=np.int64)
-        local_col = np.empty(0, dtype=np.int64)
-        edge_ids = np.empty(0, dtype=np.int64)
-
-    nodes = np.array(nodes, dtype=np.int64)
+    local_row = local_row.astype(np.int64)
+    local_col = local_col.astype(np.int64)
+    edge_ids = edge_ids.astype(np.int64)
 
     if is_torch:
         nodes = torch.from_numpy(nodes).to(device=device, dtype=torch.long)
