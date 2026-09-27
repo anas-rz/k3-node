@@ -17,6 +17,7 @@ except ImportError:
 
 from k3_node.data import Data
 from k3_node.loader.sampler_utils import partition_graph
+from k3_node.loader.keras_dataset import loader_bases
 
 
 class ClusterData(BaseDataset):
@@ -91,7 +92,7 @@ class ClusterData(BaseDataset):
         return f'{self.__class__.__name__}({self.num_parts})'
 
 
-class ClusterLoader(BaseDataLoader):
+class ClusterLoader(*loader_bases(BaseDataLoader)):
     r"""The data loader scheme from Cluster-GCN which merges partitioned
     subgraphs to form a mini-batch.
 

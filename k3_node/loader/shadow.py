@@ -15,9 +15,10 @@ except ImportError:
 
 from k3_node.data import Batch, Data
 from k3_node.loader.sampler_utils import FastGraph, sample_neighbors_homo
+from k3_node.loader.keras_dataset import loader_bases
 
 
-class ShaDowKHopSampler(BaseDataLoader):
+class ShaDowKHopSampler(*loader_bases(BaseDataLoader)):
     r"""The ShaDow k-hop sampler from the "Decoupling the Depth and Scope of
     Graph Neural Networks" paper.
 

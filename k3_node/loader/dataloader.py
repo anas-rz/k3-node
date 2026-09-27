@@ -14,6 +14,7 @@ except ImportError:
 from k3_node.data import Batch
 from k3_node.data.data import BaseData
 from k3_node.data.dataset import Dataset
+from k3_node.loader.keras_dataset import loader_bases
 
 
 class Collater:
@@ -67,7 +68,7 @@ class Collater:
 BaseDataLoader = torch.utils.data.DataLoader if torch is not None else object
 
 
-class DataLoader(BaseDataLoader):
+class DataLoader(*loader_bases(BaseDataLoader)):
     r"""A data loader which merges data objects from a
     :class:`k3_node.data.Dataset` to a mini-batch.
     Data objects can be either of type :class:`~k3_node.data.Data` or

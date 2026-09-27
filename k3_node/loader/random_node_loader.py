@@ -14,9 +14,10 @@ except ImportError:
     BaseDataLoader = object
 
 from k3_node.data import Data, HeteroData
+from k3_node.loader.keras_dataset import loader_bases
 
 
-class RandomNodeLoader(BaseDataLoader):
+class RandomNodeLoader(*loader_bases(BaseDataLoader)):
     r"""A data loader that randomly samples nodes within a graph and returns
     their induced subgraph.
 

@@ -20,6 +20,7 @@ from k3_node.loader.utils import (
     get_edge_label_index,
     infer_filter_per_worker,
 )
+from k3_node.loader.keras_dataset import loader_bases
 
 
 @dataclass
@@ -44,7 +45,7 @@ class EdgeSamplerInput:
         )
 
 
-class LinkLoader(BaseDataLoader, AffinityMixin, MultithreadingMixin, LogMemoryMixin):
+class LinkLoader(*loader_bases(BaseDataLoader), AffinityMixin, MultithreadingMixin, LogMemoryMixin):
     r"""A data loader that performs mini-batch sampling from link information."""
     def __init__(
         self,

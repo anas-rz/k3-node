@@ -5,6 +5,13 @@ from keras import layers, ops, activations
 from k3_node.layers.conv.message_passing import MessagePassing
 
 
+def _apply_nn(nn, x, training):
+    # Forward `training` explicitly: on the JAX backend Keras does not propagate it to nested
+    # layers, so dropout / batch norm inside `nn` would otherwise never be in training mode.
+    if isinstance(nn, keras.layers.Layer):
+        return nn(x, training=training)
+    return nn(x)
+
 class GINConv(MessagePassing):
     r"""The graph isomorphism operator from the `"How Powerful are Graph
     Neural Networks?" <https://arxiv.org/abs/1810.00826>`_ paper.
@@ -81,7 +88,7 @@ class GINConv(MessagePassing):
             self.nn.build(input_shape)
         self.built = True
 
-    def call(self, x, edge_index=None, size=None, **kwargs):
+    def call(self, x, edge_index=None, size=None, training=None, **kwargs):
         # Handle legacy calling: conv((x, adj))
         if edge_index is None and isinstance(x, (tuple, list)) and len(x) == 2:
             arg0, arg1 = x[0], x[1]
@@ -112,7 +119,7 @@ class GINConv(MessagePassing):
         if x_dst is not None:
             out = out + (1.0 + self.eps) * x_dst
 
-        return self.nn(out)
+        return _apply_nn(self.nn, out, training)
 
     def message(self, x_j):
         return x_j
@@ -187,7 +194,7 @@ class GINEConv(MessagePassing):
             self.lin.build((None, self.edge_dim))
         self.built = True
 
-    def call(self, x, edge_index=None, edge_attr=None, size=None, **kwargs):
+    def call(self, x, edge_index=None, edge_attr=None, size=None, training=None, **kwargs):
         if edge_index is None and isinstance(x, (tuple, list)):
             x, edge_index = x[0], x[1]
 
@@ -201,7 +208,7 @@ class GINEConv(MessagePassing):
         if x_dst is not None:
             out = out + (1.0 + self.eps) * x_dst
 
-        return self.nn(out)
+        return _apply_nn(self.nn, out, training)
 
     def message(self, x_j, edge_attr=None):
         if edge_attr is None:

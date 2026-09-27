@@ -17,6 +17,7 @@ from k3_node.loader.utils import (
     get_input_nodes,
     infer_filter_per_worker,
 )
+from k3_node.loader.keras_dataset import loader_bases
 
 
 @dataclass
@@ -65,7 +66,7 @@ class HeteroSamplerOutput:
     metadata: Optional[Any] = None
 
 
-class NodeLoader(BaseDataLoader, AffinityMixin, MultithreadingMixin, LogMemoryMixin):
+class NodeLoader(*loader_bases(BaseDataLoader), AffinityMixin, MultithreadingMixin, LogMemoryMixin):
     r"""A data loader that performs mini-batch sampling from node information."""
     def __init__(
         self,

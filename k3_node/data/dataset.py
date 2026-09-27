@@ -117,7 +117,11 @@ class Dataset:
     def index_select(self, idx: Any) -> "Dataset":
         indices = list(self.indices())
         if isinstance(idx, slice):
-            indices = indices[idx]
+            # Allow fractional slicing as in PyG, e.g. dataset[:0.9] for the first 90%
+            start, stop = idx.start, idx.stop
+            start = round(start * len(indices)) if isinstance(start, float) else start
+            stop = round(stop * len(indices)) if isinstance(stop, float) else stop
+            indices = indices[slice(start, stop, idx.step)]
         elif is_tensor_like(idx):
             idx_np = to_numpy(idx)
             if idx_np.dtype == bool:
@@ -132,6 +136,16 @@ class Dataset:
         dataset = copy.copy(self)
         dataset._indices = indices
         return dataset
+
+    def shuffle(self, return_perm: bool = False):
+        r"""Randomly shuffles the examples in the dataset (as in PyG).
+
+        Args:
+            return_perm (bool): If :obj:`True`, also returns the permutation used.
+        """
+        perm = np.random.permutation(len(self))
+        dataset = self.index_select(perm.tolist())
+        return (dataset, perm) if return_perm else dataset
 
     def __iter__(self) -> Iterator[BaseData]:
         for i in range(len(self)):

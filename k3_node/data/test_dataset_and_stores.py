@@ -101,3 +101,11 @@ def test_feature_and_graph_store():
     ret_ei = gs.get_edge_index(edge_type=("u", "follows", "u"), layout=EdgeLayout.COO)
     assert ops.convert_to_numpy(ret_ei).shape == (2, 2)
 
+
+
+def test_fractional_slicing():
+    from k3_node.datasets import FakeDataset
+
+    dataset = FakeDataset(num_graphs=10)
+    assert len(dataset[:0.9]) == 9 and len(dataset[0.9:]) == 1
+    assert len(dataset[0.2:0.5]) == 3

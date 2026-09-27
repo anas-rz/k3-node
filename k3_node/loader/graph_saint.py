@@ -14,9 +14,10 @@ except ImportError:
 
 from k3_node.data import Data
 from k3_node.loader.sampler_utils import FastGraph, random_walk
+from k3_node.loader.keras_dataset import loader_bases
 
 
-class GraphSAINTSampler(BaseDataLoader):
+class GraphSAINTSampler(*loader_bases(BaseDataLoader)):
     r"""The GraphSAINT sampler base class from the "GraphSAINT" paper.
 
     Args:

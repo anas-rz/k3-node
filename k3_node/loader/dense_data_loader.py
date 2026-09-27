@@ -13,6 +13,7 @@ except ImportError:
     BaseDataLoader = object
 
 from k3_node.data import Batch, Data, Dataset
+from k3_node.loader.keras_dataset import loader_bases
 
 
 def collate_fn(data_list: List[Data]) -> Batch:
@@ -31,7 +32,7 @@ def collate_fn(data_list: List[Data]) -> Batch:
     return batch
 
 
-class DenseDataLoader(BaseDataLoader):
+class DenseDataLoader(*loader_bases(BaseDataLoader)):
     r"""A data loader which batches data objects from a
     :class:`k3_node.data.Dataset` to a :class:`k3_node.data.Batch`
     object by stacking all attributes in a new dimension.
