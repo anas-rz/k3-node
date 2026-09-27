@@ -59,3 +59,18 @@ def test_complex_scoring():
         ops.convert_to_tensor([2, 4]),
     )
     assert ops.convert_to_numpy(score).tolist() == [58.0, 8.0]
+
+
+def test_same_shape_embeddings_are_initialized_independently():
+    # A reused Keras 3 initializer instance repeats its values. For ComplEx, identical real and
+    # imaginary parts cancel the asymmetric term, collapsing the model to DistMult.
+    import numpy as np
+
+    complex_model = ComplEx(num_nodes=20, num_relations=5, hidden_channels=8)
+    rotate_model = RotatE(num_nodes=20, num_relations=5, hidden_channels=8)
+    for a, b in [
+        (complex_model.node_emb, complex_model.node_emb_im),
+        (complex_model.rel_emb, complex_model.rel_emb_im),
+        (rotate_model.node_emb, rotate_model.node_emb_im),
+    ]:
+        assert not np.allclose(ops.convert_to_numpy(a.embeddings), ops.convert_to_numpy(b.embeddings))

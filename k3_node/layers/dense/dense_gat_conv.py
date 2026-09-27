@@ -60,7 +60,8 @@ class DenseGATConv(layers.Layer):
 
     def reset_parameters(self):
         self.lin.reset_parameters()
-        glorot = initializers.GlorotUniform()
+        # A new initializer per tensor: a reused unseeded Keras 3 initializer returns the same values on every call.
+        glorot = lambda shape, dtype=None: initializers.GlorotUniform()(shape, dtype=dtype)
         self.att_src.assign(glorot(self.att_src.shape, dtype=self.att_src.dtype))
         self.att_dst.assign(glorot(self.att_dst.shape, dtype=self.att_dst.dtype))
         if self.bias is not None:

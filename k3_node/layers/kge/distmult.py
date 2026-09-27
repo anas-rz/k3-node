@@ -40,7 +40,8 @@ class DistMult(KGEModel):
         self.reset_parameters()
 
     def reset_parameters(self):
-        glorot = keras.initializers.GlorotUniform()
+        # A new initializer per tensor: a reused unseeded Keras 3 initializer returns the same values on every call.
+        glorot = lambda shape: keras.initializers.GlorotUniform()(shape)
         self.node_emb.embeddings.assign(glorot(ops.shape(self.node_emb.embeddings)))
         self.rel_emb.embeddings.assign(glorot(ops.shape(self.rel_emb.embeddings)))
 

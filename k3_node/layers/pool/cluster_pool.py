@@ -116,10 +116,12 @@ class ClusterPooling(layers.Layer):
         if edge_index_np.shape[1] > 0:
             A_np[edge_index_np[0], edge_index_np[1]] = 1.0
 
-        # Dense edge score S
-        S_np = np.zeros((num_nodes, num_nodes), dtype=np.float32)
+        # Dense edge score S, built from the score tensor so gradients reach the scoring layer
+        # (duplicate edges are summed, as in PyG's ``to_dense_adj``).
+        S = ops.zeros((num_nodes, num_nodes), dtype=x.dtype)
         if edge_index_np.shape[1] > 0:
-            S_np[edge_index_np[0], edge_index_np[1]] = edge_score_np
+            indices = ops.convert_to_tensor(edge_index_np.T.astype("int32"))
+            S = ops.scatter(indices, ops.cast(edge_score, x.dtype), (num_nodes, num_nodes))
 
         # Single nodes in contract graph
         A_contract = np.zeros((num_nodes, num_nodes), dtype=np.float32)
@@ -127,10 +129,11 @@ class ClusterPooling(layers.Layer):
             A_contract[edge_contract[0], edge_contract[1]] = 1.0
         deg_contract = A_contract.sum(axis=-1) + A_contract.sum(axis=-2)
         nodes_single = np.where(deg_contract == 0)[0]
-        S_np[nodes_single, nodes_single] = 1.0
+        single_diag = np.zeros((num_nodes, num_nodes), dtype=np.float32)
+        single_diag[nodes_single, nodes_single] = 1.0
+        S = S + ops.convert_to_tensor(single_diag, dtype=x.dtype)
 
         C = ops.convert_to_tensor(C_np, dtype=x.dtype)
-        S = ops.convert_to_tensor(S_np, dtype=x.dtype)
 
         # x_out = (S @ C).t() @ x
         x_out = ops.matmul(ops.transpose(ops.matmul(S, C)), x)

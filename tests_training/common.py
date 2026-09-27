@@ -199,7 +199,7 @@ def get_layer_test(layer_name):
         "ChebConv": lambda: k3_layers.ChebConv(in_c, out_c, K=2),
         "ClusterGCNConv": lambda: k3_layers.ClusterGCNConv(in_c, out_c),
         "DNAConv": lambda: k3_layers.DNAConv(in_c, heads=1, groups=1),
-        "FeaStConv": lambda: k3_layers.FeaStConv(in_c, out_c, num_heads=2),
+        "FeaStConv": lambda: k3_layers.FeaStConv(in_c, out_c, heads=2),
         "FiLMConv": lambda: k3_layers.FiLMConv(in_c, out_c),
         "FusedGATConv": lambda: k3_layers.FusedGATConv(in_c, out_c),
         "GATConv": lambda: k3_layers.GATConv(in_c, out_c),
@@ -992,7 +992,9 @@ def get_layer_test(layer_name):
                     return self.layer(inputs["x"], inputs["adj"])
             return Model()
         def inputs_factory():
-            adj = np.eye(N, dtype=np.float32)
+            # Ring plus self-loops: with an identity adjacency every node attends only to itself,
+            # so attention parameters would receive no gradient.
+            adj = np.eye(N, dtype=np.float32) + np.roll(np.eye(N, dtype=np.float32), 1, axis=1)
             return {
                 "x": np.random.randn(1, N, in_c).astype(np.float32),
                 "adj": np.expand_dims(adj, 0).astype(np.float32),
@@ -1084,8 +1086,41 @@ def get_layer_test(layer_name):
     return None, None, None, False, f"Test builder for {layer_name} not yet added"
 
 
+# Weights that legitimately receive no gradient in these small test setups (same as in PyG),
+# matched as substrings of the variable path. "*" allows any subset as long as one weight trains.
+NO_GRADIENT_ALLOWED = {
+    "ARMAConv": ["arma_conv/weight"],  # shared weight is only used when num_layers > 1
+    "MFConv": ["*"],  # per-degree weights for degrees absent from the test graph
+    "SAGPooling": ["select_top_k"],  # SelectTopK weight only orders nodes, as in PyG
+    "ASAPooling": ["select_top_k"],
+    "PANPooling": ["select_top_k"],
+    "FilterEdges": ["*"],  # parameter-free; trainable weights belong to the test's selector
+    "Set2Set": ["recurrent_kernel"],  # one processing step starts from a zero hidden state
+}
+
+
+def _layer_under_test(model):
+    for attr in ("layer", "aggr"):
+        layer = getattr(model, attr, None)
+        if isinstance(layer, keras.layers.Layer):
+            return layer
+    return None
+
+
+def _assert_layer_weights_trained(layer_name, layer, before):
+    """With Adam, a weight whose gradient is always exactly zero stays bit-identical."""
+    allowed = NO_GRADIENT_ALLOWED.get(layer_name, [])
+    changed = [not np.array_equal(before[w.path], keras.ops.convert_to_numpy(w)) for w in layer.trainable_weights]
+    stale = [w.path for w, c in zip(layer.trainable_weights, changed) if not c]
+    if "*" in allowed:
+        assert any(changed), f"{layer_name}: none of its trainable weights received a gradient"
+        return
+    unexpected = [p for p in stale if not any(a in p for a in allowed)]
+    assert not unexpected, f"{layer_name}: weights received no gradient during training: {unexpected}"
+
+
 def train_and_verify_layer(layer_name, epochs=10, lr=0.02):
-    """Instantiates a model containing layer_name, trains it, and asserts loss decreases."""
+    """Trains a model containing layer_name; asserts the loss decreases and the layer's own weights train."""
     model_factory, inputs_factory, target_factory, has_weights, skip_reason = get_layer_test(layer_name)
     if skip_reason:
         pytest.skip(skip_reason)
@@ -1093,6 +1128,12 @@ def train_and_verify_layer(layer_name, epochs=10, lr=0.02):
     model = model_factory()
     inputs = inputs_factory()
     target = target_factory()
+
+    model(inputs)  # build, so the layer's initial weights can be recorded
+    layer = _layer_under_test(model)
+    before = {}
+    if layer is not None:
+        before = {w.path: keras.ops.convert_to_numpy(w).copy() for w in layer.trainable_weights}
 
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=lr), loss="mse")
 
@@ -1105,3 +1146,5 @@ def train_and_verify_layer(layer_name, epochs=10, lr=0.02):
         f"Layer {layer_name} did not reduce loss during training: "
         f"initial_loss={l0:.6f}, final_loss={l_last:.6f}"
     )
+    if layer is not None and before:
+        _assert_layer_weights_trained(layer_name, layer, before)

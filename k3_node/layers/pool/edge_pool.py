@@ -129,12 +129,12 @@ class EdgePooling(layers.Layer):
         cluster = ops.convert_to_tensor(cluster_np, dtype="int32")
         new_x = ops.segment_sum(x, cluster, num_segments=num_clusters)
 
-        new_edge_score_np = edge_score_np[new_edge_indices]
+        # Gather from the score tensor (not its numpy copy) so gradients reach the scoring layer.
+        new_edge_score = ops.take(
+            ops.cast(edge_score, x.dtype), ops.convert_to_tensor(np.asarray(new_edge_indices, dtype="int32")), axis=0
+        )
         if j > 0:
-            remaining_score = np.ones(j, dtype=edge_score_np.dtype)
-            new_edge_score_np = np.concatenate([new_edge_score_np, remaining_score], axis=0)
-
-        new_edge_score = ops.convert_to_tensor(new_edge_score_np, dtype=x.dtype)
+            new_edge_score = ops.concatenate([new_edge_score, ops.ones((j,), dtype=x.dtype)], axis=0)
         new_x = new_x * ops.reshape(new_edge_score, (-1, 1))
 
         # Coalesce new edges

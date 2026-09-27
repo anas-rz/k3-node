@@ -51,7 +51,8 @@ class TransE(KGEModel):
 
     def reset_parameters(self):
         bound = 6.0 / math.sqrt(self.hidden_channels)
-        uniform = keras.initializers.RandomUniform(-bound, bound)
+        # A new initializer per tensor: a reused unseeded Keras 3 initializer returns the same values on every call.
+        uniform = lambda shape: keras.initializers.RandomUniform(-bound, bound)(shape)
         self.node_emb.embeddings.assign(uniform(ops.shape(self.node_emb.embeddings)))
         self.rel_emb.embeddings.assign(uniform(ops.shape(self.rel_emb.embeddings)))
         self.rel_emb.embeddings.assign(normalize(self.rel_emb.embeddings, p=self.p_norm, axis=-1))

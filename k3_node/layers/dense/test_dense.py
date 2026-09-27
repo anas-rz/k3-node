@@ -369,3 +369,9 @@ def test_dmon_pooling():
     assert 0.0 <= float(ops.convert_to_numpy(ortho_loss)) <= math.sqrt(2) + 1e-4
     assert 0.0 <= float(ops.convert_to_numpy(cluster_loss)) <= math.sqrt(num_clusters) - 1 + 1e-4
 
+
+
+def test_dense_gat_conv_attention_vectors_initialized_independently():
+    conv = DenseGATConv(16, 8, heads=2)
+    conv(np.random.randn(1, 5, 16).astype("float32"), np.ones((1, 5, 5), dtype="float32"))
+    assert not np.allclose(ops.convert_to_numpy(conv.att_src), ops.convert_to_numpy(conv.att_dst))

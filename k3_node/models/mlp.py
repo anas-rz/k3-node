@@ -166,6 +166,10 @@ class MLP(keras.Model):
         if len(self.norms) > 0 and self.norms[0] is not None:
             norm_params = inspect.signature(self.norms[0].call).parameters
             self.supports_norm_batch = "batch" in norm_params
+        # Norms such as BatchNorm treat ``training=None`` as training mode, so pass it explicitly.
+        self.supports_norm_training = False
+        if len(self.norms) > 0 and self.norms[0] is not None:
+            self.supports_norm_training = "training" in inspect.signature(self.norms[0].call).parameters
 
     @property
     def num_layers(self) -> int:
@@ -206,10 +210,11 @@ class MLP(keras.Model):
             if self.act is not None and self.act_first:
                 x = self.act(x)
             if norm is not None:
+                norm_kwargs = {"training": training} if self.supports_norm_training else {}
                 if self.supports_norm_batch:
-                    x = norm(x, batch, batch_size)
+                    x = norm(x, batch, batch_size, **norm_kwargs)
                 else:
-                    x = norm(x)
+                    x = norm(x, **norm_kwargs)
             if self.act is not None and not self.act_first:
                 x = self.act(x)
             if self.dropouts[i] is not None:

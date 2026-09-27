@@ -48,7 +48,8 @@ class RotatE(KGEModel):
         self.reset_parameters()
 
     def reset_parameters(self):
-        glorot = keras.initializers.GlorotUniform()
+        # A new initializer per tensor: a reused unseeded Keras 3 initializer returns the same values on every call.
+        glorot = lambda shape: keras.initializers.GlorotUniform()(shape)
         self.node_emb.embeddings.assign(glorot(ops.shape(self.node_emb.embeddings)))
         self.node_emb_im.embeddings.assign(glorot(ops.shape(self.node_emb_im.embeddings)))
         uniform = keras.initializers.RandomUniform(0, 2 * math.pi)
