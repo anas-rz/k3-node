@@ -2,6 +2,7 @@ from keras import ops
 from keras.layers import Dense
 
 from k3_node.layers.conv.message_passing import MessagePassing
+from k3_node.ops.creation import scatter
 
 
 class PANConv(MessagePassing):
@@ -64,7 +65,7 @@ class PANConv(MessagePassing):
         # Construct adjacency matrix
         if hasattr(edge_index, "shape") and len(edge_index.shape) == 2 and edge_index.shape[0] == 2:
             row, col = edge_index[0], edge_index[1]
-            adj = ops.scatter(
+            adj = scatter(
                 ops.stack([row, col], axis=-1),
                 ops.ones((ops.shape(row)[0],), dtype=x.dtype),
                 shape=(num_nodes, num_nodes),

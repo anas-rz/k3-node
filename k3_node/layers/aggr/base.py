@@ -2,7 +2,7 @@ from typing import Optional, Tuple
 from keras import layers, ops
 import numpy as np
 from k3_node.ops.segment import segment_max, segment_sum
-from k3_node.ops.creation import full
+from k3_node.ops.creation import scatter, full
 
 
 def ptr2index(ptr):
@@ -78,7 +78,7 @@ def to_dense_batch(
             feat_shape = tuple(ops.shape(x)[1:])
             scatter_idx = np.stack([index_np[valid], local_index[valid]], axis=1)
             x_valid = x if bool(valid.all()) else ops.take(x, np.nonzero(valid)[0], axis=0)
-            out = ops.scatter(scatter_idx, x_valid, shape=(B, max_nodes, *feat_shape))
+            out = scatter(scatter_idx, x_valid, shape=(B, max_nodes, *feat_shape))
 
             if fill_value != 0.0:
                 mask_t = ops.convert_to_tensor(mask_np)
@@ -168,7 +168,7 @@ def to_dense_adj(edge_index, batch=None, edge_attr=None, max_num_nodes: Optional
     num_edges = ops.shape(edge_index)[1]
     values = ops.ones((num_edges,), dtype="float32") if edge_attr is None else ops.convert_to_tensor(edge_attr)
     extra = tuple(values.shape[1:])
-    return ops.scatter(indices, values, (num_graphs, max_nodes, max_nodes) + extra)
+    return scatter(indices, values, (num_graphs, max_nodes, max_nodes) + extra)
 
 
 class Aggregation(layers.Layer):

@@ -15,3 +15,17 @@ def full(shape, fill_value, dtype=None):
 def full_like(x, fill_value, dtype=None):
     r"""Like :func:`keras.ops.full_like`."""
     return ops.ones_like(x, dtype=dtype) * ops.cast(fill_value, dtype or x.dtype)
+
+
+def scatter(indices, values, shape):
+    r"""Like :func:`keras.ops.scatter` (values at duplicate indices are summed)."""
+    from keras import backend
+
+    if backend.backend() == "torch":
+        import torch
+
+        values = values if torch.is_tensor(values) else ops.convert_to_tensor(values)
+        indices = indices if torch.is_tensor(indices) else ops.convert_to_tensor(indices)
+        out = torch.zeros(tuple(int(s) for s in shape), dtype=values.dtype, device=values.device)
+        return out.index_put_(tuple(indices.long().T), values, accumulate=True)
+    return ops.scatter(indices, values, shape)
