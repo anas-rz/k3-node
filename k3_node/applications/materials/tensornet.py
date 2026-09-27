@@ -26,7 +26,22 @@ from .readout import WeightedAtomReadOut, ReduceReadOut
 
 
 class TensorEmbedding(layers.Layer):
-    """Embeds node types and Cartesian pair vectors into rank-2 tensors [num_nodes, units, 3, 3]."""
+    """Embeds node types and Cartesian pair vectors into rank-2 tensors [num_nodes, units, 3, 3].
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import TensorEmbedding
+
+        z = np.array([6, 8, 1, 6])  # atomic numbers
+        edge_index = np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]])
+        edge_attr = np.random.rand(8, 16).astype("float32")  # radial basis of each bond
+        edge_weight = np.random.rand(8).astype("float32") * 3.0  # bond lengths
+        vec = np.random.rand(8, 3).astype("float32")  # bond vectors
+        layer = TensorEmbedding(units=16, degree_rbf=16)
+        print(tuple(layer(z, edge_index, edge_attr, edge_weight, vec).shape))  # (4, 16, 3, 3): a 3x3 tensor per channel
+        ```
+    """
 
     def __init__(
         self,
@@ -121,7 +136,21 @@ class TensorEmbedding(layers.Layer):
 
 
 class TensorNetInteraction(layers.Layer):
-    """Equivariant Cartesian tensor message passing interaction layer."""
+    """Equivariant Cartesian tensor message passing interaction layer.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import TensorNetInteraction
+
+        edge_index = np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]])
+        edge_weight = np.random.rand(8).astype("float32") * 3.0
+        edge_attr = np.random.rand(8, 16).astype("float32")
+        X = np.random.rand(4, 16, 3, 3).astype("float32")  # per-atom tensor features
+        layer = TensorNetInteraction(num_rbf=16, units=16)
+        print(tuple(layer(edge_index, edge_weight, edge_attr, X).shape))  # (4, 16, 3, 3)
+        ```
+    """
 
     def __init__(
         self,
@@ -201,7 +230,28 @@ class TensorNetInteraction(layers.Layer):
 
 
 class TensorNet(keras.Model):
-    """Cartesian tensor-based equivariant GNN for molecular and crystal potentials."""
+    """Cartesian tensor-based equivariant GNN for molecular and crystal potentials.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import TensorNet
+
+        # A 4-atom structure: positions, bonds (listed in both directions) and atomic numbers
+        structure = {
+            "pos": np.array([[0.0, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.2, 0.8], [1.5, 1.5, 1.0]], dtype="float32"),
+            "edge_index": np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]]),
+            "line_edge_index": np.array([[0, 1, 2, 3], [1, 2, 3, 0]]),  # bond pairs forming angles
+            "node_type": np.array([6, 8, 1, 6]),  # atomic numbers
+            "batch": np.zeros(4, dtype="int32"),  # all atoms belong to structure 0
+            "state_attr": np.zeros((1, 2), dtype="float32"),  # global state features
+        }
+
+        model = TensorNet(units=16, nblocks=2, num_rbf=16)
+        energy = model(structure)  # predicted property (e.g. energy) of the structure
+        print(tuple(energy.shape))  # (1,)
+        ```
+    """
 
     def __init__(
         self,

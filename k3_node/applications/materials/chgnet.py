@@ -21,7 +21,22 @@ from k3_node.hub.hub_mixin import K3NodeHubMixin
 
 
 class CHGNetAtomGraphBlock(layers.Layer):
-    """Atom-graph convolution block for CHGNet."""
+    """Atom-graph convolution block for CHGNet.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import CHGNetAtomGraphBlock
+
+        edge_index = np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]])  # 4 atoms, 8 bonds
+        node_feat = np.random.rand(4, 16).astype("float32")
+        edge_feat = np.random.rand(8, 16).astype("float32")
+
+        block = CHGNetAtomGraphBlock(num_atom_feats=16, num_bond_feats=16, atom_hidden_dims=(16,))
+        atom_out, bond_out = block(edge_index, node_feat, edge_feat)  # updated atom and bond features
+        print(tuple(atom_out.shape), tuple(bond_out.shape))  # (4, 16) (8, 16)
+        ```
+    """
 
     def __init__(
         self,
@@ -87,7 +102,20 @@ class CHGNetAtomGraphBlock(layers.Layer):
 
 
 class CHGNetBondGraphBlock(layers.Layer):
-    """Bond-graph (line-graph) convolution block for CHGNet."""
+    """Bond-graph (line-graph) convolution block for CHGNet.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import CHGNetBondGraphBlock
+
+        line_edge_index = np.array([[0, 1, 2, 3], [1, 2, 3, 0]])  # bond pairs forming 4 angles
+        bond_feat = np.random.rand(8, 16).astype("float32")
+        angle_feat = np.random.rand(4, 16).astype("float32")
+        block = CHGNetBondGraphBlock(num_bond_feats=16, num_angle_feats=16, bond_hidden_dims=(16,))
+        print(tuple(block(line_edge_index, bond_feat, angle_feat).shape))  # (8, 16): updated bond features
+        ```
+    """
 
     def __init__(
         self,
@@ -132,7 +160,29 @@ class CHGNetBondGraphBlock(layers.Layer):
 
 
 class CHGNet(K3NodeHubMixin, keras.Model):
-    """Crystal Hamiltonian Graph Neural Network (CHGNet) with charge and angular terms."""
+    """Crystal Hamiltonian Graph Neural Network (CHGNet) with charge and angular terms.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import CHGNet
+
+        # A 4-atom structure: positions, bonds (listed in both directions) and atomic numbers
+        structure = {
+            "pos": np.array([[0.0, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.2, 0.8], [1.5, 1.5, 1.0]], dtype="float32"),
+            "edge_index": np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]]),
+            "line_edge_index": np.array([[0, 1, 2, 3], [1, 2, 3, 0]]),  # bond pairs forming angles
+            "node_type": np.array([6, 8, 1, 6]),  # atomic numbers
+            "batch": np.zeros(4, dtype="int32"),  # all atoms belong to structure 0
+            "state_attr": np.zeros((1, 2), dtype="float32"),  # global state features
+        }
+
+        model = CHGNet(dim_atom_embedding=16, dim_bond_embedding=16, dim_angle_embedding=16, num_blocks=2,
+                       atom_conv_hidden_dims=(16,), bond_conv_hidden_dims=(16,))
+        energy = model(structure)  # predicted property (e.g. energy) of the structure
+        print(tuple(energy.shape))  # (1,)
+        ```
+    """
 
     def __init__(
         self,

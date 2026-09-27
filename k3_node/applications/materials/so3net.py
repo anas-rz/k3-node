@@ -19,7 +19,17 @@ from .readout import WeightedAtomReadOut, ReduceReadOut
 
 
 class RealSphericalHarmonics(layers.Layer):
-    """Computes real spherical harmonics up to order lmax for 3D unit vectors."""
+    """Computes real spherical harmonics up to order lmax for 3D unit vectors.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import RealSphericalHarmonics
+
+        vec = np.random.rand(8, 3).astype("float32")  # bond vectors
+        print(tuple(RealSphericalHarmonics(lmax=2)(vec).shape))  # (8, 9): (lmax + 1)^2 harmonics per bond
+        ```
+    """
 
     def __init__(self, lmax: int = 2, **kwargs):
         super().__init__(**kwargs)
@@ -55,7 +65,23 @@ class RealSphericalHarmonics(layers.Layer):
 
 
 class SO3Convolution(layers.Layer):
-    """Equivariant interaction convolution layer for SO3Net."""
+    """Equivariant interaction convolution layer for SO3Net.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import SO3Convolution
+
+        edge_index = np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]])  # 4 atoms, 8 bonds
+        node_feat = np.random.rand(4, 16).astype("float32")
+        edge_feat = np.random.rand(8, 16).astype("float32")
+        sh_feats = np.random.rand(8, 9).astype("float32")  # spherical harmonics of each bond (lmax=2)
+        edge_weight = np.random.rand(8).astype("float32") * 3.0
+
+        conv = SO3Convolution(units=16, lmax=2, num_rbf=16)
+        print(tuple(conv(edge_index, node_feat, edge_feat, sh_feats, edge_weight).shape))  # (4, 16)
+        ```
+    """
 
     def __init__(self, units: int, lmax: int = 2, num_rbf: int = 32, cutoff: float = 5.0, activation: str = "swish", **kwargs):
         super().__init__(**kwargs)
@@ -83,7 +109,28 @@ class SO3Convolution(layers.Layer):
 
 
 class SO3Net(keras.Model):
-    """SO(3)-equivariant representation model using spherical harmonics."""
+    """SO(3)-equivariant representation model using spherical harmonics.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import SO3Net
+
+        # A 4-atom structure: positions, bonds (listed in both directions) and atomic numbers
+        structure = {
+            "pos": np.array([[0.0, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.2, 0.8], [1.5, 1.5, 1.0]], dtype="float32"),
+            "edge_index": np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]]),
+            "line_edge_index": np.array([[0, 1, 2, 3], [1, 2, 3, 0]]),  # bond pairs forming angles
+            "node_type": np.array([6, 8, 1, 6]),  # atomic numbers
+            "batch": np.zeros(4, dtype="int32"),  # all atoms belong to structure 0
+            "state_attr": np.zeros((1, 2), dtype="float32"),  # global state features
+        }
+
+        model = SO3Net(units=16, nblocks=2, lmax=2, num_rbf=16)
+        energy = model(structure)  # predicted property (e.g. energy) of the structure
+        print(tuple(energy.shape))  # (1,)
+        ```
+    """
 
     def __init__(
         self,

@@ -10,7 +10,19 @@ from .core import MLP, GatedMLP, get_activation, infer_num_graphs
 
 
 class ReduceReadOut(layers.Layer):
-    """Pool node features into graph features via sum, mean, or max reduction."""
+    """Pool node features into graph features via sum, mean, or max reduction.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLReduceReadOut
+
+        node_feat = np.random.rand(6, 16).astype("float32")
+        batch = np.array([0, 0, 0, 1, 1, 1])  # two structures with 3 atoms each
+
+        print(tuple(MatGLReduceReadOut(op="mean")(node_feat, batch=batch, num_graphs=2).shape))  # (2, 16)
+        ```
+    """
 
     def __init__(self, op: str = "mean", field: str = "node_feat", **kwargs):
         super().__init__(**kwargs)
@@ -30,7 +42,19 @@ class ReduceReadOut(layers.Layer):
 
 
 class WeightedReadOut(layers.Layer):
-    """Feed node features through a GatedMLP to predict atomic properties."""
+    """Feed node features through a GatedMLP to predict atomic properties.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLWeightedReadOut
+
+        node_feat = np.random.rand(6, 16).astype("float32")
+        batch = np.array([0, 0, 0, 1, 1, 1])  # two structures with 3 atoms each
+
+        print(tuple(MatGLWeightedReadOut(in_feats=16, dims=[16], num_targets=1)(node_feat).shape))  # (6, 1): per-atom outputs
+        ```
+    """
 
     def __init__(self, in_feats: int, dims: Sequence[int], num_targets: int = 1, **kwargs):
         super().__init__(**kwargs)
@@ -44,7 +68,20 @@ class WeightedReadOut(layers.Layer):
 
 
 class WeightedAtomReadOut(layers.Layer):
-    """Weighted atom readout for whole-graph properties with normalized learned weights."""
+    """Weighted atom readout for whole-graph properties with normalized learned weights.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLWeightedAtomReadOut
+
+        node_feat = np.random.rand(6, 16).astype("float32")
+        batch = np.array([0, 0, 0, 1, 1, 1])  # two structures with 3 atoms each
+
+        readout = MatGLWeightedAtomReadOut(in_feats=16, dims=[16, 8])
+        print(tuple(readout(node_feat, batch=batch, num_graphs=2).shape))  # (2, 8)
+        ```
+    """
 
     def __init__(
         self,
@@ -78,7 +115,19 @@ class WeightedAtomReadOut(layers.Layer):
 
 
 class Set2SetReadOut(layers.Layer):
-    """Iterative content-based attention pooling (Set2Set) for nodes."""
+    """Iterative content-based attention pooling (Set2Set) for nodes.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLSet2SetReadOut
+
+        node_feat = np.random.rand(6, 16).astype("float32")
+        batch = np.array([0, 0, 0, 1, 1, 1])  # two structures with 3 atoms each
+
+        print(tuple(MatGLSet2SetReadOut(in_channels=16)(node_feat, batch=batch, num_graphs=2).shape))  # (2, 32)
+        ```
+    """
 
     def __init__(self, in_channels: int, processing_steps: int = 3, num_layers: int = 1, **kwargs):
         super().__init__(**kwargs)
@@ -126,7 +175,18 @@ class Set2SetReadOut(layers.Layer):
 
 
 class EdgeSet2Set(layers.Layer):
-    """Iterative content-based attention pooling (Set2Set) for edge features."""
+    """Iterative content-based attention pooling (Set2Set) for edge features.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLEdgeSet2Set
+
+        edge_feat = np.random.rand(8, 16).astype("float32")
+        edge_batch = np.array([0, 0, 0, 0, 1, 1, 1, 1])  # bonds of two structures
+        print(tuple(MatGLEdgeSet2Set(input_dim=16)(edge_feat, edge_batch=edge_batch, num_graphs=2).shape))  # (2, 32)
+        ```
+    """
 
     def __init__(self, input_dim: int, n_iters: int = 3, n_layers: int = 1, **kwargs):
         super().__init__(**kwargs)

@@ -13,7 +13,25 @@ from .readout import Set2SetReadOut, EdgeSet2Set
 
 
 class MEGNetGraphConv(layers.Layer):
-    """MEGNet graph convolution layer: edge -> node -> state updates."""
+    """MEGNet graph convolution layer: edge -> node -> state updates.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MEGNetGraphConv
+
+        edge_index = np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]])  # 4 atoms, 8 bonds
+        node_feat = np.random.rand(4, 16).astype("float32")
+        edge_feat = np.random.rand(8, 16).astype("float32")
+        state_feat = np.random.rand(1, 16).astype("float32")  # one global state per structure
+        batch, edge_batch = np.zeros(4, dtype="int32"), np.zeros(8, dtype="int32")
+
+        conv = MEGNetGraphConv(edge_dims=[64, 32, 16], node_dims=[48, 32, 16], state_dims=[48, 32, 16])
+        edge_out, node_out, state_out = conv(edge_index, edge_feat, node_feat, state_feat, batch=batch,
+                                             edge_batch=edge_batch, num_nodes=4, num_graphs=1)
+        print(tuple(edge_out.shape), tuple(node_out.shape), tuple(state_out.shape))  # (8, 16) (4, 16) (1, 16)
+        ```
+    """
 
     def __init__(
         self,
@@ -89,7 +107,25 @@ class MEGNetGraphConv(layers.Layer):
 
 
 class MEGNetBlock(layers.Layer):
-    """MEGNet block: pre-MLPs, graph convolution, skip connections."""
+    """MEGNet block: pre-MLPs, graph convolution, skip connections.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MEGNetBlock
+
+        edge_index = np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]])  # 4 atoms, 8 bonds
+        node_feat = np.random.rand(4, 16).astype("float32")
+        edge_feat = np.random.rand(8, 16).astype("float32")
+        state_feat = np.random.rand(1, 16).astype("float32")  # one global state per structure
+        batch, edge_batch = np.zeros(4, dtype="int32"), np.zeros(8, dtype="int32")
+
+        block = MEGNetBlock(dims=[16, 32, 16], conv_hiddens=[32, 16])
+        edge_out, node_out, state_out = block(edge_index, edge_feat, node_feat, state_feat, batch=batch,
+                                              edge_batch=edge_batch, num_nodes=4, num_graphs=1)
+        print(tuple(edge_out.shape), tuple(node_out.shape), tuple(state_out.shape))  # (8, 16) (4, 16) (1, 16)
+        ```
+    """
 
     def __init__(
         self,
@@ -164,7 +200,30 @@ class MEGNetBlock(layers.Layer):
 
 
 class MEGNet(keras.Model):
-    """MEGNet materials graph network supporting TensorFlow, PyTorch, and JAX."""
+    """MEGNet materials graph network supporting TensorFlow, PyTorch, and JAX.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MEGNet
+
+        # A 4-atom structure: positions, bonds (listed in both directions) and atomic numbers
+        structure = {
+            "pos": np.array([[0.0, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.2, 0.8], [1.5, 1.5, 1.0]], dtype="float32"),
+            "edge_index": np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]]),
+            "line_edge_index": np.array([[0, 1, 2, 3], [1, 2, 3, 0]]),  # bond pairs forming angles
+            "node_type": np.array([6, 8, 1, 6]),  # atomic numbers
+            "batch": np.zeros(4, dtype="int32"),  # all atoms belong to structure 0
+            "state_attr": np.zeros((1, 2), dtype="float32"),  # global state features
+        }
+
+        model = MEGNet(dim_node_embedding=16, dim_edge_embedding=20, dim_state_embedding=2, nblocks=2,
+                       hidden_layer_sizes_input=(32, 16), hidden_layer_sizes_conv=(32, 16),
+                       hidden_layer_sizes_output=(16,))
+        energy = model(structure)  # predicted property (e.g. energy) of the structure
+        print(tuple(energy.shape))  # (1,)
+        ```
+    """
 
     def __init__(
         self,

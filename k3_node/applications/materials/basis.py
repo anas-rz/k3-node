@@ -89,7 +89,19 @@ def compute_theta_and_phi(pos, edge_index, line_edge_index, pbc_offshift=None):
 
 
 class GaussianExpansion(layers.Layer):
-    """Gaussian Radial Basis Function expansion."""
+    """Gaussian Radial Basis Function expansion.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLGaussianExpansion
+
+        r = np.array([0.9, 1.3, 2.1, 2.8, 3.5, 4.2, 1.1, 1.8], dtype="float32")  # 8 bond lengths
+
+        basis = MatGLGaussianExpansion(initial=0.0, final=5.0, num_centers=20, width=0.5)
+        print(tuple(basis(r).shape))  # (8, 20): expanded features per bond
+        ```
+    """
 
     def __init__(
         self,
@@ -135,7 +147,19 @@ class GaussianExpansion(layers.Layer):
 
 
 class RadialBesselFunction(layers.Layer):
-    """Zeroth-order spherical Bessel function radial basis with optional learnable roots."""
+    """Zeroth-order spherical Bessel function radial basis with optional learnable roots.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLRadialBesselFunction
+
+        r = np.array([0.9, 1.3, 2.1, 2.8, 3.5, 4.2, 1.1, 1.8], dtype="float32")  # 8 bond lengths
+
+        basis = MatGLRadialBesselFunction(max_n=3, cutoff=5.0)
+        print(tuple(basis(r).shape))  # (8, 3): expanded features per bond
+        ```
+    """
 
     def __init__(
         self,
@@ -170,7 +194,17 @@ class RadialBesselFunction(layers.Layer):
 
 
 class FourierExpansion(layers.Layer):
-    """Fourier expansion of scalar angular features into sine and cosine components."""
+    """Fourier expansion of scalar angular features into sine and cosine components.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLFourierExpansion
+
+        x = np.array([0.1, 0.8, 1.6, 2.9], dtype="float32")  # e.g. angles
+        print(tuple(MatGLFourierExpansion(max_f=4)(x).shape))  # (4, 9): sine and cosine features
+        ```
+    """
 
     def __init__(
         self,
@@ -215,7 +249,19 @@ class FourierExpansion(layers.Layer):
 
 
 class ChebyshevRadialBasis(layers.Layer):
-    """Chebyshev radial basis with polynomial cutoff envelope."""
+    """Chebyshev radial basis with polynomial cutoff envelope.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLChebyshevRadialBasis
+
+        r = np.array([0.9, 1.3, 2.1, 2.8, 3.5, 4.2, 1.1, 1.8], dtype="float32")  # 8 bond lengths
+
+        basis = MatGLChebyshevRadialBasis(nfunc=6, cutoff=5.0)
+        print(tuple(basis(r).shape))  # (8, 6): expanded features per bond
+        ```
+    """
 
     def __init__(
         self,
@@ -246,7 +292,19 @@ class ChebyshevRadialBasis(layers.Layer):
 
 
 class SphericalBesselFunction(layers.Layer):
-    """Spherical Bessel basis expansion j_0(k * r / cutoff)."""
+    """Spherical Bessel basis expansion j_0(k * r / cutoff).
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLSphericalBesselFunction
+
+        r = np.array([0.9, 1.3, 2.1, 2.8, 3.5, 4.2, 1.1, 1.8], dtype="float32")  # 8 bond lengths
+
+        basis = MatGLSphericalBesselFunction(max_l=3, max_n=3, cutoff=5.0)
+        print(tuple(basis(r).shape))  # (8, 9): expanded features per bond
+        ```
+    """
 
     def __init__(
         self,
@@ -278,7 +336,19 @@ class SphericalBesselFunction(layers.Layer):
 
 
 class SphericalBesselWithHarmonics(layers.Layer):
-    """Spherical Bessel basis combined with angular Legendre polynomials / harmonics."""
+    """Spherical Bessel basis combined with angular Legendre polynomials / harmonics.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLSphericalBesselWithHarmonics
+
+        r = np.array([1.1, 1.8, 2.5, 3.0], dtype="float32")  # distances of 4 triplets
+        theta = np.array([0.5, 1.2, 2.0, 2.8], dtype="float32")  # bond angles
+        basis = MatGLSphericalBesselWithHarmonics(max_n=3, max_l=3, cutoff=5.0)
+        print(tuple(basis(r, theta).shape))  # (4, 9): max_n * max_l three-body features
+        ```
+    """
 
     def __init__(
         self,
@@ -315,7 +385,19 @@ class SphericalBesselWithHarmonics(layers.Layer):
 
 
 class BondExpansion(layers.Layer):
-    """Radial basis function dispatcher for pair distances."""
+    """Radial basis function dispatcher for pair distances.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MatGLBondExpansion
+
+        r = np.array([0.9, 1.3, 2.1, 2.8, 3.5, 4.2, 1.1, 1.8], dtype="float32")  # 8 bond lengths
+
+        basis = MatGLBondExpansion(rbf_type="SphericalBessel", max_n=3, max_l=3, cutoff=5.0)
+        print(tuple(basis(r).shape))  # (8, 9): expanded features per bond
+        ```
+    """
 
     def __init__(
         self,

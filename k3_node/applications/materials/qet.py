@@ -15,7 +15,20 @@ from .readout import ReduceReadOut
 
 
 class LinearQeq(layers.Layer):
-    """Closed-form charge-equilibration solver via Lagrange multipliers."""
+    """Closed-form charge-equilibration solver via Lagrange multipliers.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import LinearQeq
+
+        chi = np.random.rand(4).astype("float32")  # electronegativities
+        hardness = np.random.rand(4).astype("float32") + 1.0
+        batch = np.zeros(4, dtype="int32")
+        charges = LinearQeq()(chi, hardness, batch=batch, num_graphs=1)  # charges summing to the total charge
+        print(tuple(charges.shape))  # (4,)
+        ```
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -52,7 +65,21 @@ class LinearQeq(layers.Layer):
 
 
 class ElectrostaticPotential(layers.Layer):
-    """Gaussian-smeared Coulomb electrostatic potential calculation."""
+    """Gaussian-smeared Coulomb electrostatic potential calculation.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import ElectrostaticPotential
+
+        edge_index = np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]])
+        charge = np.array([0.2, -0.4, 0.1, 0.1], dtype="float32")
+        sigma = np.ones(4, dtype="float32")  # Gaussian charge widths
+        bond_dists = np.random.rand(8).astype("float32") * 3.0
+        potential = ElectrostaticPotential(cutoff=5.0)
+        print(tuple(potential(edge_index, charge, sigma, bond_dists, num_nodes=4).shape))  # (4,)
+        ```
+    """
 
     def __init__(self, cutoff: float = 5.0, **kwargs):
         super().__init__(**kwargs)
@@ -82,7 +109,28 @@ class ElectrostaticPotential(layers.Layer):
 
 
 class QET(TensorNet):
-    """Charge-Equilibration TensorNet (QET) model."""
+    """Charge-Equilibration TensorNet (QET) model.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import QET
+
+        # A 4-atom structure: positions, bonds (listed in both directions) and atomic numbers
+        structure = {
+            "pos": np.array([[0.0, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.2, 0.8], [1.5, 1.5, 1.0]], dtype="float32"),
+            "edge_index": np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]]),
+            "line_edge_index": np.array([[0, 1, 2, 3], [1, 2, 3, 0]]),  # bond pairs forming angles
+            "node_type": np.array([6, 8, 1, 6]),  # atomic numbers
+            "batch": np.zeros(4, dtype="int32"),  # all atoms belong to structure 0
+            "state_attr": np.zeros((1, 2), dtype="float32"),  # global state features
+        }
+
+        model = QET(units=16, nblocks=2, num_rbf=16)
+        energy = model(structure)  # predicted property (e.g. energy) of the structure
+        print(tuple(energy.shape))  # (1,)
+        ```
+    """
 
     def __init__(
         self,

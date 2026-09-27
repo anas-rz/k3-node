@@ -18,7 +18,21 @@ from .readout import ReduceReadOut
 
 
 class GraceSPBasis(layers.Layer):
-    """Single-particle ACE basis aggregation for atomic clusters."""
+    """Single-particle ACE basis aggregation for atomic clusters.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GraceSPBasis
+
+        edge_index = np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]])
+        node_type = np.array([6, 8, 1, 6])
+        rad_basis = np.random.rand(8, 6).astype("float32")  # radial basis per bond
+        sh_basis = np.random.rand(8, 9).astype("float32")  # spherical harmonics per bond (lmax=2)
+        layer = GraceSPBasis(n_rad_base=6, lmax=2, embedding_size=8)
+        print(tuple(layer(edge_index, node_type, rad_basis, sh_basis, num_nodes=4).shape))  # (4, 9, 8): atomic basis A_i
+        ```
+    """
 
     def __init__(
         self,
@@ -56,7 +70,17 @@ class GraceSPBasis(layers.Layer):
 
 
 class GraceACEStack(layers.Layer):
-    """Multi-order Atomic Cluster Expansion stack accumulating rotational invariants."""
+    """Multi-order Atomic Cluster Expansion stack accumulating rotational invariants.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GraceACEStack
+
+        A_i = np.random.rand(4, 9, 8).astype("float32")  # atomic basis from GraceSPBasis
+        print(tuple(GraceACEStack(embedding_size=8, max_order=2)(A_i).shape))  # (4, 16): body-order invariants
+        ```
+    """
 
     def __init__(
         self,
@@ -84,7 +108,29 @@ class GraceACEStack(layers.Layer):
 
 
 class GRACE(keras.Model):
-    """Graph Atomic Cluster Expansion (GRACE) foundational interatomic potential."""
+    """Graph Atomic Cluster Expansion (GRACE) foundational interatomic potential.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GRACE
+
+        # A 4-atom structure: positions, bonds (listed in both directions) and atomic numbers
+        structure = {
+            "pos": np.array([[0.0, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.2, 0.8], [1.5, 1.5, 1.0]], dtype="float32"),
+            "edge_index": np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]]),
+            "line_edge_index": np.array([[0, 1, 2, 3], [1, 2, 3, 0]]),  # bond pairs forming angles
+            "node_type": np.array([6, 8, 1, 6]),  # atomic numbers
+            "batch": np.zeros(4, dtype="int32"),  # all atoms belong to structure 0
+            "state_attr": np.zeros((1, 2), dtype="float32"),  # global state features
+        }
+
+        model = GRACE(cutoff=5.0, n_rad_base=6, lmax=2, embedding_size=8, max_order=2, nblocks=2,
+                      readout_hidden=(16,))
+        energy = model(structure)  # predicted property (e.g. energy) of the structure
+        print(tuple(energy.shape))  # (1,)
+        ```
+    """
 
     def __init__(
         self,

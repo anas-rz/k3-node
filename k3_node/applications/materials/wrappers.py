@@ -9,7 +9,28 @@ import numpy as np
 
 
 class TransformedTargetModel(keras.Model):
-    """Wraps a model and applies inverse transformation to predictions (e.g., mean/std denormalization)."""
+    """Wraps a model and applies inverse transformation to predictions (e.g., mean/std denormalization).
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MEGNet, TransformedTargetModel
+
+        # A 4-atom structure: positions, bonds (listed in both directions) and atomic numbers
+        structure = {
+            "pos": np.array([[0.0, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.2, 0.8], [1.5, 1.5, 1.0]], dtype="float32"),
+            "edge_index": np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]]),
+            "line_edge_index": np.array([[0, 1, 2, 3], [1, 2, 3, 0]]),  # bond pairs forming angles
+            "node_type": np.array([6, 8, 1, 6]),  # atomic numbers
+            "batch": np.zeros(4, dtype="int32"),  # all atoms belong to structure 0
+            "state_attr": np.zeros((1, 2), dtype="float32"),  # global state features
+        }
+
+        base = MEGNet(dim_node_embedding=8, dim_edge_embedding=16, nblocks=1)
+        model = TransformedTargetModel(model=base, mean=5.0, std=2.0)  # outputs base * std + mean
+        print(tuple(model(structure).shape))  # (1,)
+        ```
+    """
 
     def __init__(
         self,
@@ -29,7 +50,28 @@ class TransformedTargetModel(keras.Model):
 
 
 class Potential(keras.Model):
-    """Interatomic potential wrapping an energy model and computing energies, forces, and stresses."""
+    """Interatomic potential wrapping an energy model and computing energies, forces, and stresses.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MEGNet, Potential
+
+        # A 4-atom structure: positions, bonds (listed in both directions) and atomic numbers
+        structure = {
+            "pos": np.array([[0.0, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.2, 0.8], [1.5, 1.5, 1.0]], dtype="float32"),
+            "edge_index": np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]]),
+            "line_edge_index": np.array([[0, 1, 2, 3], [1, 2, 3, 0]]),  # bond pairs forming angles
+            "node_type": np.array([6, 8, 1, 6]),  # atomic numbers
+            "batch": np.zeros(4, dtype="int32"),  # all atoms belong to structure 0
+            "state_attr": np.zeros((1, 2), dtype="float32"),  # global state features
+        }
+
+        base = MEGNet(dim_node_embedding=8, dim_edge_embedding=16, nblocks=1)
+        potential = Potential(model=base, data_mean=-1.5, data_std=0.8)  # interatomic potential wrapper
+        print(tuple(potential(structure).shape))  # (1,)
+        ```
+    """
 
     def __init__(
         self,

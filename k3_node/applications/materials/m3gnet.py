@@ -19,7 +19,28 @@ from .readout import WeightedAtomReadOut, ReduceReadOut, Set2SetReadOut
 
 
 class ThreeBodyInteractions(layers.Layer):
-    """Three-body bond angular update using directed line-graph message passing."""
+    """Three-body bond angular update using directed line-graph message passing.
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.models import ThreeBodyInteractions
+
+        edge_index = np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]])  # 4 atoms, 8 bonds
+        node_feat = np.random.rand(4, 16).astype("float32")
+        edge_feat = np.random.rand(8, 16).astype("float32")
+        line_edge_index = np.array([[0, 1, 2, 3], [1, 2, 3, 0]])  # bond pairs forming 4 angles
+        three_basis = np.random.rand(4, 9).astype("float32")  # angular basis of each triplet
+        three_cutoff = np.ones(8, dtype="float32")  # smooth cutoff weight of each bond
+
+        layer = ThreeBodyInteractions(
+            update_network_atom=keras.layers.Dense(9, activation="sigmoid"),
+            update_network_bond=keras.layers.Dense(16),
+        )
+        print(tuple(layer(edge_index, line_edge_index, three_basis, three_cutoff, node_feat, edge_feat).shape))  # (8, 16)
+        ```
+    """
 
     def __init__(
         self,
@@ -59,7 +80,23 @@ class ThreeBodyInteractions(layers.Layer):
 
 
 class M3GNetGraphConv(layers.Layer):
-    """M3GNet graph convolution layer: two-body edge and node updates."""
+    """M3GNet graph convolution layer: two-body edge and node updates.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import M3GNetGraphConv
+
+        edge_index = np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]])  # 4 atoms, 8 bonds
+        node_feat = np.random.rand(4, 16).astype("float32")
+        edge_feat = np.random.rand(8, 16).astype("float32")
+        rbf = np.random.rand(8, 9).astype("float32")  # radial basis of each bond
+
+        conv = M3GNetGraphConv(degree=9, edge_dims=[48, 16, 16], node_dims=[48, 16, 16])
+        edge_out, node_out, state_out = conv(edge_index, edge_feat, node_feat, None, rbf, num_nodes=4)
+        print(tuple(edge_out.shape), tuple(node_out.shape))  # (8, 16) (4, 16)
+        ```
+    """
 
     def __init__(
         self,
@@ -135,7 +172,23 @@ class M3GNetGraphConv(layers.Layer):
 
 
 class M3GNetBlock(layers.Layer):
-    """M3GNet block wrapping M3GNetGraphConv with optional dropout."""
+    """M3GNet block wrapping M3GNetGraphConv with optional dropout.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import M3GNetBlock
+
+        edge_index = np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]])  # 4 atoms, 8 bonds
+        node_feat = np.random.rand(4, 16).astype("float32")
+        edge_feat = np.random.rand(8, 16).astype("float32")
+        rbf = np.random.rand(8, 9).astype("float32")  # radial basis of each bond
+
+        block = M3GNetBlock(degree=9, conv_hiddens=[16], dim_node_feats=16, dim_edge_feats=16)
+        edge_out, node_out, state_out = block(edge_index, edge_feat, node_feat, None, rbf, num_nodes=4)
+        print(tuple(edge_out.shape), tuple(node_out.shape))  # (8, 16) (4, 16)
+        ```
+    """
 
     def __init__(
         self,
@@ -188,7 +241,28 @@ class M3GNetBlock(layers.Layer):
 
 
 class M3GNet(keras.Model):
-    """M3GNet materials potential model supporting 3-body angles and multibackend training."""
+    """M3GNet materials potential model supporting 3-body angles and multibackend training.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import M3GNet
+
+        # A 4-atom structure: positions, bonds (listed in both directions) and atomic numbers
+        structure = {
+            "pos": np.array([[0.0, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.2, 0.8], [1.5, 1.5, 1.0]], dtype="float32"),
+            "edge_index": np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]]),
+            "line_edge_index": np.array([[0, 1, 2, 3], [1, 2, 3, 0]]),  # bond pairs forming angles
+            "node_type": np.array([6, 8, 1, 6]),  # atomic numbers
+            "batch": np.zeros(4, dtype="int32"),  # all atoms belong to structure 0
+            "state_attr": np.zeros((1, 2), dtype="float32"),  # global state features
+        }
+
+        model = M3GNet(dim_node_embedding=16, dim_edge_embedding=16, nblocks=2, units=16, max_n=3, max_l=3)
+        energy = model(structure)  # predicted property (e.g. energy) of the structure
+        print(tuple(energy.shape))  # (1,)
+        ```
+    """
 
     def __init__(
         self,
