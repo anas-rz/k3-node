@@ -57,6 +57,7 @@ class SignedGCN(keras.layers.Layer):
             for _ in range(num_layers - 1)
         ]
         self.lin = keras.layers.Dense(3, use_bias=bias)
+        self.lin.build((None, 2 * hidden_channels))  # scores a pair of node embeddings
 
     def build(self, input_shape=None):
         self.built = True
@@ -82,6 +83,29 @@ class SignedGCN(keras.layers.Layer):
         train_edge_index = ops.convert_to_tensor(edge_index_np[:, ~test_mask])
         test_edge_index = ops.convert_to_tensor(edge_index_np[:, test_mask])
         return train_edge_index, test_edge_index
+
+    def create_spectral_features(self, pos_edge_index, neg_edge_index, num_nodes: Optional[int] = None):
+        r"""Creates ``in_channels`` spectral node features from the positive and negative edges:
+        a truncated SVD of the signed, symmetric adjacency matrix."""
+        import scipy.sparse as sp
+        from sklearn.decomposition import TruncatedSVD
+
+        from k3_node.utils.graph import coalesce
+
+        pos = np.asarray(ops.convert_to_numpy(pos_edge_index)).astype(np.int64)
+        neg = np.asarray(ops.convert_to_numpy(neg_edge_index)).astype(np.int64)
+        edge_index = np.concatenate([pos, neg], axis=1)
+        N = int(edge_index.max()) + 1 if num_nodes is None else num_nodes
+        val = np.concatenate([np.full(pos.shape[1], 2.0), np.zeros(neg.shape[1])]).astype(np.float32)
+        edge_index = np.concatenate([edge_index, edge_index[::-1]], axis=1)
+        val = np.concatenate([val, val])
+        edge_index, val = coalesce(edge_index, val, num_nodes=N)
+        edge_index, val = np.asarray(ops.convert_to_numpy(edge_index)), np.asarray(ops.convert_to_numpy(val)) - 1
+
+        A = sp.coo_matrix((val, edge_index), shape=(N, N))
+        svd = TruncatedSVD(n_components=self.in_channels, n_iter=128)
+        svd.fit(A)
+        return ops.convert_to_tensor(svd.components_.T.astype(np.float32))
 
     def call(self, x, pos_edge_index, neg_edge_index):
         z = ops.relu(self.conv1(x, pos_edge_index, neg_edge_index))

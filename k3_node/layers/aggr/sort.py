@@ -58,7 +58,8 @@ class SortAggregation(Aggregation):
         perm_expanded = repeat(ops.expand_dims(perm, -1), D, axis=-1)
         out_x = ops.take_along_axis(batch_x, perm_expanded, axis=1)
         out_x = ops.where(ops.equal(out_x, fill_value), ops.zeros_like(out_x), out_x)
-        out_x = ops.reshape(out_x, (B, -1))
+        static_d = x.shape[-1]
+        out_x = ops.reshape(out_x, (-1, k_val * static_d) if isinstance(static_d, int) else (B, -1))
 
         return out_x
 

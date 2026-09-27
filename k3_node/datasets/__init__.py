@@ -30,10 +30,12 @@ from .ppi import PPI
 from .reddit import Reddit
 from .digits import Digits
 from .seal import SEALDataset
+from .bitcoin_otc import BitcoinOTC
 
 __all__ = [
     "Digits",
     "SEALDataset",
+    "BitcoinOTC",
     "KarateClub",
     "FakeDataset",
     "FakeHeteroDataset",
