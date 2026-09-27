@@ -139,7 +139,7 @@ class ARMAConv(MessagePassing):
                 )
         self.built = True
 
-    def call(self, inputs, edge_index=None, edge_weight=None, **kwargs):
+    def call(self, inputs, edge_index=None, edge_weight=None, training=None, **kwargs):
         if edge_index is None:
             if isinstance(inputs, (list, tuple)):
                 if len(inputs) == 3:
@@ -213,7 +213,7 @@ class ARMAConv(MessagePassing):
             out_prop = self.propagate(edge_index, x=out_n, edge_weight=edge_weight, size=(num_nodes, num_nodes))
             out = ops.transpose(out_prop, (1, 0, 2))  # (K, N, F_out)
 
-            root_x = self.dropout(x)
+            root_x = self.dropout(x, training=training)
             root = ops.einsum("nf,kfo->kno", root_x, self.root_weight[w_idx])
             out = out + root
 

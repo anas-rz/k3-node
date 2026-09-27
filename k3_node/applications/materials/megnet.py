@@ -174,6 +174,7 @@ class MEGNetBlock(layers.Layer):
         edge_batch=None,
         num_nodes: Optional[int] = None,
         num_graphs: Optional[int] = None,
+        training=None,
     ):
         in_edge, in_node, in_state = edge_feat, node_feat, state_feat
 
@@ -187,9 +188,9 @@ class MEGNetBlock(layers.Layer):
         )
 
         if self.dropout is not None:
-            edge_feat = self.dropout(edge_feat)
-            node_feat = self.dropout(node_feat)
-            state_feat = self.dropout(state_feat)
+            edge_feat = self.dropout(edge_feat, training=training)
+            node_feat = self.dropout(node_feat, training=training)
+            state_feat = self.dropout(state_feat, training=training)
 
         if self.skip:
             edge_feat = edge_feat + in_edge
@@ -323,7 +324,7 @@ class MEGNet(keras.Model):
             return pos, edge_index, node_type, state_attr, pbc_offshift, batch, num_graphs
         return inputs, None, None, None, None, None, None
 
-    def call(self, inputs, edge_index=None, node_type=None, state_attr=None, pbc_offshift=None, batch=None, num_graphs=None):
+    def call(self, inputs, edge_index=None, node_type=None, state_attr=None, pbc_offshift=None, batch=None, num_graphs=None, training=None):
         if edge_index is None:
             (
                 pos,
@@ -376,7 +377,8 @@ class MEGNet(keras.Model):
         for block in self.blocks:
             edge_feat, node_feat, state_feat = block(
                 edge_index, edge_feat, node_feat, state_feat,
-                batch=batch, edge_batch=edge_batch, num_nodes=num_nodes, num_graphs=n_graphs
+                batch=batch, edge_batch=edge_batch, num_nodes=num_nodes, num_graphs=n_graphs,
+                training=training,
             )
 
         # 5. Readout pooling

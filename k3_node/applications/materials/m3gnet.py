@@ -229,14 +229,15 @@ class M3GNetBlock(layers.Layer):
         edge_batch=None,
         num_nodes: Optional[int] = None,
         num_graphs: Optional[int] = None,
+        training=None,
     ):
         edge_feat, node_feat, state_feat = self.conv(
             edge_index, edge_feat, node_feat, state_feat, rbf,
             batch=batch, edge_batch=edge_batch, num_nodes=num_nodes, num_graphs=num_graphs
         )
         if self.dropout is not None:
-            edge_feat = self.dropout(edge_feat)
-            node_feat = self.dropout(node_feat)
+            edge_feat = self.dropout(edge_feat, training=training)
+            node_feat = self.dropout(node_feat, training=training)
         return edge_feat, node_feat, state_feat
 
 
@@ -383,6 +384,7 @@ class M3GNet(keras.Model):
         pbc_offshift=None,
         batch=None,
         num_graphs=None,
+        training=None,
     ):
         if edge_index is None:
             (
@@ -445,7 +447,8 @@ class M3GNet(keras.Model):
                 )
             edge_feat, node_feat, state_feat = self.blocks[i](
                 edge_index, edge_feat, node_feat, state_feat, edge_attr,
-                batch=batch, edge_batch=edge_batch, num_nodes=num_nodes, num_graphs=n_graphs
+                batch=batch, edge_batch=edge_batch, num_nodes=num_nodes, num_graphs=n_graphs,
+                training=training,
             )
 
         # 5. Readout

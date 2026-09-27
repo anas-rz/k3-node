@@ -44,8 +44,8 @@ class TransformedTargetModel(keras.Model):
         self.mean = float(mean)
         self.std = float(std)
 
-    def call(self, inputs, **kwargs):
-        pred = self.model(inputs, **kwargs)
+    def call(self, inputs, training=None, **kwargs):
+        pred = self.model(inputs, training=training, **kwargs)
         return pred * self.std + self.mean
 
 
@@ -89,7 +89,7 @@ class Potential(keras.Model):
         self.element_refs = element_refs or {}
         self.calc_forces = calc_forces
 
-    def call(self, inputs, edge_index=None, node_type=None, **kwargs):
-        e_pred = self.model(inputs, edge_index=edge_index, node_type=node_type, **kwargs)
+    def call(self, inputs, edge_index=None, node_type=None, training=None, **kwargs):
+        e_pred = self.model(inputs, edge_index=edge_index, node_type=node_type, training=training, **kwargs)
         e_total = e_pred * self.data_std + self.data_mean
         return e_total

@@ -515,11 +515,11 @@ class GraphMAE2(layers.Layer):
 
         self.built = True
 
-    def embed(self, x, edge_index):
+    def embed(self, x, edge_index, training=None):
         r"""Generates node embeddings with the encoder."""
         if not self.built:
             self.build((None, self.in_dim))
-        return self.encoder(x, edge_index)
+        return self.encoder(x, edge_index, training=training)
 
     def encoding_mask_noise(self, x, mask_rate: Optional[float] = None, mask_nodes=None):
         r"""Masks node features for encoder input."""
@@ -642,7 +642,7 @@ class GraphMAE2(layers.Layer):
 
     def call(self, x, edge_index, training: bool = False):
         r"""Forward pass: returns node embeddings by default."""
-        return self.embed(x, edge_index)
+        return self.embed(x, edge_index, training=training)
 
     def load_weights_from_checkpoint(
         self,

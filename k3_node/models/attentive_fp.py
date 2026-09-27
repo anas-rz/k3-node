@@ -183,7 +183,7 @@ class AttentiveFP(keras.Model):
         x = ops.relu(_gru_step(self.gru, h, x))
 
         for conv, gru in zip(self.atom_convs, self.atom_grus):
-            h = conv(x, edge_index)
+            h = conv(x, edge_index, training=training)
             h = ops.elu(h)
             if self.dropout is not None:
                 h = self.dropout(h, training=training)
@@ -209,7 +209,7 @@ class AttentiveFP(keras.Model):
 
         out = ops.relu(global_add_pool(x, batch, size=size))
         for _ in range(self.num_timesteps):
-            h = ops.elu(self.mol_conv((x, out), mol_edge_index))
+            h = ops.elu(self.mol_conv((x, out), mol_edge_index, training=training))
             if self.dropout is not None:
                 h = self.dropout(h, training=training)
             out = ops.relu(_gru_step(self.mol_gru, h, out))

@@ -111,7 +111,7 @@ class GENConv(MessagePassing):
                 curr_dim = layer.units
         self.built = True
 
-    def call(self, inputs, edge_index=None, edge_attr=None, **kwargs):
+    def call(self, inputs, edge_index=None, edge_attr=None, training=None, **kwargs):
         if edge_index is None:
             if isinstance(inputs, (list, tuple)):
                 if len(inputs) == 3:
@@ -150,7 +150,8 @@ class GENConv(MessagePassing):
         out = out + x_dst
 
         for layer in self.mlp_layers:
-            out = layer(out)
+            # Batch norm needs `training` explicitly (Keras does not propagate it on JAX).
+            out = layer(out, training=training) if isinstance(layer, BatchNormalization) else layer(out)
 
         return out
 

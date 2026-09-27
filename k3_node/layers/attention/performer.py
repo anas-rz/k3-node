@@ -161,7 +161,7 @@ class PerformerAttention(layers.Layer):
         self.attn_out = layers.Dense(channels, use_bias=attn_out_bias)
         self.dropout = layers.Dropout(dropout)
 
-    def call(self, x, mask=None):
+    def call(self, x, mask=None, training=None):
         B, N, *_ = x.shape
         q, k, v = self.q(x), self.k(x), self.v(x)
 
@@ -183,5 +183,5 @@ class PerformerAttention(layers.Layer):
         out = ops.transpose(out, axes=(0, 2, 1, 3))  # Transpose back
         out = ops.reshape(out, (B, N, -1))
         out = self.attn_out(out)
-        out = self.dropout(out)
+        out = self.dropout(out, training=training)
         return out

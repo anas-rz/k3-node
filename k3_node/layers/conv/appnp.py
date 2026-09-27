@@ -61,7 +61,7 @@ class APPNP(MessagePassing):
             self.dropout.build(input_shape)
         self.built = True
 
-    def call(self, x, edge_index=None, edge_weight=None, **kwargs):
+    def call(self, x, edge_index=None, edge_weight=None, training=None, **kwargs):
         if edge_index is None and isinstance(x, (tuple, list)):
             x, edge_index = x[0], x[1]
 
@@ -86,7 +86,7 @@ class APPNP(MessagePassing):
         h = x
         for _ in range(self.K):
             if self.dropout is not None:
-                h = self.dropout(h)
+                h = self.dropout(h, training=training)
             h = self.propagate(edge_index, x=h, edge_weight=edge_weight)
             h = (1.0 - self.alpha) * h + self.alpha * x
 

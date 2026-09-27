@@ -87,6 +87,7 @@ class GPSConv(keras.layers.Layer):
 
         self.mlp_l1 = keras.layers.Dense(channels * 2)
         self.mlp_l2 = keras.layers.Dense(channels)
+        self.dropout = keras.layers.Dropout(dropout)
 
         if norm == "batch_norm":
             self.norm1 = keras.layers.BatchNormalization(axis=-1) if conv is not None else None
@@ -112,23 +113,25 @@ class GPSConv(keras.layers.Layer):
             self.mlp_l2.build((None, self.channels * 2))
         super().build(input_shape)
 
-    def call(self, x, edge_index, batch=None, **kwargs):
+    def call(self, x, edge_index, batch=None, training=None, **kwargs):
         if not self.built:
             self.build((None, self.channels))
 
+        # `training` is forwarded explicitly: Keras does not propagate it to nested layers on JAX.
         hs = []
         if self.conv is not None:
-            h = self.conv(x, edge_index, **kwargs)
+            h = self.conv(x, edge_index, training=training, **kwargs)
+            h = self.dropout(h, training=training)
             h = h + x
             if self.norm1 is not None:
-                h = self.norm1(h)
+                h = self.norm1(h, training=training)
             hs.append(h)
 
         # Global attention
         h_dense, mask = to_dense_batch(x, batch)
         # Attention mask for Keras: shape (B, 1, max_nodes)
         attn_mask = ops.expand_dims(mask, axis=1)
-        attn_out = self.attn(h_dense, h_dense, attention_mask=attn_mask)
+        attn_out = self.attn(h_dense, h_dense, attention_mask=attn_mask, training=training)
 
         # Unpack dense batch to original flat shape
         if batch is None:
@@ -139,9 +142,10 @@ class GPSConv(keras.layers.Layer):
             idx = ops.where(mask_flat)[0]
             h_global = ops.take(out_flat, idx, axis=0)
 
+        h_global = self.dropout(h_global, training=training)
         h_global = h_global + x
         if self.norm2 is not None:
-            h_global = self.norm2(h_global)
+            h_global = self.norm2(h_global, training=training)
         hs.append(h_global)
 
         # Combine local and global
@@ -151,11 +155,11 @@ class GPSConv(keras.layers.Layer):
             out = hs[0]
 
         # MLP
-        mlp_h = ops.relu(self.mlp_l1(out))
-        mlp_out = self.mlp_l2(mlp_h)
+        mlp_h = self.dropout(ops.relu(self.mlp_l1(out)), training=training)
+        mlp_out = self.dropout(self.mlp_l2(mlp_h), training=training)
         out = out + mlp_out
 
         if self.norm3 is not None:
-            out = self.norm3(out)
+            out = self.norm3(out, training=training)
 
         return out

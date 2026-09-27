@@ -48,7 +48,7 @@ class EdgeConv(MessagePassing):
             self.nn.build(nn_shape)
         self.built = True
 
-    def call(self, x, edge_index=None, **kwargs):
+    def call(self, x, edge_index=None, training=None, **kwargs):
         if edge_index is None and isinstance(x, (tuple, list)):
             x, edge_index = x[0], x[1]
 
@@ -57,10 +57,12 @@ class EdgeConv(MessagePassing):
         else:
             x_src, x_dst = x[0], x[1]
 
-        return self.propagate(edge_index, x=(x_src, x_dst), **kwargs)
+        return self.propagate(edge_index, x=(x_src, x_dst), training=training, **kwargs)
 
-    def message(self, x_i, x_j):
-        return self.nn(ops.concatenate([x_i, x_j - x_i], axis=-1))
+    def message(self, x_i, x_j, training=None):
+        h = ops.concatenate([x_i, x_j - x_i], axis=-1)
+        # Forward `training` explicitly: Keras does not propagate it to nested layers on JAX.
+        return self.nn(h, training=training) if isinstance(self.nn, keras.layers.Layer) else self.nn(h)
 
 
 class DynamicEdgeConv(EdgeConv):
@@ -95,11 +97,11 @@ class DynamicEdgeConv(EdgeConv):
         super().__init__(nn=nn, aggr=aggr, **kwargs)
         self.k = k
 
-    def call(self, x, batch=None, **kwargs):
+    def call(self, x, batch=None, training=None, **kwargs):
         if isinstance(x, (tuple, list)):
             x_src = x[0]
         else:
             x_src = x
 
         edge_index = knn_graph(x_src, k=self.k, batch=batch, loop=False, flow=self.flow)
-        return super().call(x, edge_index=edge_index, **kwargs)
+        return super().call(x, edge_index=edge_index, training=training, **kwargs)

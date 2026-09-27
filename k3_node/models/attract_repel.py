@@ -68,13 +68,13 @@ class ARLinkPredictor(keras.layers.Layer):
         self.lin_attract.build((None, hidden_channels))
         self.lin_repel.build((None, hidden_channels))
 
-    def encode(self, x, *args, **kwargs):
+    def encode(self, x, *args, training=None, **kwargs):
         r"""Encode node features into attract-repel embeddings."""
         for lin in self.lins:
             x = lin(x)
             x = ops.relu(x)
             if self.dropout is not None:
-                x = self.dropout(x)
+                x = self.dropout(x, training=training)
 
         attract_x = self.lin_attract(x)
         repel_x = self.lin_repel(x)
@@ -94,8 +94,8 @@ class ARLinkPredictor(keras.layers.Layer):
 
         return attract_score - repel_score
 
-    def call(self, x, edge_index):
-        attract_z, repel_z = self.encode(x)
+    def call(self, x, edge_index, training=None):
+        attract_z, repel_z = self.encode(x, training=training)
         return ops.sigmoid(self.decode(attract_z, repel_z, edge_index))
 
     def calculate_r_fraction(self, attract_z, repel_z):

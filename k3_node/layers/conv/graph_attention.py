@@ -113,6 +113,8 @@ class GraphAttention(Layer):
         self.attn_kernel_constraint = constraints.get(attn_kernel_constraint)
 
         super().__init__(**kwargs)
+        self.in_dropout = Dropout(in_dropout_rate)  # created once, applied with `training`
+        self.attn_dropout = Dropout(attn_dropout_rate)
 
     def build(self, input_shapes):
         if isinstance(input_shapes, (list, tuple)) and len(input_shapes) > 0 and isinstance(input_shapes[0], (list, tuple)):
@@ -173,11 +175,7 @@ class GraphAttention(Layer):
             self.attn_kernels.append([attn_kernel_self, attn_kernel_neighs])
         self.built = True
 
-    def call(self, inputs):
-        X = inputs[0]  # Node features (1 x N x F)
-        A = inputs[1]  # Adjacency matrix (1 X N x N)
-        N = ops.shape(A)[-1]
-    def call(self, inputs, A=None, **kwargs):
+    def call(self, inputs, A=None, training=None, **kwargs):
         if A is not None:
             X = inputs
         elif isinstance(inputs, (list, tuple)):
@@ -241,8 +239,8 @@ class GraphAttention(Layer):
                 dense = W / ops.sum(W, axis=1, keepdims=True)
 
             # Apply dropout to features and attention coefficients
-            dropout_feat = Dropout(self.in_dropout_rate)(features)  # (N x F')
-            dropout_attn = Dropout(self.attn_dropout_rate)(dense)  # (N x N)
+            dropout_feat = self.in_dropout(features, training=training)  # (N x F')
+            dropout_attn = self.attn_dropout(dense, training=training)  # (N x N)
 
             # Linear combination with neighbors' features [YT: see Eq. 4]
             node_features = ops.dot(dropout_attn, dropout_feat)  # (N x F')

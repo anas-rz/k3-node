@@ -63,7 +63,7 @@ class CHGNetAtomGraphBlock(layers.Layer):
         self.bond_norm = layers.LayerNormalization(axis=-1) if normalization == "layer" else None
         self.dropout = layers.Dropout(dropout) if dropout > 0.0 else None
 
-    def call(self, edge_index, atom_features, bond_features, bond_weights=None):
+    def call(self, edge_index, atom_features, bond_features, bond_weights=None, training=None):
         src = ops.cast(edge_index[0], "int32")
         dst = ops.cast(edge_index[1], "int32")
         num_nodes = ops.shape(atom_features)[0]
@@ -90,8 +90,8 @@ class CHGNetAtomGraphBlock(layers.Layer):
         new_atom_features = atom_features + node_update
 
         if self.dropout is not None:
-            new_atom_features = self.dropout(new_atom_features)
-            new_bond_features = self.dropout(new_bond_features)
+            new_atom_features = self.dropout(new_atom_features, training=training)
+            new_bond_features = self.dropout(new_bond_features, training=training)
 
         if self.atom_norm is not None:
             new_atom_features = self.atom_norm(new_atom_features)
@@ -134,7 +134,7 @@ class CHGNetBondGraphBlock(layers.Layer):
         self.bond_norm = layers.LayerNormalization(axis=-1) if normalization == "layer" else None
         self.dropout = layers.Dropout(dropout) if dropout > 0.0 else None
 
-    def call(self, line_edge_index, bond_features, angle_features, threebody_weights=None):
+    def call(self, line_edge_index, bond_features, angle_features, threebody_weights=None, training=None):
         src_bond = ops.cast(line_edge_index[0], "int32")
         dst_bond = ops.cast(line_edge_index[1], "int32")
         num_bonds = ops.shape(bond_features)[0]
@@ -152,7 +152,7 @@ class CHGNetBondGraphBlock(layers.Layer):
         new_bond_features = bond_features + feat_update
 
         if self.dropout is not None:
-            new_bond_features = self.dropout(new_bond_features)
+            new_bond_features = self.dropout(new_bond_features, training=training)
         if self.bond_norm is not None:
             new_bond_features = self.bond_norm(new_bond_features)
 
@@ -288,6 +288,7 @@ class CHGNet(K3NodeHubMixin, keras.Model):
         num_graphs=None,
         state_attr=None,
         return_magmom: bool = False,
+        training=None,
     ):
         if edge_index is None:
             (
@@ -345,8 +346,8 @@ class CHGNet(K3NodeHubMixin, keras.Model):
         # 3. Convolution blocks
         for bond_block, atom_block in zip(self.bond_blocks, self.atom_blocks):
             if angle_feats is not None and line_edge_index is not None:
-                bond_feats = bond_block(line_edge_index, bond_feats, angle_feats, threebody_weights=threebody_weights)
-            atom_feats, bond_feats = atom_block(edge_index, atom_feats, bond_feats, bond_weights=bond_weights)
+                bond_feats = bond_block(line_edge_index, bond_feats, angle_feats, threebody_weights=threebody_weights, training=training)
+            atom_feats, bond_feats = atom_block(edge_index, atom_feats, bond_feats, bond_weights=bond_weights, training=training)
 
         # 4. Energy and magnetic moment prediction
         pooled = self.readout_pool(atom_feats, batch=batch, num_graphs=n_graphs)

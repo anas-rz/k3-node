@@ -67,15 +67,15 @@ class NodeBlock(keras.layers.Layer):
     def build(self, input_shape=None):
         self.built = True
 
-    def call(self, node_emb, edge_emb, i):
+    def call(self, node_emb, edge_emb, i, training=None):
         node_i = ops.take(node_emb, i, axis=0)
         c1 = ops.concatenate([node_i, edge_emb], axis=1)
-        c1 = self.bn_c1(self.lin_c1(c1))
+        c1 = self.bn_c1(self.lin_c1(c1), training=training)
         c1_filter = ops.sigmoid(c1[:, :self.hidden_node_channels])
         c1_core = ops.tanh(c1[:, self.hidden_node_channels:])
         num_nodes = ops.shape(node_emb)[0]
         c1_emb = self.sum_aggr(c1_filter * c1_core, index=i, dim_size=num_nodes)
-        c1_emb = self.bn(c1_emb)
+        c1_emb = self.bn(c1_emb, training=training)
         return ops.tanh(node_emb + c1_emb)
 
 
@@ -122,14 +122,15 @@ class EdgeBlock(keras.layers.Layer):
         idx_k,
         idx_ji,
         idx_kj,
+        training=None,
     ):
         node_i = ops.take(node_emb, i, axis=0)
         node_j = ops.take(node_emb, j, axis=0)
         c2 = node_i * node_j
-        c2 = self.bn_c2(self.lin_c2(c2))
+        c2 = self.bn_c2(self.lin_c2(c2), training=training)
         c2_filter = ops.sigmoid(c2[:, :self.hidden_edge_channels])
         c2_core = ops.tanh(c2[:, self.hidden_edge_channels:])
-        c2_emb = self.bn_c2_2(c2_filter * c2_core)
+        c2_emb = self.bn_c2_2(c2_filter * c2_core, training=training)
 
         node_idx_i = ops.take(node_emb, idx_i, axis=0)
         node_idx_j = ops.take(node_emb, idx_j, axis=0)
@@ -137,11 +138,11 @@ class EdgeBlock(keras.layers.Layer):
         edge_idx_ji = ops.take(edge_emb, idx_ji, axis=0)
         edge_idx_kj = ops.take(edge_emb, idx_kj, axis=0)
         c3 = ops.concatenate([node_idx_i, node_idx_j, node_idx_k, edge_idx_ji, edge_idx_kj], axis=1)
-        c3 = self.bn_c3(self.lin_c3(c3))
+        c3 = self.bn_c3(self.lin_c3(c3), training=training)
         c3_filter = ops.sigmoid(c3[:, :self.hidden_edge_channels])
         c3_core = ops.tanh(c3[:, self.hidden_edge_channels:])
         c3_emb = self.sum_aggr(c3_filter * c3_core, index=idx_ji, dim_size=ops.shape(edge_emb)[0])
-        c3_emb = self.bn_c3_2(c3_emb)
+        c3_emb = self.bn_c3_2(c3_emb, training=training)
 
         return ops.tanh(edge_emb + c2_emb + c3_emb)
 
@@ -232,7 +233,7 @@ class GNNFF(keras.layers.Layer):
             self.force_predictor.build((None, self.hidden_edge_channels))
         self.built = True
 
-    def call(self, z, pos, batch=None):
+    def call(self, z, pos, batch=None, training=None):
         edge_index = radius_graph(
             pos,
             r=self.cutoff,
@@ -254,8 +255,8 @@ class GNNFF(keras.layers.Layer):
         edge_emb = self.edge_emb(dist)
 
         for node_block, edge_block in zip(self.node_blocks, self.edge_blocks):
-            node_emb = node_block(node_emb, edge_emb, i)
-            edge_emb = edge_block(node_emb, edge_emb, i, j, idx_i, idx_j, idx_k, idx_ji, idx_kj)
+            node_emb = node_block(node_emb, edge_emb, i, training=training)
+            edge_emb = edge_block(node_emb, edge_emb, i, j, idx_i, idx_j, idx_k, idx_ji, idx_kj, training=training)
 
         force = self.force_predictor(edge_emb) * unit_vec
         return self.sum_aggr(force, index=i, dim_size=num_nodes)

@@ -87,19 +87,19 @@ class DeepGCNLayer(keras.layers.Layer):
         if self.block == "res+":
             h = x
             if self.norm is not None:
-                h = self.norm(h)
+                h = self.norm(h, training=training)
             if self.act is not None:
                 h = self.act(h)
             if self.dropout is not None:
                 h = self.dropout(h, training=training)
-            h = self.conv(h, edge_index, **kwargs)
+            h = self.conv(h, edge_index, training=training, **kwargs)
 
             return x + h
 
         else:
-            h = self.conv(x, edge_index, **kwargs)
+            h = self.conv(x, edge_index, training=training, **kwargs)
             if self.norm is not None:
-                h = self.norm(h)
+                h = self.norm(h, training=training)
             if self.act is not None:
                 h = self.act(h)
 

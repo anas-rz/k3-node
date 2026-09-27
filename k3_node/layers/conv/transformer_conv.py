@@ -112,7 +112,7 @@ class TransformerConv(MessagePassing):
 
         self.built = True
 
-    def call(self, x, edge_index=None, edge_attr=None, return_attention_weights=None, **kwargs):
+    def call(self, x, edge_index=None, edge_attr=None, return_attention_weights=None, training=None, **kwargs):
         if edge_index is None and isinstance(x, (tuple, list)):
             x, edge_index = x[0], x[1]
 
@@ -143,7 +143,7 @@ class TransformerConv(MessagePassing):
         alpha = softmax(alpha, col, num_nodes=num_nodes_dst, dim=0)
 
         if self.dropout is not None:
-            alpha = self.dropout(alpha)
+            alpha = self.dropout(alpha, training=training)
 
         out = ops.expand_dims(alpha, -1) * value_j
         out = segment_sum(out, col, num_segments=num_nodes_dst)

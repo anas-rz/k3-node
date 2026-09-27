@@ -191,24 +191,25 @@ class BasicGNN(K3NodeHubMixin, keras.Model):
             x = x[0]
 
         xs: List = []
+        # `training` is forwarded explicitly: Keras does not propagate it to nested layers on JAX.
         for i, (conv, norm) in enumerate(zip(self.convs, self.norms)):
             if self.supports_edge_weight and self.supports_edge_attr:
-                x = conv(x, edge_index, edge_weight=edge_weight, edge_attr=edge_attr)
+                x = conv(x, edge_index, edge_weight=edge_weight, edge_attr=edge_attr, training=training)
             elif self.supports_edge_weight:
-                x = conv(x, edge_index, edge_weight=edge_weight)
+                x = conv(x, edge_index, edge_weight=edge_weight, training=training)
             elif self.supports_edge_attr:
-                x = conv(x, edge_index, edge_attr=edge_attr)
+                x = conv(x, edge_index, edge_attr=edge_attr, training=training)
             else:
-                x = conv(x, edge_index)
+                x = conv(x, edge_index, training=training)
 
             if i < self.num_layers - 1 or self.jk_mode is not None:
                 if self.act is not None and self.act_first:
                     x = self.act(x)
                 if norm is not None:
                     if self.supports_norm_batch and batch is not None:
-                        x = norm(x, batch=batch)
+                        x = norm(x, batch=batch, training=training)
                     else:
-                        x = norm(x)
+                        x = norm(x, training=training)
                 if self.act is not None and not self.act_first:
                     x = self.act(x)
                 if self.dropout is not None:

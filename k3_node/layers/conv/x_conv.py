@@ -115,25 +115,25 @@ class XConv(keras.layers.Layer):
         self.conv_op = GroupedConv1dFlat(C_total, C_total * depth_multiplier, K)
         self.conv_lin = keras.layers.Dense(C_out, use_bias=bias)
 
-    def _mlp1(self, pos):
+    def _mlp1(self, pos, training=None):
         # pos: (N*K, D)
         h = ops.elu(self.mlp1_l1(pos))
-        h = self.mlp1_bn1(h)
+        h = self.mlp1_bn1(h, training=training)
         h = ops.elu(self.mlp1_l2(h))
-        h = self.mlp1_bn2(h)
+        h = self.mlp1_bn2(h, training=training)
         return h
 
-    def _mlp2(self, pos_flat):
+    def _mlp2(self, pos_flat, training=None):
         # pos_flat: (N, K * D)
         K = self.kernel_size
         h = ops.elu(self.mlp2_l1(pos_flat))
-        h = self.mlp2_bn1(h)
+        h = self.mlp2_bn1(h, training=training)
         h = ops.reshape(h, (-1, K, K))
         h = ops.elu(self.mlp2_conv1(h))
-        h = self.mlp2_bn2(h)
+        h = self.mlp2_bn2(h, training=training)
         h = ops.reshape(h, (-1, K, K))
         h = self.mlp2_conv2(h)
-        h = self.mlp2_bn3(h)
+        h = self.mlp2_bn3(h, training=training)
         return ops.reshape(h, (-1, K, K))
 
     def _conv(self, x_transformed):
@@ -141,7 +141,7 @@ class XConv(keras.layers.Layer):
         h = self.conv_op(x_transformed)
         return self.conv_lin(h)
 
-    def call(self, x, pos, batch=None):
+    def call(self, x, pos, batch=None, training=None):
         if len(ops.shape(pos)) == 1:
             pos = ops.expand_dims(pos, axis=-1)
         N = ops.shape(pos)[0]
@@ -165,7 +165,7 @@ class XConv(keras.layers.Layer):
 
         pos_diff = ops.take(pos, col, axis=0) - ops.take(pos, row, axis=0)
 
-        x_star = self._mlp1(pos_diff)
+        x_star = self._mlp1(pos_diff, training=training)
         x_star = ops.reshape(x_star, (N, K, self.hidden_channels))
 
         if x is not None:
@@ -177,7 +177,7 @@ class XConv(keras.layers.Layer):
 
         x_star = ops.transpose(x_star, (0, 2, 1))  # (N, C_total, K)
 
-        transform_matrix = self._mlp2(ops.reshape(pos_diff, (N, K * D)))  # (N, K, K)
+        transform_matrix = self._mlp2(ops.reshape(pos_diff, (N, K * D)), training=training)  # (N, K, K)
 
         x_transformed = ops.matmul(x_star, transform_matrix)  # (N, C_total, K)
 

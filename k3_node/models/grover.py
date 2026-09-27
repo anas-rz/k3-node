@@ -612,19 +612,19 @@ class GTransEncoder(layers.Layer):
         self.dropout_layer = layers.Dropout(self.dropout_rate)
         super().build(input_shape)
 
-    def _pointwise_to_atom(self, emb, atom_fea, index, ffn_layer):
+    def _pointwise_to_atom(self, emb, atom_fea, index, ffn_layer, training=None):
         aggr = ops.take(emb, index, axis=0)
         aggr = ops.sum(aggr, axis=1)
         concat = ops.concatenate([atom_fea, aggr], axis=1)
-        return ffn_layer(concat)
+        return ffn_layer(concat, training=training)
 
-    def _pointwise_to_bond(self, emb, bond_fea, a2nei, b2revb_or_b2a_rev, ffn_layer):
+    def _pointwise_to_bond(self, emb, bond_fea, a2nei, b2revb_or_b2a_rev, ffn_layer, training=None):
         aggr = ops.take(emb, a2nei, axis=0)
         aggr = ops.sum(aggr, axis=1)
         rev = ops.take(emb, b2revb_or_b2a_rev, axis=0)
         aggr = aggr - rev
         concat = ops.concatenate([bond_fea, aggr], axis=1)
-        return ffn_layer(concat)
+        return ffn_layer(concat, training=training)
 
     def call(self, f_atoms, f_bonds, a2b, b2a, b2revb, a2a, training: bool = False):
         orig_f_atoms = f_atoms
@@ -652,12 +652,12 @@ class GTransEncoder(layers.Layer):
 
         # Atom embeddings
         atom_from_atom = self._pointwise_to_atom(
-            atom_output, orig_f_atoms, a2a, self.ffn_atom_from_atom
+            atom_output, orig_f_atoms, a2a, self.ffn_atom_from_atom, training=training
         )
         atom_from_atom = self.dropout_layer(self.atom_from_atom_norm(atom_from_atom), training=training)
 
         atom_from_bond = self._pointwise_to_atom(
-            bond_output, orig_f_atoms, a2b, self.ffn_atom_from_bond
+            bond_output, orig_f_atoms, a2b, self.ffn_atom_from_bond, training=training
         )
         atom_from_bond = self.dropout_layer(self.atom_from_bond_norm(atom_from_bond), training=training)
 
@@ -669,13 +669,13 @@ class GTransEncoder(layers.Layer):
         b2a_rev = ops.take(b2a, b2revb, axis=0)
 
         bond_from_atom = self._pointwise_to_bond(
-            atom_output, orig_f_bonds, atom_list_for_bond, b2a_rev, self.ffn_bond_from_atom
+            atom_output, orig_f_bonds, atom_list_for_bond, b2a_rev, self.ffn_bond_from_atom, training=training
         )
         bond_from_atom = self.dropout_layer(self.bond_from_atom_norm(bond_from_atom), training=training)
 
         bond_list_for_bond = ops.take(a2b, b2a, axis=0)
         bond_from_bond = self._pointwise_to_bond(
-            bond_output, orig_f_bonds, bond_list_for_bond, b2revb, self.ffn_bond_from_bond
+            bond_output, orig_f_bonds, bond_list_for_bond, b2revb, self.ffn_bond_from_bond, training=training
         )
         bond_from_bond = self.dropout_layer(self.bond_from_bond_norm(bond_from_bond), training=training)
 
