@@ -20,6 +20,20 @@ class NeuralFingerprint(keras.layers.Layer):
         num_layers (int): Number of layers.
         **kwargs (optional): Additional arguments of
             :class:`~k3_node.layers.conv.MFConv`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import NeuralFingerprint
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        batch = np.repeat([0, 1], 5)  # two molecules with 5 atoms each
+        model = NeuralFingerprint(in_channels=8, hidden_channels=32, out_channels=16, num_layers=3)
+        fingerprint = model(x, edge_index, batch)  # one learned fingerprint per molecule
+        print(tuple(fingerprint.shape))  # (2, 16)
+        ```
     """
     def __init__(
         self,

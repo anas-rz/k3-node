@@ -12,7 +12,21 @@ def fps(
     random_start: bool = True,
     batch_size: Optional[int] = None,
 ):
-    r"""Farthest Point Sampling algorithm."""
+    r"""Farthest Point Sampling algorithm.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import fps
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        pos = np.random.rand(10, 3).astype("float32")  # 3D positions
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        index = fps(pos, batch, ratio=0.4)  # farthest point sampling: 40% of each graph's points
+        print(tuple(index.shape))  # (4,)
+        ```
+    """
     x_np = ops.convert_to_numpy(x)
     num_nodes = x_np.shape[0]
 
@@ -63,7 +77,21 @@ def radius(
     num_workers: int = 1,
     batch_size: Optional[int] = None,
 ):
-    r"""Finds for each element in `y` all points in `x` within distance `r`."""
+    r"""Finds for each element in `y` all points in `x` within distance `r`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import radius
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        pos = np.random.rand(10, 3).astype("float32")  # 3D positions
+        query = np.random.rand(4, 3).astype("float32")  # 4 query points
+
+        assign = radius(pos, query, r=0.5)  # all points within distance 0.5 of each query point
+        print(assign.shape[0])  # 2: rows: (query index, point index)
+        ```
+    """
     x_np = ops.convert_to_numpy(x)
     y_np = ops.convert_to_numpy(y)
     if x_np.ndim == 1:
@@ -122,7 +150,20 @@ def radius_graph(
     num_workers: int = 1,
     batch_size: Optional[int] = None,
 ):
-    r"""Computes graph edges to all points within a given distance `r`."""
+    r"""Computes graph edges to all points within a given distance `r`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import radius_graph
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        pos = np.random.rand(10, 3).astype("float32")  # 3D positions
+
+        edge_index = radius_graph(pos, r=0.5)  # connect points closer than 0.5
+        print(edge_index.shape[0])  # 2
+        ```
+    """
     assert flow in ["source_to_target", "target_to_source"]
     edge_index = radius(
         x,
@@ -150,7 +191,21 @@ def nearest(
     batch_x: Optional[any] = None,
     batch_y: Optional[any] = None,
 ):
-    r"""Clusters each point in `x` to its nearest point in `y`."""
+    r"""Clusters each point in `x` to its nearest point in `y`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import nearest
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        pos = np.random.rand(10, 3).astype("float32")  # 3D positions
+        query = np.random.rand(4, 3).astype("float32")  # 4 query points
+
+        cluster = nearest(query, pos)  # index of the closest point in `pos` for every query point
+        print(tuple(cluster.shape))  # (4,)
+        ```
+    """
     edge_index = knn(y, x, k=1, batch_x=batch_y, batch_y=batch_x)
     return edge_index[1]
 

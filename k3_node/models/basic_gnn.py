@@ -233,6 +233,19 @@ class GCN(BasicGNN):
     Classification with Graph Convolutional Networks"
     <https://arxiv.org/abs/1609.02907>`_ paper, using the
     :class:`~k3_node.layers.conv.GCNConv` operator for message passing.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GCN
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        model = GCN(in_channels=8, hidden_channels=16, num_layers=2, out_channels=4)
+        out = model(x, edge_index)  # e.g. logits for 4 classes per node
+        print(tuple(out.shape))  # (10, 4)
+        ```
     """
     supports_edge_weight: bool = True
     supports_edge_attr: bool = False
@@ -245,6 +258,19 @@ class GraphSAGE(BasicGNN):
     r"""The Graph Neural Network from the `"Inductive Representation Learning
     on Large Graphs" <https://arxiv.org/abs/1706.02216>`_ paper, using the
     :class:`~k3_node.layers.conv.SAGEConv` operator for message passing.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GraphSAGE
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        model = GraphSAGE(in_channels=8, hidden_channels=16, num_layers=2, out_channels=4)
+        out = model(x, edge_index)  # e.g. logits for 4 classes per node
+        print(tuple(out.shape))  # (10, 4)
+        ```
     """
     supports_edge_weight: bool = False
     supports_edge_attr: bool = False
@@ -258,6 +284,19 @@ class GIN(BasicGNN):
     r"""The Graph Neural Network from the `"How Powerful are Graph Neural
     Networks?" <https://arxiv.org/abs/1810.00826>`_ paper, using the
     :class:`~k3_node.layers.conv.GINConv` operator for message passing.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GIN
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        model = GIN(in_channels=8, hidden_channels=16, num_layers=2, out_channels=4)
+        out = model(x, edge_index)  # e.g. logits for 4 classes per node
+        print(tuple(out.shape))  # (10, 4)
+        ```
     """
     supports_edge_weight: bool = False
     supports_edge_attr: bool = False
@@ -279,6 +318,19 @@ class GAT(BasicGNN):
     Networks?" <https://arxiv.org/abs/2105.14491>`_ papers, using the
     :class:`~k3_node.layers.conv.GATConv` or
     :class:`~k3_node.layers.conv.GATv2Conv` operator for message passing.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GAT
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        model = GAT(in_channels=8, hidden_channels=16, num_layers=2, out_channels=4, heads=2)
+        out = model(x, edge_index)  # e.g. logits for 4 classes per node
+        print(tuple(out.shape))  # (10, 4)
+        ```
     """
     supports_edge_weight: bool = False
     supports_edge_attr: bool = True
@@ -309,6 +361,22 @@ class PNA(BasicGNN):
     r"""The Graph Neural Network from the `"Principal Neighbourhood Aggregation
     for Graph Nets" <https://arxiv.org/abs/2004.05718>`_ paper, using the
     :class:`~k3_node.layers.conv.PNAConv` operator for message passing.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import PNA
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        deg = np.array([0, 2, 4, 3, 1])  # in-degree histogram of the training graphs
+        model = PNA(in_channels=8, hidden_channels=16, num_layers=2, out_channels=4,
+                    aggregators=["mean", "min", "max", "std"],
+                    scalers=["identity", "amplification", "attenuation"], deg=deg)
+        out = model(x, edge_index)
+        print(tuple(out.shape))  # (10, 4)
+        ```
     """
     supports_edge_weight: bool = False
     supports_edge_attr: bool = True
@@ -321,6 +389,19 @@ class EdgeCNN(BasicGNN):
     r"""The Graph Neural Network from the `"Dynamic Graph CNN for Learning on
     Point Clouds" <https://arxiv.org/abs/1801.07829>`_ paper, using the
     :class:`~k3_node.layers.conv.EdgeConv` operator for message passing.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import EdgeCNN
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        model = EdgeCNN(in_channels=8, hidden_channels=16, num_layers=2, out_channels=4)
+        out = model(x, edge_index)  # e.g. logits for 4 classes per node
+        print(tuple(out.shape))  # (10, 4)
+        ```
     """
     supports_edge_weight: bool = False
     supports_edge_attr: bool = False

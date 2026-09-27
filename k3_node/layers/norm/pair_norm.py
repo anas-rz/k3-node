@@ -23,6 +23,19 @@ class PairNorm(layers.Layer):
             (default: :obj:`False`)
         eps (float, optional): A value added to the denominator for numerical
             stability. (default: :obj:`1e-5`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import PairNorm
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        layer = PairNorm()
+        out = layer(x, batch)  # normalizes each graph separately
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     def __init__(self, scale: float = 1.0, scale_individually: bool = False,
                  eps: float = 1e-5, **kwargs):

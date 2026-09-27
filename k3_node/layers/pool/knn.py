@@ -86,7 +86,21 @@ def knn(
     num_workers: int = 1,
     batch_size: Optional[int] = None,
 ):
-    r"""Finds for each element in `y` the `k` nearest points in `x`."""
+    r"""Finds for each element in `y` the `k` nearest points in `x`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import knn
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        pos = np.random.rand(10, 3).astype("float32")  # 3D positions
+        query = np.random.rand(4, 3).astype("float32")  # 4 query points
+
+        assign = knn(pos, query, k=3)  # 3 nearest points in `pos` for every query point
+        print(tuple(assign.shape))  # (2, 12): [2, num_query * k]: (query index, point index)
+        ```
+    """
     x = ops.convert_to_tensor(x)
     y = ops.convert_to_tensor(y)
 
@@ -128,7 +142,20 @@ def knn_graph(
     num_workers: int = 1,
     batch_size: Optional[int] = None,
 ):
-    r"""Computes graph edges to the nearest `k` points."""
+    r"""Computes graph edges to the nearest `k` points.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import knn_graph
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        pos = np.random.rand(10, 3).astype("float32")  # 3D positions
+
+        edge_index = knn_graph(pos, k=3)  # connect every point to its 3 nearest neighbors
+        print(tuple(edge_index.shape))  # (2, 30)
+        ```
+    """
     assert flow in ["source_to_target", "target_to_source"]
     x = ops.convert_to_tensor(x)
     if len(ops.shape(x)) == 1:

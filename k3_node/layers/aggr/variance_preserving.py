@@ -8,6 +8,19 @@ class VariancePreservingAggregation(Aggregation):
     r"""Performs the Variance Preserving Aggregation (VPA) from the `"GNN-VPA:
     A Variance-Preserving Aggregation Strategy for Graph Neural Networks"
     <https://arxiv.org/abs/2403.04747>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import VariancePreservingAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = VariancePreservingAggregation()
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
     """
 
     def call(

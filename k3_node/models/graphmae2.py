@@ -329,6 +329,20 @@ class GraphMAE2(layers.Layer):
         lam (float, optional): Weight of the latent prediction loss term. (default: ``1.0``)
         momentum (float, optional): Teacher EMA update momentum. (default: ``0.996``)
         delayed_ema_epoch (int, optional): Epoch to begin EMA teacher updates. (default: ``0``)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GraphMAE2
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        model = GraphMAE2(in_dim=8, num_hidden=32, num_layers=2, num_dec_layers=1, nhead=4, nhead_out=1)
+        print(tuple(model(x, edge_index).shape))  # (10, 32): node embeddings
+        loss = model.loss(x, edge_index)  # masked feature reconstruction loss for pre-training
+        print(tuple(loss.shape))  # ()
+        ```
     """
 
     def __init__(
@@ -508,6 +522,7 @@ class GraphMAE2(layers.Layer):
 
     def encoding_mask_noise(self, x, mask_rate: Optional[float] = None, mask_nodes=None):
         r"""Masks node features for encoder input."""
+        x = ops.convert_to_tensor(x)  # NumPy inputs cannot be mixed with backend tensors
         rate = self.mask_rate if mask_rate is None else mask_rate
         num_nodes = ops.shape(x)[0]
 

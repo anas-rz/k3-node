@@ -11,6 +11,19 @@ class SortAggregation(Aggregation):
     <https://www.cse.wustl.edu/~muhan/papers/AAAI_2018_DGCNN.pdf>`_ paper,
     where node features are sorted in descending order based on their last
     feature channel. The first :math:`k` nodes form the output of the layer.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import SortAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = SortAggregation(k=2)
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 16)
+        ```
     """
 
     def __init__(self, k: int, **kwargs):

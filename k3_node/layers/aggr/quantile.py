@@ -8,6 +8,19 @@ from .base import Aggregation
 class QuantileAggregation(Aggregation):
     r"""An aggregation operator that returns the feature-wise :math:`q`-th
     quantile of a set :math:`\mathcal{X}`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import QuantileAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = QuantileAggregation(q=0.75)
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
     """
     interpolations = {"linear", "lower", "higher", "nearest", "midpoint"}
 
@@ -104,7 +117,21 @@ class QuantileAggregation(Aggregation):
 
 
 class MedianAggregation(QuantileAggregation):
-    r"""An aggregation operator that returns the feature-wise median of a set."""
+    r"""An aggregation operator that returns the feature-wise median of a set.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import MedianAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = MedianAggregation()
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
 
     def __init__(self, fill_value: float = 0.0, **kwargs):
         super().__init__(0.5, "lower", fill_value=fill_value, **kwargs)

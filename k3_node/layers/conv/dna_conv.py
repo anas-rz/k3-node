@@ -116,6 +116,21 @@ class DNAConv(MessagePassing):
         normalize (bool, optional): Whether to apply symmetric normalization. (default: :obj:`True`)
         add_self_loops (bool, optional): Whether to add self-loops. (default: :obj:`True`)
         bias (bool, optional): Whether to learn an additive bias. (default: :obj:`True`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import DNAConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        # DNAConv attends over the representations of all previous layers: [num_nodes, num_layers, channels]
+        x_all = np.random.rand(10, 3, 8).astype("float32")
+        layer = DNAConv(channels=8, heads=2, groups=2)
+        out = layer(x_all, edge_index)
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
 
     def __init__(

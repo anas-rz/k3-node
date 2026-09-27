@@ -16,7 +16,21 @@ def filter_adj(
     cluster_index: Optional[any] = None,
     num_nodes: Optional[int] = None,
 ) -> Tuple[any, Optional[any]]:
-    r"""Filters out edges if their incident nodes are not in any cluster."""
+    r"""Filters out edges if their incident nodes are not in any cluster.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import filter_adj
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        kept_nodes = np.array([0, 2, 4, 6, 8])
+        edge_index_new, _ = filter_adj(edge_index, node_index=kept_nodes)  # edges between kept nodes, relabeled
+        print(edge_index_new.shape[0])  # 2
+        ```
+    """
     if is_tracing(edge_index) or (node_index is not None and is_tracing(node_index)):
         return edge_index, edge_attr
 
@@ -62,7 +76,23 @@ def filter_adj(
 
 
 class FilterEdges(Connect):
-    r"""Filters out edges if their incident nodes are not in any cluster."""
+    r"""Filters out edges if their incident nodes are not in any cluster.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import FilterEdges, SelectTopK
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        select_output = SelectTopK(in_channels=8, ratio=0.5)(x, batch)
+        connect = FilterEdges()
+        out = connect(select_output, edge_index, batch=batch)  # keep edges between kept nodes
+        print(out.edge_index.shape[0])  # 2
+        ```
+    """
     def call(
         self,
         select_output: SelectOutput,

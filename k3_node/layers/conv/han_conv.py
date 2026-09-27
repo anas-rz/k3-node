@@ -36,6 +36,26 @@ class HANConv(MessagePassing):
         metadata (Tuple[List[str], List[Tuple[str, str, str]]]): Node types and edge types.
         heads (int, optional): Number of multi-head-attentions. (default: :obj:`1`)
         negative_slope (float, optional): LeakyReLU angle of the negative slope. (default: :obj:`0.2`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import HANConv
+
+        x_dict = {
+            "author": np.random.rand(3, 8).astype("float32"),
+            "paper": np.random.rand(4, 8).astype("float32"),
+        }
+        edge_index_dict = {
+            ("author", "writes", "paper"): np.array([[0, 1, 2], [1, 2, 3]]),
+            ("paper", "written_by", "author"): np.array([[1, 2, 3], [0, 1, 2]]),
+        }
+        metadata = (list(x_dict), list(edge_index_dict))  # (node types, edge types)
+
+        layer = HANConv(in_channels={"author": 8, "paper": 8}, out_channels=16, metadata=metadata, heads=2)
+        out_dict = layer(x_dict, edge_index_dict)
+        print(tuple(out_dict["author"].shape), tuple(out_dict["paper"].shape))  # (3, 16) (4, 16)
+        ```
     """
 
     def __init__(

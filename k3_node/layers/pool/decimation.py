@@ -7,7 +7,18 @@ def decimation_indices(
     ptr,
     decimation_factor: Union[int, float],
 ) -> Tuple[any, any]:
-    r"""Gets indices which downsample each point cloud by a decimation factor."""
+    r"""Gets indices which downsample each point cloud by a decimation factor.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import decimation_indices
+
+        ptr = np.array([0, 4, 10])  # two graphs with 4 and 6 nodes
+        index, new_ptr = decimation_indices(ptr, decimation_factor=2)  # keep every 2nd node per graph
+        print(tuple(index.shape), tuple(new_ptr.shape))  # (5,) (3,)
+        ```
+    """
     if decimation_factor < 1:
         raise ValueError(
             f"The argument `decimation_factor` should be higher than (or "

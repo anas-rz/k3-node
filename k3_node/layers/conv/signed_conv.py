@@ -7,6 +7,21 @@ from k3_node.layers.conv.message_passing import MessagePassing
 class SignedConv(MessagePassing):
     r"""The signed graph convolutional operator from the `"Signed Graph
     Convolutional Network" <https://arxiv.org/abs/1808.06354>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import SignedConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        pos_edge_index = edge_index[:, :15]  # positive (e.g. "trust") edges
+        neg_edge_index = edge_index[:, 15:]  # negative (e.g. "distrust") edges
+        layer = SignedConv(in_channels=8, out_channels=16, first_aggr=True)
+        out = layer(x, pos_edge_index, neg_edge_index)
+        print(tuple(out.shape))  # (10, 32): positive and negative embeddings, concatenated
+        ```
     """
     def __init__(
         self,

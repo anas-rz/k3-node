@@ -42,6 +42,20 @@ class GPSConv(keras.layers.Layer):
         dropout (float, optional): Dropout probability. (default: :obj:`0.0`)
         act (str, optional): Activation function. (default: :obj:`"relu"`)
         norm (str, optional): Normalization function. (default: :obj:`"batch_norm"`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import GPSConv, GCNConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        batch = np.repeat([0, 1], 5)  # two graphs with 5 nodes each
+        layer = GPSConv(channels=8, conv=GCNConv(8, 8), heads=2)
+        out = layer(x, edge_index, batch=batch)
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
 
     def __init__(

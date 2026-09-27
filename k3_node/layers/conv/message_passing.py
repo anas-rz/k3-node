@@ -28,6 +28,33 @@ class MessagePassing(layers.Layer):
         node_dim: The axis along which to index node features. (default: ``-2``)
         decomposed_layers: Number of decomposed layers for memory-efficient
             aggregation. (default: ``1``)
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import MessagePassing
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        # A minimal custom layer: average the neighbors' features, then transform them.
+        class MeanConv(MessagePassing):
+            def __init__(self, units, **kwargs):
+                super().__init__(aggr="mean", **kwargs)
+                self.dense = keras.layers.Dense(units)
+
+            def call(self, x, edge_index):
+                return self.dense(self.propagate(edge_index, x=x))
+
+            def message(self, x_j):
+                return x_j  # features of the source node of every edge
+
+
+        layer = MeanConv(16)
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
 
     def __init__(

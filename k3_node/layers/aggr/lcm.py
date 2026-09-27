@@ -9,6 +9,19 @@ class LCMAggregation(Aggregation):
     r"""The Learnable Commutative Monoid aggregation from the
     `"Learnable Commutative Monoids for Graph Neural Networks"
     <https://arxiv.org/abs/2212.08541>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import LCMAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = LCMAggregation(in_channels=8, out_channels=16)
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 16)
+        ```
     """
 
     def __init__(

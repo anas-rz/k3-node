@@ -11,6 +11,19 @@ class MultiAggregation(Aggregation):
     Aggregation for Graph Nets" <https://arxiv.org/abs/2004.05718>`_ and
     `"Adaptive Filters and Aggregator Fusion for Efficient Graph Convolutions"
     <https://arxiv.org/abs/2104.01481>`_ papers.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import MultiAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = MultiAggregation(aggrs=["sum", "mean", "max"])
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 24)
+        ```
     """
 
     def __init__(

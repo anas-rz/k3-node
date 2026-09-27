@@ -12,7 +12,21 @@ def approx_knn(
     batch_x: Optional[any] = None,
     batch_y: Optional[any] = None,
 ):
-    r"""Finds for each element in `y` the `k` approximated nearest points in `x`."""
+    r"""Finds for each element in `y` the `k` approximated nearest points in `x`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import approx_knn
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        pos = np.random.rand(10, 3).astype("float32")  # 3D positions
+        query = np.random.rand(4, 3).astype("float32")  # 4 query points
+
+        assign = approx_knn(pos, query, k=3)  # approximate (NN-descent) nearest neighbors
+        print(tuple(assign.shape))  # (2, 12)
+        ```
+    """
     try:
         from pynndescent import NNDescent
 
@@ -57,7 +71,20 @@ def approx_knn_graph(
     loop: bool = False,
     flow: str = "source_to_target",
 ):
-    r"""Computes graph edges to the nearest approximated `k` points."""
+    r"""Computes graph edges to the nearest approximated `k` points.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import approx_knn_graph
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        pos = np.random.rand(10, 3).astype("float32")  # 3D positions
+
+        edge_index = approx_knn_graph(pos, k=3)
+        print(edge_index.shape[0])  # 2
+        ```
+    """
     assert flow in ["source_to_target", "target_to_source"]
     edge_index = approx_knn(x, x, k if loop else k + 1, batch, batch)
     edge_index_np = ops.convert_to_numpy(edge_index)

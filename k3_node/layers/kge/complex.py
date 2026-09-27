@@ -25,6 +25,22 @@ class ComplEx(KGEModel):
         num_relations (int): The number of relations in the graph.
         hidden_channels (int): The hidden embedding size.
         sparse (bool, optional): Kept for API compatibility. (default: :obj:`False`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import ComplEx
+
+        head = np.random.randint(0, 20, size=(10,))  # 10 (head, relation, tail) triples
+        rel = np.random.randint(0, 5, size=(10,))
+        tail = np.random.randint(0, 20, size=(10,))
+
+        model = ComplEx(num_nodes=20, num_relations=5, hidden_channels=8)
+        score = model(head, rel, tail)  # plausibility score of every triple
+        print(tuple(score.shape))  # (10,)
+        loss = model.loss(head, rel, tail)  # training loss against randomly corrupted triples
+        print(tuple(loss.shape))  # (): a scalar
+        ```
     """
     def __init__(
         self,

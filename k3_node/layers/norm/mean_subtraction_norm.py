@@ -9,6 +9,19 @@ class MeanSubtractionNorm(layers.Layer):
     .. math::
         \mathbf{x}_i = \mathbf{x}_i - \frac{1}{|\mathcal{V}|}
         \sum_{j \in \mathcal{V}} \mathbf{x}_j
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import MeanSubtractionNorm
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        layer = MeanSubtractionNorm()
+        out = layer(x, batch)  # normalizes each graph separately
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

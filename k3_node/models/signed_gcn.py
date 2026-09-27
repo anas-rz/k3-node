@@ -19,6 +19,21 @@ class SignedGCN(keras.layers.Layer):
             objective. (default: :obj:`5`)
         bias (bool, optional): If set to :obj:`False`, all layers will not
             learn an additive bias. (default: :obj:`True`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import SignedGCN
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        pos_edge_index, neg_edge_index = edge_index[:, :15], edge_index[:, 15:]  # positive / negative links
+        model = SignedGCN(in_channels=8, hidden_channels=16, num_layers=2)
+        z = model(x, pos_edge_index, neg_edge_index)
+        print(tuple(z.shape))  # (10, 16)
+        print(tuple(model.discriminate(z, edge_index).shape))  # (30, 3): scores for (positive, negative, no link)
+        ```
     """
     def __init__(
         self,

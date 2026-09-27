@@ -26,6 +26,19 @@ class InstanceNorm(layers.Layer):
             :obj:`False`, this module does not track such statistics and always
             uses instance statistics in both training and eval modes.
             (default: :obj:`False`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import InstanceNorm
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        layer = InstanceNorm(in_channels=8)
+        out = layer(x, batch)  # normalizes each graph separately
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     def __init__(
         self,

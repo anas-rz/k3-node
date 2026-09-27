@@ -86,6 +86,22 @@ class AttentiveFP(keras.Model):
         dropout (float, optional): Dropout probability. (default: `0.0`)
         batch_size (int, optional): Fixed batch size (number of graphs) for JAX/XLA
             static shape compatibility. (default: `None`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import AttentiveFP
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        edge_attr = np.random.rand(30, 3).astype("float32")  # bond features
+
+        batch = np.repeat([0, 1], 5)  # two molecules with 5 atoms each
+        model = AttentiveFP(in_channels=8, hidden_channels=16, out_channels=1, edge_dim=3,
+                            num_layers=2, num_timesteps=2)
+        out = model(x, edge_index, edge_attr, batch)  # one prediction per molecule
+        print(tuple(out.shape))  # (2, 1)
+        ```
     """
     def __init__(
         self,

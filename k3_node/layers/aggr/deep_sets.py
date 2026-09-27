@@ -7,6 +7,20 @@ class DeepSetsAggregation(Aggregation):
     first transformed by a Multi-Layer Perceptron (MLP)
     :math:`\phi_{\mathbf{\Theta}}`, summed, and then transformed by another MLP
     :math:`\rho_{\mathbf{\Theta}}`.
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import DeepSetsAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = DeepSetsAggregation(local_nn=keras.layers.Dense(16), global_nn=keras.layers.Dense(16))
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 16)
+        ```
     """
 
     def __init__(

@@ -9,6 +9,22 @@ class PANPooling(layers.Layer):
     r"""The path integral based pooling operator from the
     `"Path Integral Based Convolution and Pooling for Graph Neural Networks"
     <https://arxiv.org/abs/2006.16811>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import PANPooling, PANConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        # PANPooling consumes the path weights produced by PANConv
+        x, weights = PANConv(in_channels=8, out_channels=8, filter_size=2)(x, edge_index)
+        layer = PANPooling(in_channels=8, ratio=0.5)
+        x_pool, edge_index_pool, edge_attr_pool, batch_pool, perm, score = layer(x, weights, batch=batch)
+        print(tuple(x_pool.shape))  # (6, 8)
+        ```
     """
     def __init__(
         self,

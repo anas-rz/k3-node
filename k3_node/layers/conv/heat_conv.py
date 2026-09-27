@@ -23,6 +23,23 @@ class HEATConv(MessagePassing):
         negative_slope (float, optional): LeakyReLU angle. (default: :obj:`0.2`)
         root_weight (bool, optional): Whether to add root node features. (default: :obj:`True`)
         bias (bool, optional): Whether to learn an additive bias. (default: :obj:`True`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import HEATConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        node_type = np.random.randint(0, 2, size=(10,))
+        edge_type = np.random.randint(0, 3, size=(30,))
+        edge_attr = np.random.rand(30, 5).astype("float32")
+        layer = HEATConv(in_channels=8, out_channels=16, num_node_types=2, num_edge_types=3,
+                         edge_type_emb_dim=4, edge_dim=5, edge_attr_emb_dim=6, heads=2)
+        out = layer(x, edge_index, node_type, edge_type, edge_attr)
+        print(tuple(out.shape))  # (10, 32)
+        ```
     """
 
     def __init__(

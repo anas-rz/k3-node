@@ -23,6 +23,20 @@ class RENet(keras.Model):
             (default: :obj:`0.0`)
         bias (bool, optional): If set to :obj:`False`, all layers will not
             learn an additive bias. (default: :obj:`True`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import RENet
+
+        model = RENet(num_nodes=5, num_rels=4, hidden_channels=16, seq_len=3)
+        sub, rel, obj = np.array([0, 1]), np.array([0, 1]), np.array([2, 3])  # queries at time t
+        # Neighbor histories of subjects and objects: neighbor id, timestep and query index
+        h_sub, h_sub_t, h_sub_batch = np.array([0, 1, 2]), np.array([0, 1, 0]), np.array([0, 0, 1])
+        h_obj, h_obj_t, h_obj_batch = np.array([1, 2, 3]), np.array([1, 2, 0]), np.array([0, 0, 1])
+        log_prob_obj, log_prob_sub = model(sub, rel, obj, h_sub, h_sub_t, h_sub_batch, h_obj, h_obj_t, h_obj_batch)
+        print(tuple(log_prob_obj.shape))  # (2, 5): scores over all entities for each query
+        ```
     """
     def __init__(
         self,

@@ -11,6 +11,16 @@ def _orthogonal_matrix(dim: int, seed: int = None):
 
 
 def orthogonal_matrix(num_rows: int, num_cols: int, seed=None):
+    """Function ``orthogonal_matrix``.
+
+    Example:
+        ```python
+        from k3_node.layers import orthogonal_matrix
+
+        projection = orthogonal_matrix(num_rows=16, num_cols=8)  # random orthogonal features (Performer)
+        print(tuple(projection.shape))  # (16, 8)
+        ```
+    """
     num_full_blocks = int(num_rows / num_cols)
     blocks = []
     for _ in range(num_full_blocks):
@@ -25,6 +35,19 @@ def orthogonal_matrix(num_rows: int, num_cols: int, seed=None):
 
 
 def linear_attention(q, k, v):
+    # Plain NumPy inputs cannot be mixed with backend tensors (e.g. `ndarray @ torch.Tensor`).
+    """Function ``linear_attention``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import linear_attention
+
+        q = k = v = np.random.rand(1, 2, 10, 8).astype("float32")  # [batch, heads, num_nodes, head_dim]
+        print(tuple(linear_attention(q, k, v).shape))  # (1, 2, 10, 8)
+        ```
+    """
+    q, k, v = ops.convert_to_tensor(q), ops.convert_to_tensor(k), ops.convert_to_tensor(v)
     _k = ops.expand_dims(ops.sum(k, axis=-2), axis=-1)
     D_inv = 1.0 / (q @ _k)
     kv = ops.transpose(k, axes=[0, 1, 3, 2]) @ v
@@ -34,6 +57,18 @@ def linear_attention(q, k, v):
 
 
 def generalized_kernel(x, mat, kernel=ops.relu, epsilon=0.001):
+    """Function ``generalized_kernel``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import generalized_kernel, orthogonal_matrix
+
+        x = np.random.rand(1, 2, 10, 8).astype("float32")  # [batch, heads, num_nodes, head_dim]
+        features = generalized_kernel(x, orthogonal_matrix(16, 8))  # random-feature map of x
+        print(tuple(features.shape))  # (1, 2, 10, 16)
+        ```
+    """
     batch_size, num_heads = ops.shape(x)[:2]
     projection = ops.transpose(mat, axes=[1, 0])  # Transpose along correct axes
     projection = ops.tile(projection, [1, num_heads, 1, 1])  # Expand dimensions
@@ -43,6 +78,18 @@ def generalized_kernel(x, mat, kernel=ops.relu, epsilon=0.001):
 
 
 class PerformerProjection(layers.Layer):
+    """Layer ``PerformerProjection``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import PerformerProjection
+
+        q = k = v = np.random.rand(1, 2, 10, 8).astype("float32")  # [batch, heads, num_nodes, head_dim]
+        proj = PerformerProjection(num_cols=8)  # random-feature approximation of softmax attention
+        print(tuple(proj(q, k, v).shape))  # (1, 2, 10, 8)
+        ```
+    """
     def __init__(self, num_cols, kernel=ops.relu):
         super().__init__()
         import math
@@ -74,6 +121,18 @@ class PerformerAttention(layers.Layer):
         qkv_bias: activation function.
         attn_out_bias: Bias in Attention Out.
         dropout: Dropout rate.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import PerformerAttention
+
+        x = np.random.rand(1, 10, 8).astype("float32")  # [batch, num_nodes, channels]
+
+        mask = np.ones((1, 10), dtype=bool)  # which nodes are real (not padding)
+        attn = PerformerAttention(channels=8, heads=2)  # linear-complexity attention
+        print(tuple(attn(x, mask).shape))  # (1, 10, 8)
+        ```
     """
     def __init__(
         self,

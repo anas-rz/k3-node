@@ -10,6 +10,19 @@ from .utils import MultiheadAttentionBlock
 class PatchTransformerAggregation(Aggregation):
     r"""Performs patch transformer aggregation in which the elements to
     aggregate are processed by multi-head attention blocks across patches.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import PatchTransformerAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = PatchTransformerAggregation(in_channels=8, out_channels=16, patch_size=2, hidden_channels=8)
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 16)
+        ```
     """
 
     def __init__(

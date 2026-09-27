@@ -15,6 +15,21 @@ class EdgeConv(MessagePassing):
             pair-wise node features to new edge representations.
         aggr: The aggregation scheme to use (``"max"``, ``"mean"``, ``"sum"``).
             (default: ``"max"``)
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import EdgeConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        nn = keras.Sequential([keras.layers.Dense(16, activation="relu"), keras.layers.Dense(16)])
+        layer = EdgeConv(nn)
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
 
     def __init__(self, nn: Callable, aggr: str = "max", **kwargs):
@@ -59,6 +74,21 @@ class DynamicEdgeConv(EdgeConv):
         aggr: The aggregation scheme to use (``"max"``, ``"mean"``, ``"sum"``).
             (default: ``"max"``)
         num_workers: Number of workers (ignored in Keras backend).
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import DynamicEdgeConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        nn = keras.Sequential([keras.layers.Dense(16, activation="relu"), keras.layers.Dense(16)])
+        layer = DynamicEdgeConv(nn, k=3)
+        out = layer(x)  # k-NN graph is built from x
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
 
     def __init__(self, nn: Callable, k: int = 6, aggr: str = "max", num_workers: int = 1, **kwargs):

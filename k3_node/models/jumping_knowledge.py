@@ -39,6 +39,18 @@ class JumpingKnowledge(keras.layers.Layer):
             (default: :obj:`None`)
         num_layers (int, optional): The number of layers to aggregate. Needs to
             be only set for LSTM-style aggregation. (default: :obj:`None`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import JumpingKnowledge
+
+        # Node representations from 3 GNN layers
+        xs = [np.random.rand(10, 16).astype("float32") for _ in range(3)]
+        print(tuple(JumpingKnowledge("cat")(xs).shape))  # (10, 48): concatenate all layers
+        print(tuple(JumpingKnowledge("max")(xs).shape))  # (10, 16): element-wise max
+        print(tuple(JumpingKnowledge("lstm", channels=16, num_layers=3)(xs).shape))  # (10, 16): attention over layers
+        ```
     """
 
     def __init__(
@@ -128,6 +140,21 @@ class HeteroJumpingKnowledge(keras.layers.Layer):
             (default: :obj:`None`)
         num_layers (int, optional): The number of layers to aggregate. Needs to
             be only set for LSTM-style aggregation. (default: :obj:`None`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import HeteroJumpingKnowledge
+
+        # Per node type: representations from 3 GNN layers
+        xs_dict = {
+            "author": [np.random.rand(3, 16).astype("float32") for _ in range(3)],
+            "paper": [np.random.rand(4, 16).astype("float32") for _ in range(3)],
+        }
+        model = HeteroJumpingKnowledge(["author", "paper"], mode="cat")
+        out_dict = model(xs_dict)
+        print(tuple(out_dict["author"].shape), tuple(out_dict["paper"].shape))  # (3, 48) (4, 48)
+        ```
     """
 
     def __init__(

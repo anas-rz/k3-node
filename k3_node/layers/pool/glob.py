@@ -41,6 +41,18 @@ def _infer_size(batch, size=None):
 def global_add_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
     r"""Returns batch-wise graph-level-outputs by adding node features
     across the node dimension.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import global_add_pool
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        out = global_add_pool(x, batch)  # one row per graph
+        print(tuple(out.shape))  # (2, 8)
+        ```
     """
     if batch is None:
         dim = -1 if len(ops.shape(x)) == 1 else 0
@@ -61,6 +73,18 @@ def global_add_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
 def global_mean_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
     r"""Returns batch-wise graph-level-outputs by averaging node features
     across the node dimension.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import global_mean_pool
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        out = global_mean_pool(x, batch)  # one row per graph
+        print(tuple(out.shape))  # (2, 8)
+        ```
     """
     if batch is None:
         dim = -1 if len(ops.shape(x)) == 1 else 0
@@ -84,6 +108,18 @@ def global_mean_pool(x, batch: Optional[any] = None, size: Optional[int] = None)
 def global_max_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
     r"""Returns batch-wise graph-level-outputs by taking the channel-wise
     maximum across the node dimension.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import global_max_pool
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        out = global_max_pool(x, batch)  # one row per graph
+        print(tuple(out.shape))  # (2, 8)
+        ```
     """
     if batch is None:
         dim = -1 if len(ops.shape(x)) == 1 else 0

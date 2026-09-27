@@ -39,6 +39,18 @@ class SelfMultiheadAttentionWithPair(layers.Layer):
         bias (bool, optional): Whether to include bias terms in linear projections. (default: ``True``)
         scaling_factor (float, optional): Scaling factor multiplier for attention keys. (default: ``1.0``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import SelfMultiheadAttentionWithPair
+
+        x = np.random.rand(2, 6, 16).astype("float32")  # [batch, num_atoms, embed_dim]
+
+        attn_bias = np.random.rand(2 * 4, 6, 6).astype("float32")  # pair bias per [batch * head]
+        attn = SelfMultiheadAttentionWithPair(embed_dim=16, num_heads=4)
+        print(tuple(attn(x, attn_bias=attn_bias).shape))  # (2, 6, 16)
+        ```
     """
 
     def __init__(
@@ -158,6 +170,19 @@ class TransformerEncoderLayerWithPair(layers.Layer):
         activation_fn (str or Callable, optional): Non-linear activation function. (default: ``"gelu"``)
         post_ln (bool, optional): Whether to use Post-LN instead of Pre-LN. (default: ``False``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import TransformerEncoderLayerWithPair
+
+        x = np.random.rand(2, 6, 16).astype("float32")  # [batch, num_atoms, embed_dim]
+
+        attn_bias = np.random.rand(2 * 4, 6, 6).astype("float32")  # pair bias per [batch * head]
+        layer = TransformerEncoderLayerWithPair(embed_dim=16, ffn_embed_dim=32, attention_heads=4)
+        out = layer(x, attn_bias=attn_bias)
+        print(tuple(out[0].shape) if isinstance(out, tuple) else tuple(out.shape))  # (2, 6, 16)
+        ```
     """
 
     def __init__(
@@ -269,6 +294,16 @@ class TriangleMultiplication(layers.Layer):
         hidden_dim (int): Intermediate channel dimension.
         mode (str, optional): Either ``"outgoing"`` or ``"incoming"``. (default: ``"outgoing"``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import TriangleMultiplication
+
+        pair = np.random.rand(2, 6, 6, 8).astype("float32")  # [batch, num_atoms, num_atoms, pair_dim]
+        layer = TriangleMultiplication(pair_dim=8, hidden_dim=4, mode="outgoing")
+        print(tuple(layer(pair).shape))  # (2, 6, 6, 8)
+        ```
     """
 
     def __init__(
@@ -351,6 +386,17 @@ class OuterProduct(layers.Layer):
         pair_dim (int): Pair representation dimension.
         hidden_dim (int, optional): Intermediate projection dimension. (default: ``32``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import OuterProduct
+
+        x = np.random.rand(2, 6, 16).astype("float32")  # [batch, num_atoms, embed_dim]
+
+        layer = OuterProduct(embed_dim=16, pair_dim=8, hidden_dim=4)  # atom features -> pair features
+        print(tuple(layer(x).shape))  # (2, 6, 6, 8)
+        ```
     """
 
     def __init__(

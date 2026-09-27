@@ -10,7 +10,20 @@ def voxel_grid(
     start: Optional[Union[float, List[float], any]] = None,
     end: Optional[Union[float, List[float], any]] = None,
 ):
-    r"""Voxel grid pooling that clusters points within the same voxel."""
+    r"""Voxel grid pooling that clusters points within the same voxel.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import voxel_grid
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        pos = np.random.rand(10, 3).astype("float32")  # 3D positions
+
+        cluster = voxel_grid(pos, size=0.5)  # voxel id of each point
+        print(tuple(cluster.shape))  # (10,)
+        ```
+    """
     pos_np = ops.convert_to_numpy(pos)
     if pos_np.ndim == 1:
         pos_np = pos_np[:, None]

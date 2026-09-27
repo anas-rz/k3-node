@@ -19,6 +19,23 @@ class CorrectAndSmooth(keras.layers.Layer):
             determine the scaling factor :math:`\gamma`. (default: :obj:`True`)
         scale (float, optional): The scaling factor :math:`\gamma`, in case
             :obj:`autoscale = False`. (default: :obj:`1.0`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import CorrectAndSmooth
+
+        y_soft = np.random.rand(6, 3).astype("float32")  # base model's class probabilities
+        y_true = np.array([1, 0, 0, 2, 1, 1])
+        train_mask = np.array([True, False, True, False, True, False])
+        edge_index = np.array([[0, 1, 1, 2, 4, 5], [1, 0, 2, 1, 5, 4]])
+
+        model = CorrectAndSmooth(num_correction_layers=2, correction_alpha=0.5,
+                                 num_smoothing_layers=2, smoothing_alpha=0.5)
+        y_soft = model.correct(y_soft, y_true[train_mask], train_mask, edge_index)  # propagate residual errors
+        y_soft = model.smooth(y_soft, y_true[train_mask], train_mask, edge_index)  # propagate predictions
+        print(tuple(y_soft.shape))  # (6, 3)
+        ```
     """
     def __init__(
         self,
@@ -45,6 +62,8 @@ class CorrectAndSmooth(keras.layers.Layer):
         return self.smooth(y_soft, *args, **kwargs)
 
     def correct(self, y_soft, y_true, mask, edge_index, edge_weight=None):
+        # Plain NumPy inputs cannot be mixed with backend tensors; convert them first.
+        y_soft, y_true, mask = ops.convert_to_tensor(y_soft), ops.convert_to_tensor(y_true), ops.convert_to_tensor(mask)
         num_classes = ops.shape(y_soft)[-1]
         y_true_shape = ops.shape(y_true)
         if len(y_true_shape) == 1:
@@ -94,6 +113,8 @@ class CorrectAndSmooth(keras.layers.Layer):
             return y_soft + self.scale * smoothed_error
 
     def smooth(self, y_soft, y_true, mask, edge_index, edge_weight=None):
+        # Plain NumPy inputs cannot be mixed with backend tensors; convert them first.
+        y_soft, y_true, mask = ops.convert_to_tensor(y_soft), ops.convert_to_tensor(y_true), ops.convert_to_tensor(mask)
         num_classes = ops.shape(y_soft)[-1]
         y_true_shape = ops.shape(y_true)
         if len(y_true_shape) == 1:

@@ -9,6 +9,19 @@ class GraphMultisetTransformer(Aggregation):
     r"""The Graph Multiset Transformer pooling operator from the
     `"Accurate Learning of Graph Representations
     with Graph Multiset Pooling" <https://arxiv.org/abs/2102.11533>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import GraphMultisetTransformer
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = GraphMultisetTransformer(channels=8, k=2)
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
     """
 
     def __init__(

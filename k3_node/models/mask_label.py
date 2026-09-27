@@ -21,6 +21,21 @@ class MaskLabel(keras.layers.Layer):
             concatenated. In case :obj:`method="add"`, then :obj:`out_channels`
             needs to be identical to the input dimensionality of node features.
             (default: :obj:`"add"`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MaskLabel
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        y = np.random.randint(0, 3, size=(10,))  # node labels
+        known = np.random.rand(10) > 0.5  # labels visible to the model
+        model = MaskLabel(num_classes=3, out_channels=8)  # label embedding added to x
+        out = model(x, y, known)
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
 
     def __init__(

@@ -16,6 +16,19 @@ class MessageNorm(layers.Layer):
         learn_scale (bool, optional): If set to :obj:`True`, will learn the
             scaling factor :math:`s` of message normalization.
             (default: :obj:`False`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import MessageNorm
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+
+        msg = np.random.rand(10, 8).astype("float32")  # aggregated messages for each node
+        layer = MessageNorm(learn_scale=True)
+        out = layer(x, msg)  # rescales messages to the norm of x
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     def __init__(self, learn_scale: bool = False, **kwargs):
         super().__init__(**kwargs)

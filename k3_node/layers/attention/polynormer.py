@@ -3,6 +3,20 @@ from keras import ops
 
 
 class PolynormerAttention(keras.layers.Layer):
+    """Layer ``PolynormerAttention``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import PolynormerAttention
+
+        x = np.random.rand(1, 10, 8).astype("float32")  # [batch, num_nodes, channels]
+
+        mask = np.ones((1, 10), dtype=bool)
+        attn = PolynormerAttention(channels=8, heads=2)
+        print(tuple(attn(x, mask).shape))  # (1, 10, 128)
+        ```
+    """
     def __init__(
         self,
         channels,

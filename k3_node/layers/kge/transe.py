@@ -31,6 +31,22 @@ class TransE(KGEModel):
         p_norm (float, optional): The order embedding and distance
             normalization. (default: :obj:`1.0`)
         sparse (bool, optional): Kept for API compatibility. (default: :obj:`False`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import TransE
+
+        head = np.random.randint(0, 20, size=(10,))  # 10 (head, relation, tail) triples
+        rel = np.random.randint(0, 5, size=(10,))
+        tail = np.random.randint(0, 20, size=(10,))
+
+        model = TransE(num_nodes=20, num_relations=5, hidden_channels=8)
+        score = model(head, rel, tail)  # plausibility score of every triple
+        print(tuple(score.shape))  # (10,)
+        loss = model.loss(head, rel, tail)  # training loss against randomly corrupted triples
+        print(tuple(loss.shape))  # (): a scalar
+        ```
     """
     def __init__(
         self,

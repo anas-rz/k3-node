@@ -12,6 +12,28 @@ EPS = 1e-15
 class DeepGraphInfomax(keras.Model):
     r"""The Deep Graph Infomax model from the
     `"Deep Graph Infomax" <https://arxiv.org/abs/1809.10341>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import GCNConv
+        from k3_node.models import DeepGraphInfomax
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        encoder = GCNConv(8, 16)
+        model = DeepGraphInfomax(
+            hidden_channels=16,
+            encoder=lambda x, edge_index: encoder(x, edge_index),
+            summary=lambda z, *args: keras.ops.sigmoid(keras.ops.mean(z, axis=0)),
+            corruption=lambda x, edge_index: (keras.random.shuffle(x), edge_index),  # permute node features
+        )
+        pos_z, neg_z, summary = model(x, edge_index)
+        print(tuple(pos_z.shape), tuple(neg_z.shape), tuple(summary.shape))  # (10, 16) (10, 16) (16,)
+        print(tuple(model.loss(pos_z, neg_z, summary).shape))  # (): scalar contrastive loss
+        ```
     """
 
     def __init__(

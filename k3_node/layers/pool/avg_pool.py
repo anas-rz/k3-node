@@ -22,7 +22,21 @@ def avg_pool_x(
     batch_size: Optional[int] = None,
     size: Optional[int] = None,
 ) -> Tuple[any, Optional[any]]:
-    r"""Average-pools node features according to the clustering defined in `cluster`."""
+    r"""Average-pools node features according to the clustering defined in `cluster`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import avg_pool_x
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+        cluster = np.repeat(np.arange(5), 2)  # merge nodes pairwise into 5 clusters
+
+        x_pool, batch_pool = avg_pool_x(cluster, x, batch)
+        print(tuple(x_pool.shape))  # (5, 8)
+        ```
+    """
     if size is not None:
         if batch_size is None:
             batch_size = int(ops.max(batch)) + 1
@@ -43,7 +57,22 @@ def avg_pool(
     batch: Optional[any] = None,
     pos: Optional[any] = None,
 ):
-    r"""Pools and coarsens a graph given by `data` according to `cluster` using averaging."""
+    r"""Pools and coarsens a graph given by `data` according to `cluster` using averaging.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import avg_pool
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+        cluster = np.repeat(np.arange(5), 2)  # merge nodes pairwise into 5 clusters
+
+        x_pool, edge_index_pool, batch_pool = avg_pool(cluster, x, edge_index, batch=batch)
+        print(tuple(x_pool.shape))  # (5, 8)
+        ```
+    """
     cluster, perm = consecutive_cluster(cluster)
 
     if hasattr(data, "x"):
@@ -84,7 +113,20 @@ def avg_pool_neighbor_x(
     edge_index=None,
     flow: str = "source_to_target",
 ):
-    r"""Average-pools neighboring node features."""
+    r"""Average-pools neighboring node features.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import avg_pool_neighbor_x
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        out = avg_pool_neighbor_x(x, edge_index=edge_index)  # pool each node with its neighbors
+        print(tuple(out.shape))  # (10, 8)
+        ```
+    """
     if hasattr(data, "x"):
         x = data.x
         edge_index = data.edge_index

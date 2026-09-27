@@ -12,6 +12,19 @@ class WLConv(keras.layers.Layer):
 
     Args:
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import WLConv
+
+        colors = np.array([0, 1, 0, 1])  # discrete node colors (labels)
+        edge_index = np.array([[0, 1, 2, 3], [1, 2, 3, 0]])
+        layer = WLConv()
+        new_colors = layer(colors, edge_index)  # one Weisfeiler-Lehman refinement step
+        print(tuple(new_colors.shape))  # (4,)
+        print(tuple(layer.histogram(new_colors).shape))  # (1, 2): color histogram per graph
+        ```
     """
 
     def __init__(self, **kwargs):
@@ -87,6 +100,19 @@ class WLConvContinuous(MessagePassing):
 
     Args:
         **kwargs: Additional arguments of :class:`MessagePassing`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import WLConvContinuous
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        layer = WLConvContinuous()
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
 
     def __init__(self, **kwargs):

@@ -61,6 +61,20 @@ class DMoNPooling(layers.Layer):
             list, will construct an MLP based on the given feature sizes.
         k (int): The number of clusters.
         dropout (float, optional): Dropout probability. (default: :obj:`0.0`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import DMoNPooling
+
+        x = np.random.rand(2, 10, 8).astype("float32")  # batch of 2 graphs, 10 nodes, 8 features
+        adj = (np.random.rand(2, 10, 10) > 0.7).astype("float32")  # dense adjacency matrices
+
+        layer = DMoNPooling(channels=8, k=3)  # 3 clusters
+        s, x_pool, adj_pool, spectral_loss, ortho_loss, cluster_loss = layer(x, adj)
+        print(tuple(s.shape))  # (2, 10, 3): soft cluster assignments
+        print(tuple(x_pool.shape), tuple(adj_pool.shape))  # (2, 3, 8) (2, 3, 3)
+        ```
     """
     def __init__(
         self,
@@ -127,7 +141,23 @@ def dense_dmon_pool(
     s,
     mask: Optional[any] = None,
 ) -> Tuple[any, any, any, any, any]:
-    r"""Functional dense DMoN pooling operator."""
+    r"""Functional dense DMoN pooling operator.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import dense_dmon_pool
+
+        x = np.random.rand(2, 10, 8).astype("float32")  # batch of 2 graphs, 10 nodes, 8 features
+        adj = (np.random.rand(2, 10, 10) > 0.7).astype("float32")  # dense adjacency matrices
+        s = np.random.rand(2, 10, 3).astype("float32")  # assignment scores for 3 clusters
+
+        x_pool, adj_pool, spectral_loss, ortho_loss, cluster_loss = dense_dmon_pool(x, adj, s)
+        print(tuple(x_pool.shape), tuple(adj_pool.shape))  # (2, 3, 8) (2, 3, 3)
+        ```
+    """
+    # Plain NumPy inputs cannot be mixed with backend tensors (e.g. `ndarray @ torch.Tensor`).
+    x, adj, s = ops.convert_to_tensor(x), ops.convert_to_tensor(adj), ops.convert_to_tensor(s)
     if len(ops.shape(x)) == 2:
         x = ops.expand_dims(x, axis=0)
     if len(ops.shape(adj)) == 2:

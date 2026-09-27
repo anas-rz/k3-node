@@ -41,6 +41,18 @@ class DiffGroupNorm(layers.Layer):
             :obj:`False`, this module does not track such statistics and always
             uses batch statistics in both training and eval modes.
             (default: :obj:`True`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import DiffGroupNorm
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+
+        layer = DiffGroupNorm(in_channels=8, groups=2)
+        out = layer(x, training=True)  # uses batch statistics while training
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     def __init__(
         self,

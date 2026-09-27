@@ -26,6 +26,19 @@ def dense_mincut_pool(
         s: Assignment tensor [B, N, C] or [N, C].
         mask: Mask tensor [B, N] indicating valid nodes. (default: None)
         temp: Temperature parameter for softmax function. (default: 1.0)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import dense_mincut_pool
+
+        x = np.random.rand(2, 10, 8).astype("float32")  # batch of 2 graphs, 10 nodes, 8 features
+        adj = (np.random.rand(2, 10, 10) > 0.7).astype("float32")  # dense adjacency matrices
+        s = np.random.rand(2, 10, 3).astype("float32")  # assignment scores for 3 clusters
+
+        x_pool, adj_pool, mincut_loss, ortho_loss = dense_mincut_pool(x, adj, s)
+        print(tuple(x_pool.shape), tuple(adj_pool.shape))  # (2, 3, 8) (2, 3, 3)
+        ```
     """
     if len(ops.shape(x)) == 2:
         x = ops.expand_dims(x, axis=0)

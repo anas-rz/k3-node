@@ -37,6 +37,19 @@ class LightGCN(keras.Model):
         alpha (float or Tensor, optional): The scalar or vector specifying
             the re-weighting coefficients for aggregating the final embedding.
             (default: :obj:`None`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import LightGCN
+
+        edge_index = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [1, 2, 3, 4, 5, 6, 7, 0]])  # user-item interactions
+        edge_label_index = np.array([[0, 1, 2, 3], [4, 5, 6, 7]])  # pairs to score
+        model = LightGCN(num_nodes=50, embedding_dim=16, num_layers=2)
+        scores = model(edge_index, edge_label_index)
+        print(tuple(scores.shape))  # (4,)
+        print(tuple(model.recommend(edge_index, k=2).shape))  # (50, 2): top-2 recommendations per node
+        ```
     """
     def __init__(
         self,

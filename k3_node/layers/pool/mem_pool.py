@@ -7,6 +7,18 @@ EPS = 1e-15
 class MemPooling(layers.Layer):
     r"""Memory based pooling layer from `"Memory-Based Graph Networks"
     <https://arxiv.org/abs/2002.09518>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import MemPooling
+
+        x = np.random.rand(2, 5, 8).astype("float32")  # dense batch: 2 graphs with 5 nodes each
+        layer = MemPooling(in_channels=8, out_channels=16, heads=2, num_clusters=3)
+        x_pool, assignment = layer(x)
+        print(tuple(x_pool.shape))  # (2, 3, 16)
+        print(tuple(assignment.shape))  # (2, 5, 3): soft assignment of nodes to clusters
+        ```
     """
     def __init__(
         self,

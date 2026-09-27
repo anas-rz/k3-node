@@ -13,6 +13,23 @@ class MeshCNNConv(MessagePassing):
         out_channels (int): Size of each output sample.
         kernels (List[keras.layers.Layer], optional): A list of 5 neural network layers
             that transform edge representations. (default: :obj:`None`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import MeshCNNConv
+
+        # In MeshCNN the "nodes" are mesh edges; each mesh edge has exactly 4 neighboring edges,
+        # listed in a fixed order in edge_index (4 incoming entries per mesh edge).
+        x = np.random.rand(4, 8).astype("float32")  # features of 4 mesh edges
+        edge_index = np.array([
+            [1, 2, 3, 0, 0, 2, 3, 1, 0, 1, 3, 2, 0, 1, 2, 3],  # neighboring mesh edge
+            [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3],  # mesh edge being updated
+        ])
+        layer = MeshCNNConv(in_channels=8, out_channels=16)
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (4, 16)
+        ```
     """
 
     def __init__(

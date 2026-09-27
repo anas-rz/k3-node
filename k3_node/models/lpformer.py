@@ -65,7 +65,19 @@ class MLP(keras.layers.Layer):
 
 
 class LPAttLayer(keras.layers.Layer):
-    r"""Attention layer for pairwise link interaction."""
+    r"""Attention layer for pairwise link interaction.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import LPAttLayer
+
+        edge_feats = np.random.rand(4, 16).astype("float32")  # features of 4 target links
+        node_feats = np.random.rand(4, 16).astype("float32")
+        layer = LPAttLayer(in_channels=16, out_channels=16, num_heads=2)
+        print(tuple(layer(edge_feats, node_feats).shape))  # (4, 32)
+        ```
+    """
     def __init__(
         self,
         in_channels: int,
@@ -130,6 +142,21 @@ class LPFormer(keras.Model):
         num_heads (int, optional): Number of attention heads. (default: 1)
         transformer_dropout (float, optional): Transformer dropout rate. (default: 0.1)
         ppr_thresholds (list, optional): Thresholds for PPR node categorization. (default: [0, 1e-4, 1e-2])
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import LPFormer
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        x = np.random.rand(10, 16).astype("float32")
+        target_links = np.array([[0, 1], [2, 3]])  # the (source, target) pairs to score
+        model = LPFormer(in_channels=16, hidden_channels=16, num_gnn_layers=2)
+        out = model(target_links, x, edge_index)  # one score per link
+        print(tuple(out.shape))  # (2, 1)
+        ```
     """
     def __init__(
         self,

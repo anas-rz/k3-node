@@ -10,6 +10,18 @@ def graclus(
 ):
     r"""A greedy clustering algorithm of picking an unmarked vertex and matching
     it with one of its unmarked neighbors that maximizes its edge weight.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import graclus
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        cluster = graclus(edge_index, num_nodes=10)  # greedy matching of neighboring nodes
+        print(tuple(cluster.shape))  # (10,): a cluster id for every node
+        ```
     """
     edge_index_np = ops.convert_to_numpy(edge_index).astype(np.int64)
     if num_nodes is None:

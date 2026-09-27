@@ -31,6 +31,19 @@ class APPNPConv(Conv):
             kernel_constraint: Constraint for the `kernel` weights matrix.
             bias_constraint: Constraint for the bias vector.
             **kwargs: Additional keyword arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import APPNPConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        layer = APPNPConv(channels=16, alpha=0.1, propagations=2)
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

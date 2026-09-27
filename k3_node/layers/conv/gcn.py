@@ -22,6 +22,19 @@ class GraphConvolution(Layer):
         bias_regularizer: Regularizer for the bias vector.
         bias_constraint: Constraint for the bias vector.
         **kwargs: Additional arguments to pass to the `Layer` superclass.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import GraphConvolution
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        layer = GraphConvolution(units=16, activation="relu")
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

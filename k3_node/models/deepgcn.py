@@ -35,6 +35,27 @@ class DeepGCNLayer(keras.layers.Layer):
         ckpt_grad (bool, optional): Kept for API compatibility; a no-op,
             since there is no gradient-checkpointing API shared uniformly
             across Keras backends. (default: `False`)
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import GENConv, LayerNorm
+        from k3_node.models import DeepGCNLayer
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        x = np.random.rand(10, 16).astype("float32")
+        layer = DeepGCNLayer(
+            conv=GENConv(16, 16),
+            norm=LayerNorm(16),
+            act=keras.layers.ReLU(),
+            block="res+",  # pre-activation residual block (DeeperGCN)
+        )
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

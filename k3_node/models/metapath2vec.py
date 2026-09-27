@@ -29,6 +29,22 @@ class MetaPath2Vec(keras.layers.Layer):
             (default: :obj:`1`)
         num_nodes_dict (Dict[str, int], optional): The number of nodes for each
             node type. (default: :obj:`None`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MetaPath2Vec
+
+        edge_index_dict = {
+            ("author", "writes", "paper"): np.array([[0, 1, 1], [0, 0, 1]]),
+            ("paper", "written_by", "author"): np.array([[0, 0, 1], [0, 1, 1]]),
+        }
+        metapath = [("author", "writes", "paper"), ("paper", "written_by", "author")]
+        model = MetaPath2Vec(edge_index_dict, embedding_dim=16, metapath=metapath,
+                             walk_length=2, context_size=2, walks_per_node=2)
+        print(tuple(model("author").shape))  # (2, 16): embeddings of all authors
+        print(tuple(model("paper").shape))  # (2, 16)
+        ```
     """
     def __init__(
         self,

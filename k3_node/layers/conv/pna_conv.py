@@ -10,6 +10,21 @@ class PNAConv(MessagePassing):
     r"""The Principal Neighbourhood Aggregation graph convolutional operator
     from the `"Principal Neighbourhood Aggregation for Graph Nets"
     <https://arxiv.org/abs/2004.05718>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import PNAConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        deg = np.array([0, 2, 4, 3, 1])  # in-degree histogram of the training graphs
+        layer = PNAConv(in_channels=8, out_channels=16, aggregators=["mean", "max", "min", "std"],
+                        scalers=["identity", "amplification"], deg=deg)
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

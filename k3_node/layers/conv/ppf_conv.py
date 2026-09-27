@@ -40,6 +40,23 @@ class PPFConv(MessagePassing):
     r"""The PPFNet graph convolutional operator from the
     `"PPFNet: Global Context Aware Local Features for Robust 3D Point
     Matching" <https://arxiv.org/abs/1802.02669>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import PPFConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        pos = np.random.rand(10, 3).astype("float32")  # 3D node positions
+        normal = np.random.rand(10, 3).astype("float32")  # surface normals
+
+        local_nn = keras.Sequential([keras.layers.Dense(16, activation="relu"), keras.layers.Dense(16)])
+        layer = PPFConv(local_nn=local_nn)
+        out = layer(x, pos, normal, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

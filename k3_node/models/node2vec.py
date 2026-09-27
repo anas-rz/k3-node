@@ -26,6 +26,20 @@ class Node2Vec(keras.layers.Layer):
         num_negative_samples (int, optional): The number of negative samples to
             use for each positive sample. (default: :obj:`1`)
         num_nodes (int, optional): The number of nodes. (default: :obj:`None`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import Node2Vec
+
+        edge_index = np.array([[0, 1, 2, 3, 0, 2], [1, 2, 3, 0, 2, 0]])
+        model = Node2Vec(edge_index, embedding_dim=16, walk_length=4, context_size=3, walks_per_node=2)
+        print(tuple(model().shape))  # (4, 16): embeddings of all nodes
+
+        batch = np.array([0, 1])
+        loss = model.loss(model.pos_sample(batch), model.neg_sample(batch))  # skip-gram loss on random walks
+        print(tuple(loss.shape))  # (): a scalar
+        ```
     """
     def __init__(
         self,

@@ -14,6 +14,22 @@ class GroupAddRev(keras.layers.Layer):
         split_dim (int, optional): The dimension across which to split groups.
             (default: :obj:`-1`)
         num_groups (int, optional): The number of groups. (default: :obj:`None`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import GCNConv
+        from k3_node.models import GroupAddRev
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        x = np.random.rand(10, 32).astype("float32")
+        model = GroupAddRev([GCNConv(16, 16), GCNConv(16, 16)])  # channels are split into 2 groups
+        out = model(x, edge_index=edge_index)
+        print(tuple(out.shape))  # (10, 32)
+        print(tuple(model.inverse(out, edge_index=edge_index).shape))  # (10, 32): reversible: recover the input
+        ```
     """
     def __init__(
         self,

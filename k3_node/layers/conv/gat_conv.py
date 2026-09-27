@@ -36,6 +36,19 @@ class GATConv(MessagePassing):
             to the source and target node features. (default: ``False``)
         residual: If set to :obj:`True`, will compute residual connections.
             (default: ``False``)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import GATConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        layer = GATConv(in_channels=8, out_channels=16, heads=2)
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 32)
+        ```
     """
 
     def __init__(
@@ -212,5 +225,19 @@ class GATConv(MessagePassing):
 
 
 class FusedGATConv(GATConv):
-    r"""The fused graph attentional operator."""
+    r"""The fused graph attentional operator.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import FusedGATConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        layer = FusedGATConv(in_channels=8, out_channels=16)
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
+    """
     pass

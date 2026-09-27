@@ -43,6 +43,17 @@ class Linear(layers.Layer):
             or :obj:`None`). (default: :obj:`None`)
         bias_initializer (str, optional): The initializer for the bias vector
             (:obj:`"zeros"` or :obj:`None`). (default: :obj:`None`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import Linear
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+
+        layer = Linear(in_channels=8, out_channels=16)
+        print(tuple(layer(x).shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,
@@ -137,6 +148,19 @@ class HeteroLinear(layers.Layer):
             or :obj:`None`). (default: :obj:`None`)
         bias_initializer (str, optional): The initializer for the bias vector
             (:obj:`"zeros"` or :obj:`None`). (default: :obj:`None`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import HeteroLinear
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        node_type = np.random.randint(0, 3, size=(10,))
+
+        layer = HeteroLinear(in_channels=8, out_channels=16, num_types=3)  # separate weights per type
+        out = layer(x, node_type)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,
@@ -242,6 +266,17 @@ class HeteroDictLinear(layers.Layer):
         out_channels (int): Size of each output sample.
         types (List[Any], optional): The keys of the input dictionary.
             (default: :obj:`None`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import HeteroDictLinear
+
+        x_dict = {"author": np.random.rand(3, 8).astype("float32"), "paper": np.random.rand(4, 12).astype("float32")}
+        layer = HeteroDictLinear(in_channels={"author": 8, "paper": 12}, out_channels=16)
+        out_dict = layer(x_dict)
+        print(tuple(out_dict["author"].shape), tuple(out_dict["paper"].shape))  # (3, 16) (4, 16)
+        ```
     """
     def __init__(
         self,

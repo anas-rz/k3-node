@@ -69,6 +69,21 @@ class Polynormer(keras.layers.Layer):
             (default: :obj:`True`)
         local_attn (bool): Whether use local attention (GATConv vs GCNConv).
             (default: :obj:`False`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import Polynormer
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        batch = np.repeat([0, 1], 5)  # two graphs with 5 nodes each
+        model = Polynormer(in_channels=8, hidden_channels=32, out_channels=4,
+                           local_layers=2, global_layers=1, heads=2)
+        out = model(x, edge_index, batch)
+        print(tuple(out.shape))  # (10, 4)
+        ```
     """
 
     def __init__(

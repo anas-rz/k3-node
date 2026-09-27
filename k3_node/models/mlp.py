@@ -74,6 +74,19 @@ class MLP(keras.Model):
             well. (default: `True`)
         bias (bool or List[bool], optional): If set to `False`, the module
             will not learn additive biases. (default: `True`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MLP
+
+        x = np.random.rand(10, 16).astype("float32")
+        mlp = MLP([16, 32, 32, 4])  # channel sizes: input, hidden, hidden, output
+        print(tuple(mlp(x).shape))  # (10, 4)
+
+        mlp = MLP(in_channels=16, hidden_channels=32, out_channels=4, num_layers=3, dropout=0.1)
+        print(tuple(mlp(x).shape))  # (10, 4)
+        ```
     """
     def __init__(
         self,

@@ -4,7 +4,21 @@ from .linear import Linear
 
 
 class DenseGraphConv(layers.Layer):
-    r"""See :class:`torch_geometric.nn.conv.GraphConv`."""
+    r"""See :class:`torch_geometric.nn.conv.GraphConv`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import DenseGraphConv
+
+        x = np.random.rand(2, 10, 8).astype("float32")  # batch of 2 graphs, 10 nodes, 8 features
+        adj = (np.random.rand(2, 10, 10) > 0.7).astype("float32")  # dense adjacency matrices
+
+        layer = DenseGraphConv(in_channels=8, out_channels=16)
+        out = layer(x, adj)
+        print(tuple(out.shape))  # (2, 10, 16)
+        ```
+    """
     def __init__(
         self,
         in_channels: int,

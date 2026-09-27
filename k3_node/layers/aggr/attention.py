@@ -8,6 +8,20 @@ class AttentionalAggregation(Aggregation):
     r"""The soft attention aggregation layer from the `"Graph Matching Networks
     for Learning the Similarity of Graph Structured Objects"
     <https://arxiv.org/abs/1904.12787>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import AttentionalAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = AttentionalAggregation(gate_nn=keras.layers.Dense(1), nn=keras.layers.Dense(16))
+        out = aggr(x, index=index, dim_size=2)  # attention-weighted sum per set
+        print(tuple(out.shape))  # (2, 16)
+        ```
     """
 
     def __init__(

@@ -8,7 +8,20 @@ def aggregation_resolver(
     *args,
     **kwargs,
 ) -> Aggregation:
-    r"""Resolves an aggregation string or instance to an `Aggregation` object."""
+    r"""Resolves an aggregation string or instance to an `Aggregation` object.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import aggregation_resolver
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = aggregation_resolver("mean")  # build an Aggregation from its name
+        print(type(aggr).__name__, tuple(aggr(x, index=index, dim_size=2).shape))  # MeanAggregation (2, 8)
+        ```
+    """
     if isinstance(query, Aggregation):
         return query
 

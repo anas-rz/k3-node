@@ -15,6 +15,20 @@ from k3_node.layers.conv.utils import (
 class PointTransformerConv(MessagePassing):
     r"""The Point Transformer layer from the `"Point Transformer"
     <https://arxiv.org/abs/2012.09164>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import PointTransformerConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        pos = np.random.rand(10, 3).astype("float32")  # 3D node positions
+
+        layer = PointTransformerConv(in_channels=8, out_channels=16)
+        out = layer(x, pos, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

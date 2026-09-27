@@ -36,42 +36,30 @@ class MetaLayer(keras.layers.Layer):
             its edge features and its current global features.
             (default: :obj:`None`)
 
-    Example::
-
-        from keras import layers
+    Example:
+        ```python
+        import numpy as np
+        import keras
         from k3_node.models import MetaLayer
-        from k3_node.layers.conv.utils import scatter
 
-        class EdgeModel(layers.Layer):
-            def __init__(self):
-                super().__init__()
-                self.mlp = layers.Dense(5)
-            def call(self, src, dst, edge_attr, u, batch):
-                out = ops.concatenate([src, dst, edge_attr, u[batch]], axis=1)
-                return self.mlp(out)
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        edge_attr = np.random.rand(30, 4).astype("float32")
 
-        class NodeModel(layers.Layer):
-            def __init__(self):
-                super().__init__()
-                self.mlp1 = layers.Dense(10)
-                self.mlp2 = layers.Dense(10)
-            def call(self, x, edge_index, edge_attr, u, batch):
-                row, col = edge_index[0], edge_index[1]
-                out = ops.concatenate([x[row], edge_attr], axis=1)
-                out = scatter(self.mlp1(out), col, dim_size=ops.shape(x)[0])
-                out = ops.concatenate([x, out, u[batch]], axis=1)
-                return self.mlp2(out)
+        edge_mlp = keras.layers.Dense(8)
+        node_mlp = keras.layers.Dense(8)
 
-        class GlobalModel(layers.Layer):
-            def __init__(self):
-                super().__init__()
-                self.mlp = layers.Dense(20)
-            def call(self, x, edge_index, edge_attr, u, batch):
-                out = ops.concatenate([u, scatter(x, batch)], axis=1)
-                return self.mlp(out)
+        def edge_model(src, dst, edge_attr, u, batch):  # update every edge from its endpoints
+            return edge_mlp(keras.ops.concatenate([src, dst, edge_attr], axis=-1))
 
-        op = MetaLayer(EdgeModel(), NodeModel(), GlobalModel())
-        x, edge_attr, u = op(x, edge_index, edge_attr, u, batch)
+        def node_model(x, edge_index, edge_attr, u, batch):  # update nodes from incoming edges
+            incoming = keras.ops.segment_sum(edge_attr, edge_index[1], num_segments=10)
+            return node_mlp(keras.ops.concatenate([x, incoming], axis=-1))
+
+        model = MetaLayer(edge_model=edge_model, node_model=node_model)
+        x_out, edge_attr_out, u_out = model(x, edge_index, edge_attr=edge_attr)
+        print(tuple(x_out.shape), tuple(edge_attr_out.shape))  # (10, 8) (30, 8)
+        ```
     """
 
     def __init__(

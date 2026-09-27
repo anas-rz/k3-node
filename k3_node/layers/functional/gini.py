@@ -19,6 +19,15 @@ def gini(w):
 
     Args:
         w: A two-dimensional tensor.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import gini
+
+        w = np.random.rand(16, 8).astype("float32")  # e.g. a weight matrix
+        print(tuple(gini(w).shape))  # (): scalar sparsity measure
+        ```
     """
     num_rows = ops.shape(w)[0]
     n = ops.shape(w)[-1]

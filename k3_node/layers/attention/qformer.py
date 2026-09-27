@@ -2,6 +2,19 @@ from keras import layers, ops
 
 
 class QFormerEncoderLayer(layers.Layer):
+    """Layer ``QFormerEncoderLayer``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import QFormerEncoderLayer
+
+        x = np.random.rand(1, 10, 8).astype("float32")  # [batch, num_nodes, channels]
+
+        layer = QFormerEncoderLayer(input_dim=8, hidden_dim=16, num_heads=2)
+        print(tuple(layer(x).shape))  # (1, 10, 8)
+        ```
+    """
     def __init__(
         self,
         input_dim,
@@ -67,6 +80,19 @@ class QFormerEncoderLayer(layers.Layer):
 
 
 class QFormer(layers.Layer):
+    """Layer ``QFormer``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import QFormer
+
+        x = np.random.rand(1, 10, 8).astype("float32")  # [batch, num_nodes, channels]
+
+        model = QFormer(input_dim=8, hidden_dim=16, output_dim=4, num_heads=2, num_layers=1)
+        print(tuple(model(x).shape))  # (1, 10, 4)
+        ```
+    """
     def __init__(
         self,
         input_dim,

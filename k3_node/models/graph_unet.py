@@ -27,6 +27,18 @@ class GraphUNet(keras.Model):
             summation. (default: :obj:`True`)
         act (str or Callable, optional): The nonlinearity to use.
             (default: :obj:`"relu"`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GraphUNet
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        model = GraphUNet(in_channels=8, hidden_channels=32, out_channels=4, depth=2, pool_ratios=0.5)
+        print(tuple(model(x, edge_index).shape))  # (10, 4): pools down, then unpools back to every node
+        ```
     """
     def __init__(
         self,

@@ -9,6 +9,20 @@ class DegreeScalerAggregation(Aggregation):
     r"""Combines one or more aggregators and transforms its output with one or
     more scalers as introduced in the `"Principal Neighbourhood Aggregation for
     Graph Nets" <https://arxiv.org/abs/2004.05718>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import DegreeScalerAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        deg = np.array([0, 3, 5, 2])  # in-degree histogram of the training graphs
+        aggr = DegreeScalerAggregation(aggr=["mean", "max"], scaler=["identity", "amplification"], deg=deg)
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 32): 2 aggregators x 2 scalers x 8 features
+        ```
     """
 
     def __init__(

@@ -9,6 +9,20 @@ class FAConv(MessagePassing):
     r"""The Frequency Adaptive Graph Convolution operator from the
     `"Beyond Low-Frequency Information in Graph Convolutional Networks"
     <https://arxiv.org/abs/2101.00797>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import FAConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        x_0 = x  # initial node representations
+        layer = FAConv(channels=8, eps=0.1)
+        out = layer(x, x_0, edge_index)
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     def __init__(
         self,

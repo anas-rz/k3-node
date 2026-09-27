@@ -14,6 +14,19 @@ class FeaStConv(MessagePassing):
     r"""The (fault-tolerant) feature-steered graph convolution operator from
     the `"FeaStNet: Feature-Steered Graph Convolutions for 3D Shape Analysis"
     <https://arxiv.org/abs/1706.05206>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import FeaStConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        layer = FeaStConv(in_channels=8, out_channels=16, heads=2)
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

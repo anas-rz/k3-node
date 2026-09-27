@@ -11,7 +11,21 @@ from k3_node.models.mlp import MLP
 
 
 class SparseLinear(keras.layers.Layer):
-    r"""A sparse linear transformation operator computing :math:`\mathbf{A}\mathbf{W} + \mathbf{b}`."""
+    r"""A sparse linear transformation operator computing :math:`\mathbf{A}\mathbf{W} + \mathbf{b}`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import SparseLinear
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        layer = SparseLinear(in_channels=10, out_channels=16)  # in_channels = number of nodes
+        out = layer(edge_index)  # multiplies the adjacency matrix with a learned weight matrix
+        print(tuple(out.shape))  # (10, 16)
+        ```
+    """
     def __init__(self, in_channels: int, out_channels: int, bias: bool = True, **kwargs):
         super().__init__(**kwargs)
         self.in_channels = in_channels
@@ -72,6 +86,20 @@ class LINKX(keras.Model):
         num_node_layers (int, optional): Number of layers of
             :math:`\textrm{MLP}_{\mathbf{X}}`. (default: :obj:`1`)
         dropout (float, optional): Dropout probability. (default: :obj:`0.0`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import LINKX
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        # LINKX learns from node features and adjacency separately, which suits heterophilic graphs
+        model = LINKX(num_nodes=10, in_channels=8, hidden_channels=32, out_channels=4, num_layers=2)
+        out = model(x, edge_index)
+        print(tuple(out.shape))  # (10, 4)
+        ```
     """
     def __init__(
         self,

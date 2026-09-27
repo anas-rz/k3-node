@@ -4,7 +4,17 @@ import numpy as np
 
 
 def ptr2index(ptr):
-    r"""Converts a pointer tensor into an index tensor."""
+    r"""Converts a pointer tensor into an index tensor.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import ptr2index
+
+        ptr = np.array([0, 3, 5])  # CSR pointer: set 0 has 3 elements, set 1 has 2
+        print(tuple(ptr2index(ptr).shape))  # (5,): set id of every element
+        ```
+    """
     ptr_np = ops.convert_to_numpy(ptr).astype(np.int64)
     counts = ptr_np[1:] - ptr_np[:-1]
     index_np = np.repeat(np.arange(len(counts), dtype=np.int64), counts)
@@ -20,6 +30,18 @@ def to_dense_batch(
 ) -> Tuple[any, any]:
     r"""Transforms a batched feature tensor into a dense representation
     of shape `(batch_size, max_nodes, *dims)`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import to_dense_batch
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        x_dense, mask = to_dense_batch(x, batch)  # [num_graphs, max_nodes, features] + validity mask
+        print(tuple(x_dense.shape), tuple(mask.shape))  # (2, 5, 8) (2, 5)
+        ```
     """
     from k3_node.layers.conv.utils import is_tracing
 
@@ -121,6 +143,9 @@ class Aggregation(layers.Layer):
         max_num_elements: Optional[int] = None,
         **kwargs,
     ):
+        # Plain NumPy inputs cannot be mixed with backend tensors (e.g. `ndarray - torch.Tensor`).
+        if isinstance(x, np.ndarray):
+            x = ops.convert_to_tensor(x)
         dim_total = len(x.shape) if hasattr(x, "shape") and x.shape is not None else len(ops.shape(x))
         if dim >= dim_total or dim < -dim_total:
             raise ValueError(

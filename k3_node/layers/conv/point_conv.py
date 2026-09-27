@@ -9,6 +9,22 @@ class PointNetConv(MessagePassing):
     r"""The PointNet set abstraction layer from the `"PointNet++: Deep
     Hierarchical Feature Learning on Point Sets in a Metric Space"
     <https://arxiv.org/abs/1706.02413>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import PointNetConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        pos = np.random.rand(10, 3).astype("float32")  # 3D node positions
+
+        local_nn = keras.Sequential([keras.layers.Dense(16, activation="relu"), keras.layers.Dense(16)])
+        layer = PointNetConv(local_nn=local_nn)
+        out = layer(x, pos, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

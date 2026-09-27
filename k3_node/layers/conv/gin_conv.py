@@ -16,6 +16,21 @@ class GINConv(MessagePassing):
         eps: (Initial) :math:`\epsilon`-value. (default: ``0.0``)
         train_eps: If set to :obj:`True`, :math:`\epsilon` will be a learnable
             parameter. (default: ``False``)
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import GINConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        mlp = keras.Sequential([keras.layers.Dense(16, activation="relu"), keras.layers.Dense(16)])
+        layer = GINConv(mlp)
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
 
     def __init__(
@@ -114,6 +129,22 @@ class GINEConv(MessagePassing):
         train_eps: If set to :obj:`True`, :math:`\epsilon` will be a learnable
             parameter. (default: ``False``)
         edge_dim: Edge feature dimensionality. (default: :obj:`None`)
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import GINEConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        edge_attr = np.random.rand(30, 3).astype("float32")  # 3 features per edge
+
+        mlp = keras.Sequential([keras.layers.Dense(16, activation="relu"), keras.layers.Dense(16)])
+        layer = GINEConv(mlp, edge_dim=3)
+        out = layer(x, edge_index, edge_attr)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
 
     def __init__(

@@ -10,6 +10,20 @@ class RGCNConv(MessagePassing):
     r"""The relational graph convolutional operator from the
     `"Modeling Relational Data with Graph Convolutional Networks"
     <https://arxiv.org/abs/1703.06103>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import RGCNConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        edge_type = np.random.randint(0, 3, size=(30,))  # relation type of each edge
+
+        layer = RGCNConv(in_channels=8, out_channels=16, num_relations=3)
+        out = layer(x, edge_index, edge_type)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,
@@ -174,7 +188,22 @@ class RGCNConv(MessagePassing):
 
 
 class FastRGCNConv(RGCNConv):
-    r"""See :class:`RGCNConv`."""
+    r"""See :class:`RGCNConv`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import FastRGCNConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        edge_type = np.random.randint(0, 3, size=(30,))  # relation type of each edge
+
+        layer = FastRGCNConv(in_channels=8, out_channels=16, num_relations=3)
+        out = layer(x, edge_index, edge_type)
+        print(tuple(out.shape))  # (10, 16)
+        ```
+    """
     def call(self, inputs, edge_index=None, edge_type=None, **kwargs):
         if edge_index is None:
             if isinstance(inputs, (list, tuple)):
@@ -245,7 +274,22 @@ class FastRGCNConv(RGCNConv):
 
 
 class CuGraphRGCNConv(RGCNConv):
-    r"""Fallback for CuGraphRGCNConv."""
+    r"""Fallback for CuGraphRGCNConv.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import CuGraphRGCNConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        edge_type = np.random.randint(0, 3, size=(30,))  # relation type of each edge
+
+        layer = CuGraphRGCNConv(in_channels=8, out_channels=16, num_relations=3)
+        out = layer(x, edge_index, edge_type)
+        print(tuple(out.shape))  # (10, 16)
+        ```
+    """
     def __init__(
         self,
         in_channels: int,

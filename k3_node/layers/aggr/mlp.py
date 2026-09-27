@@ -8,6 +8,19 @@ class MLPAggregation(Aggregation):
     r"""Performs MLP aggregation in which the elements to aggregate are
     flattened into a single vectorial representation, and are then processed by
     a Multi-Layer Perceptron (MLP).
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import MLPAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = MLPAggregation(in_channels=8, out_channels=16, max_num_elements=5)
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 16)
+        ```
     """
 
     def __init__(

@@ -5,7 +5,21 @@ from .base import Aggregation
 
 
 class SumAggregation(Aggregation):
-    r"""An aggregation operator that sums up features across a set of elements."""
+    r"""An aggregation operator that sums up features across a set of elements.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import SumAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = SumAggregation()
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
 
     def call(
         self,
@@ -20,7 +34,21 @@ class SumAggregation(Aggregation):
 
 
 class MeanAggregation(Aggregation):
-    r"""An aggregation operator that averages features across a set of elements."""
+    r"""An aggregation operator that averages features across a set of elements.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import MeanAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = MeanAggregation()
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
 
     def call(
         self,
@@ -35,7 +63,21 @@ class MeanAggregation(Aggregation):
 
 
 class MaxAggregation(Aggregation):
-    r"""An aggregation operator that takes the feature-wise maximum across a set of elements."""
+    r"""An aggregation operator that takes the feature-wise maximum across a set of elements.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import MaxAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = MaxAggregation()
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
 
     def call(
         self,
@@ -50,7 +92,21 @@ class MaxAggregation(Aggregation):
 
 
 class MinAggregation(Aggregation):
-    r"""An aggregation operator that takes the feature-wise minimum across a set of elements."""
+    r"""An aggregation operator that takes the feature-wise minimum across a set of elements.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import MinAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = MinAggregation()
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
 
     def call(
         self,
@@ -65,7 +121,21 @@ class MinAggregation(Aggregation):
 
 
 class MulAggregation(Aggregation):
-    r"""An aggregation operator that multiplies features across a set of elements."""
+    r"""An aggregation operator that multiplies features across a set of elements.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import MulAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = MulAggregation()
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
 
     def call(
         self,
@@ -81,7 +151,21 @@ class MulAggregation(Aggregation):
 
 
 class VarAggregation(Aggregation):
-    r"""An aggregation operator that takes the feature-wise variance across a set of elements."""
+    r"""An aggregation operator that takes the feature-wise variance across a set of elements.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import VarAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = VarAggregation()
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
 
     def __init__(self, semi_grad: bool = False, **kwargs):
         super().__init__(**kwargs)
@@ -108,7 +192,21 @@ class VarAggregation(Aggregation):
 
 
 class StdAggregation(Aggregation):
-    r"""An aggregation operator that takes the feature-wise standard deviation across a set of elements."""
+    r"""An aggregation operator that takes the feature-wise standard deviation across a set of elements.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import StdAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = StdAggregation()
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
 
     def __init__(self, semi_grad: bool = False, **kwargs):
         super().__init__(**kwargs)
@@ -134,7 +232,21 @@ class StdAggregation(Aggregation):
 
 
 class SoftmaxAggregation(Aggregation):
-    r"""The softmax aggregation operator based on a temperature term."""
+    r"""The softmax aggregation operator based on a temperature term.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import SoftmaxAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = SoftmaxAggregation(learn=True)
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
 
     def __init__(
         self,
@@ -216,7 +328,21 @@ class SoftmaxAggregation(Aggregation):
 
 
 class PowerMeanAggregation(Aggregation):
-    r"""The powermean aggregation operator based on a power term."""
+    r"""The powermean aggregation operator based on a power term.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import PowerMeanAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = PowerMeanAggregation(learn=True)
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
 
     def __init__(
         self,

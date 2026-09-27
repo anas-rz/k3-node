@@ -15,6 +15,21 @@ class EdgePooling(layers.Layer):
     Contraction" <https://graphreason.github.io/papers/17.pdf>`__ and
     `"Edge Contraction Pooling for Graph Neural Networks"
     <https://arxiv.org/abs/1905.10990>`__ papers.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import EdgePooling
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        layer = EdgePooling(in_channels=8)
+        x_pool, edge_index_pool, batch_pool, unpool_info = layer(x, edge_index, batch)
+        # The number of clusters depends on the learned edge scores
+        print(x_pool.shape[0] <= 10, x_pool.shape[1])  # True 8: fewer nodes, same features
+        ```
     """
     def __init__(
         self,

@@ -10,6 +10,20 @@ from k3_node.layers.aggr import SoftmaxAggregation, PowerMeanAggregation
 class GENConv(MessagePassing):
     r"""The generalized graph convolution operator from the `"DeeperGCN: All
     You Need to Train Deeper GCNs" <https://arxiv.org/abs/2006.07739>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import GENConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        edge_attr = np.random.rand(30, 3).astype("float32")  # 3 features per edge
+
+        layer = GENConv(in_channels=8, out_channels=16, edge_dim=3)
+        out = layer(x, edge_index, edge_attr)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

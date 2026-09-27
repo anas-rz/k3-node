@@ -8,6 +8,25 @@ class PointGNNConv(MessagePassing):
     r"""The PointGNN graph convolutional operator from the
     `"Point-GNN: Graph Neural Network for 3D Object Detection in a Point Cloud"
     <https://arxiv.org/abs/2003.01251>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import PointGNNConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        pos = np.random.rand(10, 3).astype("float32")  # 3D node positions
+
+        layer = PointGNNConv(
+            mlp_h=keras.layers.Dense(3),  # predicts a position offset per node
+            mlp_f=keras.layers.Dense(16),  # edge feature network
+            mlp_g=keras.layers.Dense(8),  # node update network (output size = input features)
+        )
+        out = layer(x, pos, edge_index)
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     def __init__(
         self,

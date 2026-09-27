@@ -19,6 +19,19 @@ class DenseGCNConv(layers.Layer):
             (default: :obj:`False`)
         bias (bool, optional): If set to :obj:`False`, the layer will not learn
             an additive bias. (default: :obj:`True`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import DenseGCNConv
+
+        x = np.random.rand(2, 10, 8).astype("float32")  # batch of 2 graphs, 10 nodes, 8 features
+        adj = (np.random.rand(2, 10, 10) > 0.7).astype("float32")  # dense adjacency matrices
+
+        layer = DenseGCNConv(in_channels=8, out_channels=16)
+        out = layer(x, adj)
+        print(tuple(out.shape))  # (2, 10, 16)
+        ```
     """
     def __init__(
         self,

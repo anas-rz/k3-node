@@ -11,6 +11,19 @@ class LGConv(MessagePassing):
 
     Args:
         normalize: Whether to apply symmetric normalization. (default: ``True``)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import LGConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        layer = LGConv()
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
 
     def __init__(self, normalize: bool = True, **kwargs):

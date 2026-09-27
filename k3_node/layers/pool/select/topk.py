@@ -1,3 +1,4 @@
+import numpy as np
 from typing import Callable, Optional, Union
 from keras import initializers, layers, ops
 
@@ -14,7 +15,24 @@ def topk(
     min_score: Optional[float] = None,
     tol: float = 1e-7,
 ):
-    r"""Selects top-k items according to score and batch assignment."""
+    r"""Selects top-k items according to score and batch assignment.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import topk
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        score = np.random.rand(10).astype("float32")
+        perm = topk(score, ratio=0.5, batch=batch)  # indices of the top 50% nodes per graph
+        print(tuple(perm.shape))  # (6,)
+        ```
+    """
+    # Plain NumPy inputs cannot be mixed with backend tensors; convert them first.
+    x = ops.convert_to_tensor(x) if isinstance(x, np.ndarray) else x
+    batch = ops.convert_to_tensor(batch) if isinstance(batch, np.ndarray) else batch
     if is_tracing(x) or is_tracing(batch):
         return ops.arange(ops.shape(x)[0], dtype="int32")
 
@@ -73,7 +91,22 @@ def topk(
 
 
 class SelectTopK(Select):
-    r"""Selects the top-:math:`k` nodes with highest projection scores."""
+    r"""Selects the top-:math:`k` nodes with highest projection scores.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import SelectTopK
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        select = SelectTopK(in_channels=8, ratio=0.5)
+        out = select(x, batch)
+        print(tuple(out.node_index.shape))  # (6,): indices of the kept nodes
+        print(tuple(out.weight.shape))  # (6,): their scores
+        ```
+    """
     def __init__(
         self,
         in_channels: int,

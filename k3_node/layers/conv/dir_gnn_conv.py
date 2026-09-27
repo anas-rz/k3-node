@@ -8,6 +8,20 @@ from k3_node.layers.conv.message_passing import MessagePassing
 class DirGNNConv(Layer):
     r"""A directed graph neural network operator from the
     `"Directed Graph Neural Networks" <https://arxiv.org/abs/2301.07663>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import DirGNNConv, GCNConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        # Runs the wrapped convolution on incoming and outgoing edges separately
+        layer = DirGNNConv(GCNConv(in_channels=8, out_channels=16))
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

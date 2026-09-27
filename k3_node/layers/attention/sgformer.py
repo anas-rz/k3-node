@@ -17,6 +17,17 @@ class SGFormerAttention(keras.layers.Layer):
             (default: :obj:`64`)
         qkv_bias (bool, optional): If specified, add bias to query, key
             and value in the self attention. (default: :obj:`False`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import SGFormerAttention
+
+        x = np.random.rand(1, 10, 8).astype("float32")  # [batch, num_nodes, channels]
+
+        attn = SGFormerAttention(channels=8, heads=2)
+        print(tuple(attn(x).shape))  # (1, 10, 64)
+        ```
     """
     def __init__(
         self,

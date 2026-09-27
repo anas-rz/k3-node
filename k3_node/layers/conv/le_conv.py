@@ -14,6 +14,19 @@ class LEConv(MessagePassing):
         out_channels: Size of each output sample.
         bias: If set to :obj:`False`, the layer will not learn an additive bias.
             (default: ``True``)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import LEConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        layer = LEConv(in_channels=8, out_channels=16)
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
 
     def __init__(

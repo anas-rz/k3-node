@@ -24,6 +24,19 @@ class LayerNorm(layers.Layer):
             is used, each graph will be considered as an element to be
             normalized. If `"node"` is used, each node will be considered as
             an element to be normalized. (default: :obj:`"graph"`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import LayerNorm
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        layer = LayerNorm(in_channels=8, mode="graph")
+        out = layer(x, batch)  # normalizes each graph separately
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     def __init__(
         self,
@@ -135,6 +148,19 @@ class HeteroLayerNorm(layers.Layer):
             (default: :obj:`True`)
         mode (str, optional): The normalization mode to use for layer
             normalization (:obj:`"node"`). (default: :obj:`"node"`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import HeteroLayerNorm
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        node_type = np.random.randint(0, 3, size=(10,))  # type of each node
+
+        layer = HeteroLayerNorm(in_channels=8, num_types=3)
+        out = layer(x, node_type)  # separate statistics per node type
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     def __init__(
         self,

@@ -10,6 +10,19 @@ class ARMAConv(MessagePassing):
     r"""The ARMA graph convolutional operator from the `"Graph Neural Networks
     with Convolutional ARMA Filters" <https://arxiv.org/abs/1901.01343>`_
     paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import ARMAConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        layer = ARMAConv(in_channels=8, out_channels=16, num_stacks=1, num_layers=1)
+        out = layer(x, edge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

@@ -20,6 +20,19 @@ class ARLinkPredictor(keras.layers.Layer):
         dropout (float): Dropout probability. (default: `0.0`)
         attract_ratio (float): Ratio to use for attract component. Must be
             between 0 and 1. (default: `0.5`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import ARLinkPredictor
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        model = ARLinkPredictor(in_channels=8, hidden_channels=16, num_layers=2)
+        scores = model(x, edge_index)  # one link score per edge in edge_index
+        print(tuple(scores.shape))  # (30,)
+        ```
     """
     def __init__(self, in_channels, hidden_channels, out_channels=None,
                 num_layers=2, dropout=0.0, attract_ratio=0.5, **kwargs):

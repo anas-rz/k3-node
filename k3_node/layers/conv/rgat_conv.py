@@ -10,6 +10,20 @@ from k3_node.layers.conv.utils import softmax
 class RGATConv(MessagePassing):
     r"""The relational graph attentional operator from the
     `"Relational Graph Attention Networks" <https://arxiv.org/abs/1904.05811>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import RGATConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        edge_type = np.random.randint(0, 3, size=(30,))  # relation type of each edge
+
+        layer = RGATConv(in_channels=8, out_channels=16, num_relations=3)
+        out = layer(x, edge_index, edge_type)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

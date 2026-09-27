@@ -31,6 +31,18 @@ class BatchNorm(layers.Layer):
             with only a single element will work as during in evaluation.
             That is the running mean and variance will be used.
             Requires :obj:`track_running_stats=True`. (default: :obj:`False`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import BatchNorm
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+
+        layer = BatchNorm(in_channels=8)
+        out = layer(x, training=True)  # uses batch statistics while training
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     def __init__(
         self,
@@ -180,6 +192,19 @@ class HeteroBatchNorm(layers.Layer):
             :obj:`False`, this module does not track such statistics and always
             uses batch statistics in both training and eval modes.
             (default: :obj:`True`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import HeteroBatchNorm
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        node_type = np.random.randint(0, 3, size=(10,))  # type of each node
+
+        layer = HeteroBatchNorm(in_channels=8, num_types=3)
+        out = layer(x, node_type, training=True)  # separate statistics per node type
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     def __init__(
         self,

@@ -10,6 +10,19 @@ class SetTransformerAggregation(Aggregation):
     aggregate are processed by multi-head attention blocks, as described in
     the `"Graph Neural Networks with Adaptive Readouts"
     <https://arxiv.org/abs/2211.04952>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import SetTransformerAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = SetTransformerAggregation(channels=8, num_seed_points=2)
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 16)
+        ```
     """
 
     def __init__(

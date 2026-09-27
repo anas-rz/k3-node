@@ -24,6 +24,19 @@ class LabelPropagation(MessagePassing):
     Args:
         num_layers (int): The number of propagations.
         alpha (float): The :math:`\alpha` coefficient.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import LabelPropagation
+
+        y = np.array([0, 1, 2, 0, 1, 2])  # node labels
+        train_mask = np.array([True, True, True, False, False, False])  # labels known for 3 nodes
+        edge_index = np.array([[0, 1, 2, 3, 4, 5], [3, 4, 5, 0, 1, 2]])
+        model = LabelPropagation(num_layers=3, alpha=0.9)
+        out = model(y, edge_index, train_mask)  # soft labels for every node
+        print(tuple(out.shape))  # (6, 3)
+        ```
     """
     def __init__(self, num_layers: int, alpha: float, **kwargs):
         super().__init__(aggr='sum', **kwargs)

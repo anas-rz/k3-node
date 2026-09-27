@@ -61,6 +61,21 @@ class SAGPooling(layers.Layer):
     Pooling" <https://arxiv.org/abs/1904.08082>`_ and `"Understanding
     Attention and Generalization in Graph Neural Networks"
     <https://arxiv.org/abs/1905.02850>`_ papers.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import SAGPooling
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        layer = SAGPooling(in_channels=8, ratio=0.5)  # keep half of the nodes of each graph
+        out = layer(x, edge_index, batch=batch)
+        x_pool, edge_index_pool, edge_attr_pool, batch_pool = out[0], out[1], out[2], out[3]
+        print(tuple(x_pool.shape))  # (6, 8)
+        ```
     """
     def __init__(
         self,

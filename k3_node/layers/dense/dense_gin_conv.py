@@ -16,6 +16,20 @@ class DenseGINConv(layers.Layer):
         eps (float, optional): (Initial) :math:`\epsilon`-value. (default: :obj:`0.0`)
         train_eps (bool, optional): If set to :obj:`True`, :math:`\epsilon` will
             be a trainable parameter. (default: :obj:`False`)
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.layers import DenseGINConv
+
+        x = np.random.rand(2, 10, 8).astype("float32")  # batch of 2 graphs, 10 nodes, 8 features
+        adj = (np.random.rand(2, 10, 10) > 0.7).astype("float32")  # dense adjacency matrices
+
+        layer = DenseGINConv(keras.Sequential([keras.layers.Dense(16, activation="relu"), keras.layers.Dense(16)]))
+        out = layer(x, adj)
+        print(tuple(out.shape))  # (2, 10, 16)
+        ```
     """
     def __init__(
         self,

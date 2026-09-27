@@ -8,6 +8,17 @@ from k3_node.layers.aggr import MeanAggregation
 
 
 class TimeEncoder(keras.layers.Layer):
+    """Layer ``TimeEncoder``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import TimeEncoder
+
+        t = np.array([1.0, 2.0, 3.0], dtype="float32")  # time differences
+        print(tuple(TimeEncoder(out_channels=16)(t).shape))  # (3, 16)
+        ```
+    """
     def __init__(self, out_channels: int, **kwargs):
         super().__init__(**kwargs)
         self.out_channels = out_channels
@@ -25,6 +36,27 @@ class TimeEncoder(keras.layers.Layer):
 
 
 class IdentityMessage(keras.layers.Layer):
+    """Layer ``IdentityMessage``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import IdentityMessage, LastAggregator, TGNMemory
+
+        memory = TGNMemory(
+            num_nodes=5, raw_msg_dim=8, memory_dim=16, time_dim=16,
+            message_module=IdentityMessage(raw_msg_dim=8, memory_dim=16, time_dim=16),
+            aggregator_module=LastAggregator(),
+        )
+        src, dst = np.array([0, 1]), np.array([1, 2])  # two interaction events
+        t = np.array([1.0, 2.0], dtype="float32")
+        raw_msg = np.random.rand(2, 8).astype("float32")
+        memory.update_state(src, dst, t, raw_msg)  # update the memory of the involved nodes
+
+        mem, last_update = memory(np.array([0, 1, 2]))
+        print(tuple(mem.shape), tuple(last_update.shape))  # (3, 16) (3,)
+        ```
+    """
     def __init__(self, raw_msg_dim: int, memory_dim: int, time_dim: int, **kwargs):
         super().__init__(**kwargs)
         self.raw_msg_dim = raw_msg_dim
@@ -47,6 +79,20 @@ class IdentityMessage(keras.layers.Layer):
 
 
 class LastAggregator(keras.layers.Layer):
+    """Layer ``LastAggregator``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import LastAggregator
+
+        msg = np.random.rand(4, 8).astype("float32")  # 4 messages
+        index = np.array([0, 0, 1, 1])  # destination node of each message
+        t = np.array([1.0, 2.0, 1.0, 3.0], dtype="float32")  # message timestamps
+        out = LastAggregator()(msg, index, t, dim_size=2)  # keeps the latest message per node
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
     def call(self, msg, index, t, dim_size: int):
         t_np = ops.convert_to_numpy(t)
         index_np = ops.convert_to_numpy(index).astype(np.int64)
@@ -62,6 +108,20 @@ class LastAggregator(keras.layers.Layer):
 
 
 class MeanAggregator(keras.layers.Layer):
+    """Layer ``MeanAggregator``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MeanAggregator
+
+        msg = np.random.rand(4, 8).astype("float32")  # 4 messages
+        index = np.array([0, 0, 1, 1])  # destination node of each message
+        t = np.array([1.0, 2.0, 1.0, 3.0], dtype="float32")  # message timestamps
+        out = MeanAggregator()(msg, index, t, dim_size=2)  # averages the messages per node
+        print(tuple(out.shape))  # (2, 8)
+        ```
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.mean_aggr = MeanAggregation()
@@ -143,6 +203,25 @@ class TGNMemory(keras.layers.Layer):
             node memory, raw message, and time encoding.
         aggregator_module (Callable): Function aggregating messages to the
             same destination into a single representation.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import IdentityMessage, LastAggregator, TGNMemory
+
+        memory = TGNMemory(
+            num_nodes=5, raw_msg_dim=8, memory_dim=16, time_dim=16,
+            message_module=IdentityMessage(raw_msg_dim=8, memory_dim=16, time_dim=16),
+            aggregator_module=LastAggregator(),
+        )
+        src, dst = np.array([0, 1]), np.array([1, 2])  # two interaction events
+        t = np.array([1.0, 2.0], dtype="float32")
+        raw_msg = np.random.rand(2, 8).astype("float32")
+        memory.update_state(src, dst, t, raw_msg)  # update the memory of the involved nodes
+
+        mem, last_update = memory(np.array([0, 1, 2]))
+        print(tuple(mem.shape), tuple(last_update.shape))  # (3, 16) (3,)
+        ```
     """
     def __init__(
         self,

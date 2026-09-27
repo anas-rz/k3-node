@@ -18,6 +18,21 @@ class HypergraphConv(MessagePassing):
         concat (bool, optional): Whether to concatenate heads. (default: :obj:`True`)
         negative_slope (float, optional): LeakyReLU angle. (default: :obj:`0.2`)
         bias (bool, optional): Whether to learn an additive bias. (default: :obj:`True`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import HypergraphConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        # Row 0: node index, row 1: hyperedge index (nodes 0-5 form two hyperedges)
+        hyperedge_index = np.array([[0, 1, 2, 3, 4, 5], [0, 0, 0, 1, 1, 1]])
+        layer = HypergraphConv(in_channels=8, out_channels=16)
+        out = layer(x, hyperedge_index)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
 
     def __init__(

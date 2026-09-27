@@ -26,6 +26,18 @@ class PMLP(keras.Model):
             normalization. (default: :obj:`True`)
         bias (bool, optional): If set to :obj:`False`, the module will not
             learn additive biases. (default: :obj:`True`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import PMLP
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        model = PMLP(in_channels=8, hidden_channels=32, out_channels=4, num_layers=2)
+        print(tuple(model(x, edge_index).shape))  # (10, 4): message passing is used at inference
+        ```
     """
 
     def __init__(

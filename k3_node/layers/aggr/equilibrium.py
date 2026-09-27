@@ -36,6 +36,19 @@ class ResNetPotential(layers.Layer):
 class EquilibriumAggregation(Aggregation):
     r"""The equilibrium aggregation layer from the `"Equilibrium Aggregation:
     Encoding Sets via Optimization" <https://arxiv.org/abs/2202.12795>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import EquilibriumAggregation
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        index = np.repeat([0, 1], 5)  # aggregate nodes 0-4 into set 0 and nodes 5-9 into set 1
+
+        aggr = EquilibriumAggregation(in_channels=8, out_channels=16, num_layers=[8])
+        out = aggr(x, index=index, dim_size=2)
+        print(tuple(out.shape))  # (2, 16)
+        ```
     """
 
     def __init__(

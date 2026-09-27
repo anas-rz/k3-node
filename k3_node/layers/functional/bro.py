@@ -16,6 +16,18 @@ def bro(x, batch, p: Union[int, float] = 2):
           || \mathbf{HH}^T - \mathbf{I}||_p
 
     and returns an average over all graphs in the batch.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import bro
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        batch = np.repeat([0, 1], 5)  # nodes 0-4 belong to graph 0, nodes 5-9 to graph 1
+
+        loss = bro(x, batch)  # Batch Representation Orthogonality penalty
+        print(tuple(loss.shape))  # (): a scalar
+        ```
     """
     batch_np = ops.convert_to_numpy(batch)
     unique_ids = sorted(set(batch_np.tolist()))

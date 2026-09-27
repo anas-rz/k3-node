@@ -11,6 +11,20 @@ class GravNetConv(MessagePassing):
     r"""The GravNet operator from the `"Learning Representations of Irregular
     Particle-Detector Geometry with Distance-Weighted Graph Networks"
     <https://arxiv.org/abs/1902.07987>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import GravNetConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        # Neighbors are found by k-NN in a learned space, so no edge_index is needed
+        layer = GravNetConv(in_channels=8, out_channels=16, space_dimensions=3, propagate_dimensions=4, k=3)
+        out = layer(x)
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
     def __init__(
         self,

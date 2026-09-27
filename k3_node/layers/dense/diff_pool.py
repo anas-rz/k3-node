@@ -26,7 +26,22 @@ def dense_diff_pool(
         s: Assignment tensor [B, N, C] or [N, C].
         mask: Mask tensor [B, N] indicating valid nodes. (default: None)
         normalize: If set to False, link prediction loss is not divided by total elements.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import dense_diff_pool
+
+        x = np.random.rand(2, 10, 8).astype("float32")  # batch of 2 graphs, 10 nodes, 8 features
+        adj = (np.random.rand(2, 10, 10) > 0.7).astype("float32")  # dense adjacency matrices
+        s = np.random.rand(2, 10, 3).astype("float32")  # assignment scores for 3 clusters
+
+        x_pool, adj_pool, link_loss, entropy_loss = dense_diff_pool(x, adj, s)
+        print(tuple(x_pool.shape), tuple(adj_pool.shape))  # (2, 3, 8) (2, 3, 3)
+        ```
     """
+    # Plain NumPy inputs cannot be mixed with backend tensors (e.g. `ndarray @ torch.Tensor`).
+    x, adj, s = ops.convert_to_tensor(x), ops.convert_to_tensor(adj), ops.convert_to_tensor(s)
     if len(ops.shape(x)) == 2:
         x = ops.expand_dims(x, axis=0)
     if len(ops.shape(adj)) == 2:

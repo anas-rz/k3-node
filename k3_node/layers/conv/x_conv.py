@@ -51,6 +51,20 @@ class XConv(keras.layers.Layer):
         dilation (int, optional): Dilation factor. (default: :obj:`1`)
         bias (bool, optional): Whether to learn an additive bias. (default: :obj:`True`)
         num_workers (int, optional): Kept for PyG compatibility.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import XConv
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+        pos = np.random.rand(10, 3).astype("float32")  # 3D node positions
+
+        layer = XConv(in_channels=8, out_channels=16, dim=3, kernel_size=2)
+        out = layer(x, pos)  # neighborhoods are built from `pos`
+        print(tuple(out.shape))  # (10, 16)
+        ```
     """
 
     def __init__(

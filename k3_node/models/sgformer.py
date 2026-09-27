@@ -159,6 +159,19 @@ class SGFormer(keras.Model):
             (default: :obj:`0.5`)
         aggregate (str, optional): Aggregate type (:obj:`'add'` or :obj:`'cat'`).
             (default: :obj:`'add'`)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import SGFormer
+
+        x = np.random.rand(10, 8).astype("float32")  # 10 nodes with 8 features each
+        edge_index = np.random.randint(0, 10, size=(2, 30))  # 30 random edges
+
+        model = SGFormer(in_channels=8, hidden_channels=32, out_channels=4, trans_num_layers=1,
+                         trans_num_heads=1, gnn_num_layers=1)
+        print(tuple(model(x, edge_index).shape))  # (10, 4)
+        ```
     """
     def __init__(
         self,

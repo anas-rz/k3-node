@@ -30,6 +30,18 @@ def knn_interpolate(x, pos_x, pos_y, batch_x=None, batch_y=None, k: int = 3, num
             a specific example. (default: :obj:`None`)
         k (int, optional): Number of neighbors. (default: :obj:`3`)
         num_workers (int, optional): Unused, kept for API compatibility.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import knn_interpolate
+
+        x = np.random.rand(6, 8).astype("float32")  # features of 6 coarse points
+        pos_x = np.random.rand(6, 3).astype("float32")
+        pos_y = np.random.rand(10, 3).astype("float32")  # 10 fine points to interpolate onto
+        out = knn_interpolate(x, pos_x, pos_y, k=3)
+        print(tuple(out.shape))  # (10, 8)
+        ```
     """
     assign_index = knn(pos_x, pos_y, k, batch_x=batch_x, batch_y=batch_y, num_workers=num_workers)
     y_idx, x_idx = assign_index[0], assign_index[1]
