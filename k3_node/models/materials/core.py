@@ -266,7 +266,9 @@ def vector_to_symtensor(vector):
     trace = outer[..., 0, 0] + outer[..., 1, 1] + outer[..., 2, 2]
     eye3 = ops.eye(3, dtype=outer.dtype)
     scalars = ops.expand_dims(ops.expand_dims(trace / 3.0, axis=-1), axis=-1) * eye3
-    sym = 0.5 * (outer + ops.transpose(outer, axes=[*range(len(outer.shape) - 2), -1, -2]))
+    ndim = len(outer.shape)
+    axes = list(range(ndim - 2)) + [ndim - 1, ndim - 2]
+    sym = 0.5 * (outer + ops.transpose(outer, axes=axes))
     return sym - scalars
 
 
@@ -276,7 +278,9 @@ def decompose_tensor(tensor):
     trace = tensor[..., 0, 0] + tensor[..., 1, 1] + tensor[..., 2, 2]
     eye3 = ops.eye(3, dtype=tensor.dtype)
     scalars = ops.expand_dims(ops.expand_dims(trace / 3.0, axis=-1), axis=-1) * eye3
-    transposed = ops.transpose(tensor, axes=[*range(len(tensor.shape) - 2), -1, -2])
+    ndim = len(tensor.shape)
+    axes = list(range(ndim - 2)) + [ndim - 1, ndim - 2]
+    transposed = ops.transpose(tensor, axes=axes)
     skew = 0.5 * (tensor - transposed)
     sym = 0.5 * (tensor + transposed)
     traceless = sym - scalars
