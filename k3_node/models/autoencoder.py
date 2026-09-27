@@ -108,6 +108,92 @@ class GAE:
 
         return roc_auc_score(y, pred), average_precision_score(y, pred)
 
+    # ---- Keras-style training -------------------------------------------------------------------
+    def compile(self, optimizer, discriminator_optimizer=None, discriminator_steps: int = 5):
+        r"""Sets the optimizers used by :meth:`fit`.
+
+        Args:
+            optimizer (keras.optimizers.Optimizer): Trains the encoder (and decoder).
+            discriminator_optimizer (keras.optimizers.Optimizer, optional): Trains the
+                discriminator of adversarial models (:class:`ARGA`, :class:`ARGVA`).
+            discriminator_steps (int): Discriminator updates per encoder update. (default: ``5``)
+        """
+        self.optimizer = optimizer
+        self.discriminator_optimizer = discriminator_optimizer
+        self.discriminator_steps = discriminator_steps
+
+    def _encoder_loss(self, data):
+        z = self.encode(data.x, data.edge_index, training=True)
+        loss = self.recon_loss(z, data.pos_edge_label_index)
+        if isinstance(self, ARGA):
+            loss = loss + self.reg_loss(z)
+        if hasattr(self, "kl_loss"):
+            loss = loss + (1 / data.num_nodes) * self.kl_loss()
+        return loss
+
+    def train_step(self, data):
+        r"""Runs one training step on ``data`` and returns the loss."""
+        from k3_node.training import gradient_step
+
+        self.train()
+        if isinstance(self, ARGA):
+            z = ops.stop_gradient(self.encode(data.x, data.edge_index, training=True))
+            for _ in range(self.discriminator_steps):
+                gradient_step(lambda: self.discriminator_loss(z), self.discriminator.trainable_variables,
+                              self.discriminator_optimizer)
+        return gradient_step(lambda: self._encoder_loss(data), self._trainable_variables(), self.optimizer)
+
+    def _trainable_variables(self):
+        variables = list(self.encoder.trainable_variables)
+        return variables + list(getattr(self.decoder, "trainable_variables", []))
+
+    def fit(self, data, epochs: int = 1, validation_data=None, verbose: int = 1):
+        r"""Trains the model on one graph for ``epochs`` full-graph steps.
+
+        Args:
+            data (Data): The training graph with node features ``x``, the message passing edges
+                ``edge_index`` and the edges to reconstruct ``pos_edge_label_index``, as created
+                by :class:`~k3_node.transforms.RandomLinkSplit` with ``split_labels=True``.
+            epochs (int): The number of training steps. (default: ``1``)
+            validation_data (Data, optional): A graph with ``pos_edge_label_index`` and
+                ``neg_edge_label_index`` on which AUC and average precision are reported.
+            verbose (int): ``0`` is silent, otherwise one line is printed per epoch.
+
+        Returns:
+            dict: The loss (and validation metrics) of every epoch.
+        """
+        if getattr(self, "optimizer", None) is None:
+            raise ValueError("Call `compile(optimizer=...)` before `fit`.")
+        if isinstance(self, ARGA) and self.discriminator_optimizer is None:
+            raise ValueError("Adversarial models need `compile(..., discriminator_optimizer=...)`.")
+        # Create the variables before the first gradient step
+        z = self.encode(data.x, data.edge_index)
+        if isinstance(self, ARGA):
+            self.discriminator(z)
+
+        history = {"loss": []}
+        for epoch in range(1, epochs + 1):
+            logs = {"loss": self.train_step(data)}
+            if validation_data is not None:
+                logs.update({f"val_{k}": v for k, v in self.evaluate(validation_data).items()})
+            for key, value in logs.items():
+                history.setdefault(key, []).append(value)
+            if verbose:
+                print(f"Epoch {epoch:03d}: " + ", ".join(f"{k}: {v:.4f}" for k, v in logs.items()))
+        return history
+
+    def evaluate(self, data):
+        r"""Returns the link prediction AUC and average precision on ``data`` (which needs
+        ``pos_edge_label_index`` and ``neg_edge_label_index``)."""
+        z = self.embed(data)
+        auc, ap = self.test(z, data.pos_edge_label_index, data.neg_edge_label_index)
+        return {"auc": float(auc), "ap": float(ap)}
+
+    def embed(self, data):
+        r"""Returns the node embeddings of ``data`` (without sampling noise)."""
+        self.eval()
+        return self.encode(data.x, data.edge_index, training=False)
+
 
 class VGAE(GAE):
     r"""The Variational Graph Auto-Encoder model from the

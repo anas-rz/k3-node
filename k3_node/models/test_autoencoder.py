@@ -81,3 +81,39 @@ def test_init():
     VGAE(encoder, decoder)
     ARGA(encoder, discriminator, decoder)
     ARGVA(encoder, discriminator, decoder)
+
+
+def test_fit_evaluate_all_variants():
+    import keras
+    import numpy as np
+    from k3_node.data import Data
+    from k3_node.layers import GCNConv
+
+    rng = np.random.default_rng(0)
+    edge_index = rng.integers(0, 20, size=(2, 60))
+    data = Data(x=rng.random((20, 8)).astype("float32"), edge_index=edge_index,
+                pos_edge_label_index=edge_index, neg_edge_label_index=rng.integers(0, 20, size=(2, 60)))
+
+    class Encoder(keras.Model):
+        def __init__(self, variational):
+            super().__init__()
+            self.variational = variational
+            self.conv_mu, self.conv_logstd = GCNConv(8, 4), GCNConv(8, 4)
+
+        def call(self, x, edge_index):
+            mu = self.conv_mu(x, edge_index)
+            return (mu, self.conv_logstd(x, edge_index)) if self.variational else mu
+
+    def discriminator():
+        return keras.Sequential([keras.layers.Dense(8, activation="relu"), keras.layers.Dense(1)])
+
+    for model in [GAE(Encoder(False)), VGAE(Encoder(True)), ARGA(Encoder(False), discriminator()),
+                  ARGVA(Encoder(True), discriminator())]:
+        model.compile(keras.optimizers.Adam(0.01), discriminator_optimizer=keras.optimizers.Adam(0.01))
+        model.embed(data)  # builds the encoder
+        before = [np.array(v) for v in model.encoder.trainable_variables]
+        history = model.fit(data, epochs=2, validation_data=data, verbose=0)
+        assert set(history) == {"loss", "val_auc", "val_ap"} and len(history["loss"]) == 2
+        assert any(not np.allclose(b, np.array(v)) for b, v in zip(before, model.encoder.trainable_variables))
+        assert 0.0 <= model.evaluate(data)["auc"] <= 1.0
+        assert tuple(model.embed(data).shape) == (20, 4)
