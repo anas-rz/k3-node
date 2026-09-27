@@ -49,6 +49,10 @@
          <lastmod>2026-09-27</lastmod>
     </url>
     <url>
+         <loc>https://anas-rz.github.io/k3-node/api/export/</loc>
+         <lastmod>2026-09-27</lastmod>
+    </url>
+    <url>
          <loc>https://anas-rz.github.io/k3-node/api/hub/</loc>
          <lastmod>2026-09-27</lastmod>
     </url>
@@ -514,6 +518,10 @@
     </url>
     <url>
          <loc>https://anas-rz.github.io/k3-node/guides/etl/</loc>
+         <lastmod>2026-09-27</lastmod>
+    </url>
+    <url>
+         <loc>https://anas-rz.github.io/k3-node/guides/export_and_serving/</loc>
          <lastmod>2026-09-27</lastmod>
     </url>
     <url>

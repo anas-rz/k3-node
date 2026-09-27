@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://anas-rz.github.io/k3-node/api/dense/">
+        <link rel="canonical" href="https://anas-rz.github.io/k3-node/api/export/">
       
       
-        <link rel="prev" href="../pool/">
+        <link rel="prev" href="../hub/">
       
       
-        <link rel="next" href="../tasks/">
+        <link rel="next" href="../ops/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Dense Layers - K3Node</title>
+        <title>Model Export & Runtimes - K3Node</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#dense-layers" class="md-skip">
+        <a href="#model-export-serving-runtime-api-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Dense Layers
+              Model Export & Runtimes
             
           </span>
         </div>
@@ -993,37 +993,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Dense Layers
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../dense/" class="md-nav__link">
         
   
   
@@ -1039,325 +1012,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#dense-convolutions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dense Convolutions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Dense Convolutions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#densegcnconv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DenseGCNConv
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.DenseGCNConv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DenseGCNConv
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#densegatconv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DenseGATConv
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.DenseGATConv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DenseGATConv
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#denseginconv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DenseGINConv
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.DenseGINConv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DenseGINConv
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#densegraphconv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DenseGraphConv
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.DenseGraphConv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DenseGraphConv
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#densesageconv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DenseSAGEConv
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.DenseSAGEConv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DenseSAGEConv
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dense-pooling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dense Pooling
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Dense Pooling">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#dmonpooling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DMoNPooling
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.DMoNPooling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DMoNPooling
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="DMoNPooling">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.DMoNPooling.call" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        call
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.DMoNPooling.reset_parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        reset_parameters
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dense_diff_pool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        dense_diff_pool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.dense_diff_pool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        dense_diff_pool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dense_mincut_pool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        dense_mincut_pool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.dense_mincut_pool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        dense_mincut_pool
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dense-linear-layers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dense Linear Layers
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Dense Linear Layers">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#linear" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Linear
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.Linear" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Linear
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#heterolinear" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        HeteroLinear
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#k3_node.layers.dense.HeteroLinear" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        HeteroLinear
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1703,10 +1357,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../export/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Export & Runtimes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1722,6 +1403,148 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#k3_node.export.onnx_exporter.export_onnx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        export_onnx
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#k3_node.export.tflite_exporter.export_tflite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        export_tflite
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#k3_node.export.tensorrt_exporter.export_tensorrt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        export_tensorrt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#k3_node.export.tensorrt_exporter.generate_triton_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        generate_triton_config
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#k3_node.export.runtime.ONNXModel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ONNXModel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ONNXModel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.export.runtime.ONNXModel.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.export.runtime.ONNXModel.predict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#k3_node.export.runtime.TFLiteModel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TFLiteModel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TFLiteModel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.export.runtime.TFLiteModel.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.export.runtime.TFLiteModel.predict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2007,540 +1830,24 @@
 
 
 
-<h1 id="dense-layers">Dense Layers</h1>
-<p>The <code>k3_node.layers.dense</code> module implements dense tensor graph operations operating on dense adjacency matrices of shape <code>(batch_size, num_nodes, num_nodes)</code>.</p>
-<hr />
-<h2 id="dense-convolutions">Dense Convolutions</h2>
-<h3 id="densegcnconv">DenseGCNConv</h3>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-<h3 id="k3_node.layers.dense.DenseGCNConv" class="doc doc-heading">
-            <code>k3_node.layers.dense.DenseGCNConv</code>
-
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
-
-
-
-        <p>Applies the dense convolutional operator from the <code>"Semi-supervised
-Classification with Graph Convolutional Networks"
-&lt;https://arxiv.org/abs/1609.02907&gt;</code>_ paper.</p>
-<p>.. math::
-    \mathbf{X}^{\prime} = \mathbf{\tilde{D}}^{-1/2} \mathbf{\tilde{A}}
-    \mathbf{\tilde{D}}^{-1/2} \mathbf{X} \mathbf{\Theta}</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>in_channels</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Size of each input sample.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>out_channels</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Size of each output sample.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>improved</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If set to :obj:<code>True</code>, the layer computes
-:math:<code>\mathbf{\tilde{A}} = \mathbf{A} + 2 \mathbf{I}</code>.
-(default: :obj:<code>False</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>bias</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If set to :obj:<code>False</code>, the layer will not learn
-an additive bias. (default: :obj:<code>True</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>True</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div><h3 id="densegatconv">DenseGATConv</h3>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-<h3 id="k3_node.layers.dense.DenseGATConv" class="doc doc-heading">
-            <code>k3_node.layers.dense.DenseGATConv</code>
-
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
-
-
-
-        <p>See :class:<code>torch_geometric.nn.conv.GATConv</code>.</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div><h3 id="denseginconv">DenseGINConv</h3>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-<h3 id="k3_node.layers.dense.DenseGINConv" class="doc doc-heading">
-            <code>k3_node.layers.dense.DenseGINConv</code>
-
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
-
-
-
-        <p>Applies the dense Graph Isomorphism Network (GIN) convolutional operator
-from the <code>"How Powerful are Graph Neural Networks?"
-&lt;https://arxiv.org/abs/1810.00826&gt;</code>_ paper.</p>
-<p>.. math::
-    \mathbf{X}^{\prime} = \mathrm{MLP} \left( \left( \mathbf{A} + (1 + \epsilon)
-    \cdot \mathbf{I} \right) \cdot \mathbf{X} \right)</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>nn</code>
-            </td>
-            <td>
-                  <code><span title="callable">callable</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A neural network layer (e.g. MLP or Dense) mapping feature
-representations to output representations.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>eps</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>(Initial) :math:<code>\epsilon</code>-value. (default: :obj:<code>0.0</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>0.0</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>train_eps</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If set to :obj:<code>True</code>, :math:<code>\epsilon</code> will
-be a trainable parameter. (default: :obj:<code>False</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div><h3 id="densegraphconv">DenseGraphConv</h3>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-<h3 id="k3_node.layers.dense.DenseGraphConv" class="doc doc-heading">
-            <code>k3_node.layers.dense.DenseGraphConv</code>
-
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
-
-
-
-        <p>See :class:<code>torch_geometric.nn.conv.GraphConv</code>.</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div><h3 id="densesageconv">DenseSAGEConv</h3>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-<h3 id="k3_node.layers.dense.DenseSAGEConv" class="doc doc-heading">
-            <code>k3_node.layers.dense.DenseSAGEConv</code>
-
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
-
-
-
-        <p>See :class:<code>torch_geometric.nn.conv.SAGEConv</code>.</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div><hr />
-<h2 id="dense-pooling">Dense Pooling</h2>
-<h3 id="dmonpooling">DMoNPooling</h3>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-<h3 id="k3_node.layers.dense.DMoNPooling" class="doc doc-heading">
-            <code>k3_node.layers.dense.DMoNPooling</code>
-
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
-
-
-
-        <p>The spectral modularity pooling operator from the <code>"Graph Clustering
-with Graph Neural Networks" &lt;https://arxiv.org/abs/2006.16904&gt;</code>_ paper.</p>
-<p>.. math::
-    \mathbf{X}^{\prime} &amp;= {\mathrm{softmax}(\mathbf{S})}^{\top} \cdot
-    \mathbf{X}</p>
-<div class="language-text highlight"><pre><span></span><code>\mathbf{A}^{\prime} &amp;= {\mathrm{softmax}(\mathbf{S})}^{\top} \cdot
-\mathbf{A} \cdot \mathrm{softmax}(\mathbf{S})
-</code></pre></div>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>channels</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span> or <span title="typing.List">List</span>[<span title="int">int</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Size of each input sample. If given as a
-list, will construct an MLP based on the given feature sizes.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>k</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The number of clusters.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>dropout</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Dropout probability. (default: :obj:<code>0.0</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>0.0</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
+<h1 id="model-export-serving-runtime-api-reference">Model Export &amp; Serving Runtime API Reference</h1>
 
 
 <div class="doc doc-object doc-function">
 
 
-<h4 id="k3_node.layers.dense.DMoNPooling.call" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<h3 id="k3_node.export.onnx_exporter.export_onnx" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">k3_node</span><span class="o">.</span><span class="n">export</span><span class="o">.</span><span class="n">onnx_exporter</span><span class="o">.</span><span class="n">export_onnx</span><span class="p">(</span><span class="n">model_or_task</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">dummy_inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">opset</span><span class="o">=</span><span class="mi">17</span><span class="p">,</span> <span class="n">dynamic_axes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">input_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
-</h4>
+</h3>
 
 
-    <div class="doc doc-contents ">
+    <div class="doc doc-contents first">
 
-        <p>Forward pass.</p>
+        <p>Exports a K3-Node GNN model or task to high-performance ONNX format.</p>
+<p>Supports arbitrary Graph Neural Networks (GCN, GAT, GraphSAGE, GIN, SchNet,
+materials models, and task estimators) with dynamic graph sizing (varying numbers
+of nodes and edges).</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2556,13 +1863,15 @@ list, will construct an MLP based on the given feature sizes.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>x</code>
+                <code>model_or_task</code>
             </td>
             <td>
+                  <code><span title="typing.Any">Any</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Node feature tensor [B, N, F] or [N, F].</p>
+                <p>A K3-Node task instance (e.g. <code>NodeClassifier</code>, <code>GraphClassifier</code>)
+or model instance (e.g. <code>GCN</code>, <code>SchNet</code>, <code>CHGNet</code>).</p>
               </div>
             </td>
             <td>
@@ -2571,13 +1880,14 @@ list, will construct an MLP based on the given feature sizes.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>adj</code>
+                <code>output_path</code>
             </td>
             <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <span title="pathlib.Path">Path</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Adjacency tensor [B, N, N] or [N, N].</p>
+                <p>Target path for the <code>.onnx</code> file.</p>
               </div>
             </td>
             <td>
@@ -2586,14 +1896,15 @@ list, will construct an MLP based on the given feature sizes.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>mask</code>
+                <code>dummy_inputs</code>
             </td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="any">any</span>]</code>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Any">Any</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Mask tensor [B, N] indicating valid nodes. (default: None)</p>
+                <p>Optional sample input data (e.g., PyG <code>Data</code> object, tuple of tensors).
+If <code>None</code>, automatically generated based on model topology.</p>
               </div>
             </td>
             <td>
@@ -2602,18 +1913,105 @@ list, will construct an MLP based on the given feature sizes.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>training</code>
+                <code>opset</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>ONNX operator set version. (default: <code>17</code>)</p>
+              </div>
+            </td>
+            <td>
+                  <code>17</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dynamic_axes</code>
             </td>
             <td>
                   <code><span title="bool">bool</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Whether layer is in training mode.</p>
+                <p>Whether node and edge dimensions should be dynamic. (default: <code>True</code>)</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>input_names</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[<span title="str">str</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional custom names for input tensors.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>output_names</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[<span title="str">str</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional custom names for output tensors.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbose</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to print verbose export progress. (default: <code>False</code>)</p>
               </div>
             </td>
             <td>
                   <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pathlib.Path">Path</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path object pointing to the generated <code>.onnx</code> file.</p>
+              </div>
             </td>
           </tr>
       </tbody>
@@ -2627,15 +2025,736 @@ list, will construct an MLP based on the given feature sizes.</p>
 <div class="doc doc-object doc-function">
 
 
-<h4 id="k3_node.layers.dense.DMoNPooling.reset_parameters" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">reset_parameters</span><span class="p">()</span></code>
+<h3 id="k3_node.export.tflite_exporter.export_tflite" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">k3_node</span><span class="o">.</span><span class="n">export</span><span class="o">.</span><span class="n">tflite_exporter</span><span class="o">.</span><span class="n">export_tflite</span><span class="p">(</span><span class="n">model_or_task</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">dummy_inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">quantization</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">representative_dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Exports a K3-Node GNN model or task to an optimized TensorFlow Lite flatbuffer.</p>
+<p>Supports float32, float16 (FP16), and dynamic range INT8 quantization for
+low-latency deployment on edge, mobile, and embedded hardware.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>model_or_task</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A K3-Node task instance or model instance.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>output_path</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <span title="pathlib.Path">Path</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Target path for the <code>.tflite</code> file.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dummy_inputs</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Any">Any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional sample input data (e.g., PyG <code>Data</code> object, tuple of tensors).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>quantization</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Quantization strategy:
+- <code>None</code> or <code>"fp32"</code>: Full 32-bit floating point precision.
+- <code>"fp16"</code>: 16-bit floating point quantization (~2x smaller &amp; faster on GPU/NPU).
+- <code>"int8_dynamic"</code>: Dynamic range integer quantization (~4x smaller with 8-bit weights).
+- <code>"int8_full"</code>: Full 8-bit integer quantization (requires <code>representative_dataset</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>representative_dataset</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Callable">Callable</span>[[], <span title="typing.Generator">Generator</span>[<span title="typing.List">List</span>[<span title="numpy.ndarray">ndarray</span>], None, None]]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Generator of representative calibration inputs for <code>"int8_full"</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbose</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to print verbose progress. (default: <code>False</code>)</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pathlib.Path">Path</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path object pointing to the generated <code>.tflite</code> file.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="k3_node.export.tensorrt_exporter.export_tensorrt" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">k3_node</span><span class="o">.</span><span class="n">export</span><span class="o">.</span><span class="n">tensorrt_exporter</span><span class="o">.</span><span class="n">export_tensorrt</span><span class="p">(</span><span class="n">model_or_task_or_onnx</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">dummy_inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="s1">'fp16'</span><span class="p">,</span> <span class="n">workspace_gb</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_shapes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">opt_shapes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_shapes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Compiles a K3-Node model or ONNX file into an ultra-low latency NVIDIA TensorRT engine.</p>
+<p>Uses the Python <code>tensorrt</code> API if available on the GPU host, or invokes NVIDIA's
+<code>trtexec</code> binary directly.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>model_or_task_or_onnx</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>K3-Node model/task, or an existing <code>.onnx</code> file path.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>output_path</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <span title="pathlib.Path">Path</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Target path for the compiled <code>.engine</code> or <code>.plan</code> binary.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dummy_inputs</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Any">Any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional input sample to determine shapes and topology.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>precision</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Precision mode: <code>"fp32"</code>, <code>"fp16"</code>, or <code>"int8"</code>. (default: <code>"fp16"</code>)</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;fp16&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>workspace_gb</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Max GPU memory in GB allocated for TensorRT engine building. (default: <code>1</code>)</p>
+              </div>
+            </td>
+            <td>
+                  <code>1</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>min_shapes</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="typing.Tuple">Tuple</span>[<span title="int">int</span>, ...]]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional minimum dynamic shapes dictionary (e.g. <code>{'x': (1, 16)}</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>opt_shapes</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="typing.Tuple">Tuple</span>[<span title="int">int</span>, ...]]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional optimal dynamic shapes dictionary (e.g. <code>{'x': (100, 16)}</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_shapes</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="typing.Tuple">Tuple</span>[<span title="int">int</span>, ...]]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional maximum dynamic shapes dictionary (e.g. <code>{'x': (10000, 16)}</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbose</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to log engine building progress. (default: <code>False</code>)</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pathlib.Path">Path</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path object pointing to the compiled TensorRT <code>.engine</code> file.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="k3_node.export.tensorrt_exporter.generate_triton_config" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">k3_node</span><span class="o">.</span><span class="n">export</span><span class="o">.</span><span class="n">tensorrt_exporter</span><span class="o">.</span><span class="n">generate_triton_config</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s1">'onnxruntime'</span><span class="p">,</span> <span class="n">max_batch_size</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Generates a complete Triton Inference Server model repository directory structure and <code>config.pbtxt</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>model_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the model in Triton (e.g., <code>'cora_gcn'</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>output_dir</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <span title="pathlib.Path">Path</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Root path for the model repository folder.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>in_channels</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of node input features.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>out_channels</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of output features or classes.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend engine (<code>'onnxruntime'</code> or <code>'tensorrt_plan'</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;onnxruntime&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_batch_size</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum batch size (default: <code>0</code> for dynamic graph sizing).</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pathlib.Path">Path</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to the generated <code>config.pbtxt</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="k3_node.export.runtime.ONNXModel" class="doc doc-heading">
+            <code>k3_node.export.runtime.ONNXModel</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>High-performance serving wrapper for exported ONNX GNN models.</p>
+<p>Requires only <code>onnxruntime</code> and <code>numpy</code>. Completely decoupled from Keras,
+PyTorch, and TensorFlow for lightweight production microservices.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">ONNXModel</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">model</span> <span class="o">=</span> <span class="n">ONNXModel</span><span class="p">(</span><span class="s2">"cora_gcn.onnx"</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">preds</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">graph_data</span><span class="p">)</span>
+</span></code></pre></div>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.export.runtime.ONNXModel.__init__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">providers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session_options</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h4>
 
 
     <div class="doc doc-contents ">
 
-        <p>Resets all learnable parameters of the module.</p>
+        <p>Initializes the ONNX runtime inference session.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>model_path</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <span title="pathlib.Path">Path</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to the <code>.onnx</code> model file.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>providers</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[<span title="str">str</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Execution providers list (e.g. <code>['CUDAExecutionProvider', 'CPUExecutionProvider']</code>).
+If <code>None</code>, automatically picks the fastest available provider.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>session_options</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Any">Any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional custom ONNX Runtime SessionOptions.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.export.runtime.ONNXModel.predict" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Runs low-latency inference on graph data.</p>
+
+
+<details class="accepts" open>
+  <summary>Accepts</summary>
+  <ul>
+<li>PyG / K3-Node <code>Data</code> object</li>
+<li>Dictionary of tensors</li>
+<li>Positional numpy arrays</li>
+</ul>
+</details>
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Input graph Data, dictionary, or array.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>*args</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additional positional inputs.</p>
+              </div>
+            </td>
+            <td>
+                  <code>()</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Numpy array containing model predictions or logits.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -2648,369 +2767,35 @@ list, will construct an MLP based on the given feature sizes.</p>
 
     </div>
 
-</div><h3 id="dense_diff_pool">dense_diff_pool</h3>
-
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="k3_node.layers.dense.dense_diff_pool" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">k3_node</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dense</span><span class="o">.</span><span class="n">dense_diff_pool</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-
-        <p>The differentiable pooling operator from the <code>"Hierarchical Graph
-Representation Learning with Differentiable Pooling"
-&lt;https://arxiv.org/abs/1806.08804&gt;</code>_ paper.</p>
-<p>.. math::
-    \mathbf{X}^{\prime} &amp;= {\mathrm{softmax}(\mathbf{S})}^{\top} \cdot
-    \mathbf{X}</p>
-<div class="language-text highlight"><pre><span></span><code>\mathbf{A}^{\prime} &amp;= {\mathrm{softmax}(\mathbf{S})}^{\top} \cdot
-\mathbf{A} \cdot \mathrm{softmax}(\mathbf{S})
-</code></pre></div>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>x</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Node feature tensor [B, N, F] or [N, F].</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>adj</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Adjacency tensor [B, N, N] or [N, N].</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>s</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Assignment tensor [B, N, C] or [N, C].</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>mask</code>
-            </td>
-            <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="any">any</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Mask tensor [B, N] indicating valid nodes. (default: None)</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>normalize</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If set to False, link prediction loss is not divided by total elements.</p>
-              </div>
-            </td>
-            <td>
-                  <code>True</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div><h3 id="dense_mincut_pool">dense_mincut_pool</h3>
-
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="k3_node.layers.dense.dense_mincut_pool" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">k3_node</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dense</span><span class="o">.</span><span class="n">dense_mincut_pool</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">temp</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-
-        <p>The MinCut pooling operator from the <code>"Spectral Clustering in Graph
-Neural Networks for Graph Pooling" &lt;https://arxiv.org/abs/1907.00481&gt;</code>_
-paper.</p>
-<p>.. math::
-    \mathbf{X}^{\prime} &amp;= {\mathrm{softmax}(\mathbf{S})}^{\top} \cdot
-    \mathbf{X}</p>
-<div class="language-text highlight"><pre><span></span><code>\mathbf{A}^{\prime} &amp;= {\mathrm{softmax}(\mathbf{S})}^{\top} \cdot
-\mathbf{A} \cdot \mathrm{softmax}(\mathbf{S})
-</code></pre></div>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>x</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Node feature tensor [B, N, F] or [N, F].</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>adj</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Adjacency tensor [B, N, N] or [N, N].</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>s</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Assignment tensor [B, N, C] or [N, C].</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>mask</code>
-            </td>
-            <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="any">any</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Mask tensor [B, N] indicating valid nodes. (default: None)</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>temp</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Temperature parameter for softmax function. (default: 1.0)</p>
-              </div>
-            </td>
-            <td>
-                  <code>1.0</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div><hr />
-<h2 id="dense-linear-layers">Dense Linear Layers</h2>
-<h3 id="linear">Linear</h3>
-
+</div>
 
 <div class="doc doc-object doc-class">
 
 
 
-<h3 id="k3_node.layers.dense.Linear" class="doc doc-heading">
-            <code>k3_node.layers.dense.Linear</code>
+<h3 id="k3_node.export.runtime.TFLiteModel" class="doc doc-heading">
+            <code>k3_node.export.runtime.TFLiteModel</code>
 
 
 </h3>
 
 
     <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
 
 
 
-        <p>Applies a linear transformation to the incoming data:</p>
-<p>.. math::
-    \mathbf{x}^{\prime} = \mathbf{x} \mathbf{W} + \mathbf{b}</p>
+        <p>Lightweight serving wrapper for TensorFlow Lite flatbuffer GNN models.</p>
+<p>Requires only standard <code>tensorflow</code> or <code>tflite_runtime</code>. Ideal for mobile,
+Raspberry Pi, and edge embedded devices.</p>
 
 
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>in_channels</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Size of each input sample.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>out_channels</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Size of each output sample.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>bias</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If set to :obj:<code>False</code>, the layer will not learn
-an additive bias. (default: :obj:<code>True</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>True</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>weight_initializer</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The initializer for the weight
-matrix (:obj:<code>"glorot"</code>, :obj:<code>"uniform"</code>, :obj:<code>"kaiming_uniform"</code>
-or :obj:<code>None</code>). (default: :obj:<code>None</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>bias_initializer</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The initializer for the bias vector
-(:obj:<code>"zeros"</code> or :obj:<code>None</code>). (default: :obj:<code>None</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">TFLiteModel</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">model</span> <span class="o">=</span> <span class="n">TFLiteModel</span><span class="p">(</span><span class="s2">"model.tflite"</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">preds</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">graph_data</span><span class="p">)</span>
+</span></code></pre></div>
+</details>
 
 
 
@@ -3032,37 +2817,18 @@ or :obj:<code>None</code>). (default: :obj:<code>None</code>)</p>
 
 
 
+<div class="doc doc-object doc-function">
 
 
-  </div>
+<h4 id="k3_node.export.runtime.TFLiteModel.__init__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span></code>
 
-    </div>
-
-</div><h3 id="heterolinear">HeteroLinear</h3>
-
-
-<div class="doc doc-object doc-class">
+</h4>
 
 
+    <div class="doc doc-contents ">
 
-<h3 id="k3_node.layers.dense.HeteroLinear" class="doc doc-heading">
-            <code>k3_node.layers.dense.HeteroLinear</code>
-
-
-</h3>
-
-
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
-
-
-
-        <p>Applies separate linear transformations to the incoming data according
-to types.</p>
-<p>.. math::
-    \mathbf{x}^{\prime}<em _kappa_i="\kappa_i">i = \mathbf{x}_i \mathbf{\Theta}</em> +
-    \mathbf{b}_{\kappa_i}</p>
+        <p>Initializes the TFLite interpreter.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -3078,144 +2844,115 @@ to types.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>in_channels</code>
+                <code>model_path</code>
             </td>
             <td>
-                  <code><span title="int">int</span></code>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <span title="pathlib.Path">Path</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Size of each input sample.</p>
+                <p>Path to the <code>.tflite</code> model file.</p>
               </div>
             </td>
             <td>
                 <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>out_channels</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Size of each output sample.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>num_types</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The number of types.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>is_sorted</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If set to :obj:<code>True</code>, assumes that
-:obj:<code>type_vec</code> is sorted. (default: :obj:<code>False</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>bias</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If set to :obj:<code>False</code>, the layer will not learn
-an additive bias. (default: :obj:<code>True</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>True</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>weight_initializer</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The initializer for the weight
-matrix (:obj:<code>"glorot"</code>, :obj:<code>"uniform"</code>, :obj:<code>"kaiming_uniform"</code>
-or :obj:<code>None</code>). (default: :obj:<code>None</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>bias_initializer</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The initializer for the bias vector
-(:obj:<code>"zeros"</code> or :obj:<code>None</code>). (default: :obj:<code>None</code>)</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
             </td>
           </tr>
       </tbody>
     </table>
 
 
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
 
 
+<h4 id="k3_node.export.runtime.TFLiteModel.predict" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h4>
 
 
+    <div class="doc doc-contents ">
+
+        <p>Runs inference using the TFLite interpreter.</p>
 
 
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Input graph Data, dict, or numpy array.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>*args</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additional positional inputs.</p>
+              </div>
+            </td>
+            <td>
+                  <code>()</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Numpy array containing prediction results.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-<div class="doc doc-children">
 
+    </div>
 
-
-
-
-
-
-
-
+</div>
 
 
 
