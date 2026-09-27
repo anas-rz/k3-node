@@ -2,6 +2,7 @@ from typing import Optional, Tuple
 from keras import ops
 import numpy as np
 from k3_node.ops.segment import segment_max, segment_sum
+from k3_node.ops.host import to_numpy
 
 
 def pool_edge(
@@ -26,8 +27,8 @@ def pool_edge(
         print(edge_index_pool.shape[0], edge_attr_pool.shape[1])  # 2 3
         ```
     """
-    cluster_np = ops.convert_to_numpy(cluster)
-    edge_index_np = ops.convert_to_numpy(edge_index)
+    cluster_np = to_numpy(cluster)
+    edge_index_np = to_numpy(edge_index)
 
     row = cluster_np[edge_index_np[0]]
     col = cluster_np[edge_index_np[1]]
@@ -50,7 +51,7 @@ def pool_edge(
 
     out_edge_attr = None
     if edge_attr is not None:
-        ea_np = ops.convert_to_numpy(edge_attr)[non_loop]
+        ea_np = to_numpy(edge_attr)[non_loop]
         num_unique = unique_edges.shape[1]
         ea_tensor = ops.convert_to_tensor(ea_np, dtype=edge_attr.dtype)
         inv_tensor = ops.convert_to_tensor(inv, dtype="int32")
@@ -100,7 +101,19 @@ def pool_pos(cluster, pos):
         ```
     """
     cluster = ops.cast(cluster, dtype="int32")
-    num_clusters = int(ops.max(cluster)) + 1 if ops.shape(cluster)[0] > 0 else 0
+    num_clusters = int(to_numpy(cluster).max()) + 1 if ops.shape(cluster)[0] > 0 else 0
     sum_pos = segment_sum(pos, cluster, num_segments=num_clusters)
     count = segment_sum(ops.ones_like(pos), cluster, num_segments=num_clusters)
     return sum_pos / ops.maximum(count, 1.0)
+
+
+def as_mutable_graph(data):
+    """Turns a (read-only) loader batch into a ``Data`` object that pooling can update in place.
+
+    ``ptr`` is dropped because it no longer matches the nodes once they are pooled.
+    """
+    if hasattr(data, "_asdict"):
+        from k3_node.data import Data
+
+        return Data(**{k: v for k, v in data._asdict().items() if k != "ptr" and v is not None})
+    return data

@@ -3,6 +3,7 @@ from keras import ops
 import numpy as np
 
 from .knn import knn
+from k3_node.ops.host import to_numpy
 
 
 def approx_knn(
@@ -35,10 +36,10 @@ def approx_knn(
         if batch_y is None:
             batch_y = ops.zeros((ops.shape(y)[0],), dtype="int32")
 
-        x_np = ops.convert_to_numpy(x)
-        y_np = ops.convert_to_numpy(y)
-        batch_x_np = ops.convert_to_numpy(batch_x)
-        batch_y_np = ops.convert_to_numpy(batch_y)
+        x_np = to_numpy(x)
+        y_np = to_numpy(y)
+        batch_x_np = to_numpy(batch_x)
+        batch_y_np = to_numpy(batch_y)
 
         min_xy = min(np.min(x_np), np.min(y_np))
         x_np = x_np - min_xy
@@ -87,7 +88,7 @@ def approx_knn_graph(
     """
     assert flow in ["source_to_target", "target_to_source"]
     edge_index = approx_knn(x, x, k if loop else k + 1, batch, batch)
-    edge_index_np = ops.convert_to_numpy(edge_index)
+    edge_index_np = to_numpy(edge_index)
 
     if flow == "source_to_target":
         edge_index_np = np.flip(edge_index_np, axis=0)

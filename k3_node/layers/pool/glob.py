@@ -4,6 +4,7 @@ from keras import ops
 
 from k3_node.layers.conv.utils import is_tracing
 from k3_node.ops.segment import segment_max, segment_sum
+from k3_node.ops.host import to_numpy
 
 
 def _infer_size(batch, size=None):
@@ -30,7 +31,7 @@ def _infer_size(batch, size=None):
     try:
         if ops.shape(batch)[0] == 0:
             return 0
-        return int(ops.convert_to_numpy(ops.max(batch))) + 1
+        return int(to_numpy(batch).max()) + 1
     except Exception:
         pass
     try:

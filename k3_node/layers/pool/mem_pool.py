@@ -1,4 +1,5 @@
 from typing import Optional, Tuple
+from k3_node.layers.aggr.base import to_dense_batch
 from keras import initializers, layers, ops
 
 EPS = 1e-15
@@ -85,16 +86,11 @@ class MemPooling(layers.Layer):
     ) -> Tuple[any, any]:
         r"""Forward pass."""
         if len(ops.shape(x)) == 2:
-            # Dense batching
+            # Node-level input: one dense [num_nodes, channels] block per graph (as in PyG)
             if batch is None:
                 batch = ops.zeros((ops.shape(x)[0],), dtype="int32")
-            else:
-                batch = ops.cast(batch, dtype="int32")
-            N = ops.shape(x)[0] if max_num_nodes is None else max_num_nodes
-            # Simple conversion if already batch
-            x = ops.expand_dims(x, axis=0)
-            if mask is None:
-                mask = ops.ones((1, ops.shape(x)[1]), dtype=bool)
+            x, mask = to_dense_batch(x, ops.cast(batch, "int32"), dim_size=batch_size,
+                                     max_num_elements=max_num_nodes)
         elif mask is None:
             mask = ops.ones((ops.shape(x)[0], ops.shape(x)[1]), dtype=bool)
 

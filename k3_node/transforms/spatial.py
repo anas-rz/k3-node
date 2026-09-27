@@ -1,73 +1,92 @@
+"""Transforms that use node positions (``data.pos``), meshes (``data.face``) or images.
+
+They run on the host with NumPy and return tensors of the same kind as their inputs, so they work
+with every Keras backend.
+"""
 import math
 import random
 import re
-from itertools import repeat
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
+import keras
 import numpy as np
-try:
-    import torch
-    import torch.nn.functional as F
-    from torch import Tensor
-except ImportError:
-    torch = None
-    F = None
-    Tensor = Any
 
 from k3_node.data import Data, HeteroData
 from k3_node.transforms.base_transform import BaseTransform, functional_transform
 from k3_node.transforms.utils import match_tensor, to_numpy, to_undirected
 
 
-def _get_angle(v1: Tensor, v2: Tensor) -> Tensor:
-    cross = torch.cross(v1, v2, dim=-1)
-    if cross.dim() > 1:
-        cross_norm = cross.norm(p=2, dim=-1)
+def _np(x):
+    return None if x is None else to_numpy(x)
+
+
+def _out(value, like, dtype=None):
+    """Returns the NumPy result ``value`` as the same kind of tensor (and dtype) as ``like``."""
+    if dtype is None:
+        dtype = keras.backend.standardize_dtype(like.dtype) if like is not None else None
+    value = np.asarray(value)
+    if dtype is not None:
+        value = value.astype(dtype)
+    if isinstance(like, np.ndarray):
+        return value
+    return match_tensor(value, like, dtype=dtype)
+
+
+def _is_tensor(x) -> bool:
+    return hasattr(x, "shape") and hasattr(x, "dtype") and len(x.shape) > 0
+
+
+def _normalize(x, axis=-1):
+    return x / np.maximum(np.linalg.norm(x, axis=axis, keepdims=True), 1e-12)
+
+
+def _set_edge_attr(data, new, cat: bool, like):
+    """Stores ``new`` edge features, appended to the existing ones if ``cat``."""
+    pseudo = data.edge_attr
+    if pseudo is not None and cat:
+        p = _np(pseudo)
+        p = p.reshape(-1, 1) if p.ndim == 1 else p
+        data.edge_attr = _out(np.concatenate([p, new.astype(p.dtype)], axis=-1), pseudo)
     else:
-        cross_norm = cross.abs()
-    dot = (v1 * v2).sum(dim=-1)
-    return torch.atan2(cross_norm, dot)
+        data.edge_attr = _out(new, like)
 
 
-def _point_pair_features(pos_i: Tensor, pos_j: Tensor, norm_i: Tensor, norm_j: Tensor) -> Tensor:
+def _get_angle(v1, v2):
+    cross = np.cross(v1, v2)
+    cross_norm = np.linalg.norm(cross, axis=-1) if cross.ndim > 1 else np.abs(cross)
+    return np.arctan2(cross_norm, (v1 * v2).sum(-1))
+
+
+def _point_pair_features(pos_i, pos_j, norm_i, norm_j):
     pseudo = pos_j - pos_i
-    return torch.stack([
-        pseudo.norm(p=2, dim=-1),
+    return np.stack([
+        np.linalg.norm(pseudo, axis=-1),
         _get_angle(norm_i, pseudo),
         _get_angle(norm_j, pseudo),
         _get_angle(norm_i, norm_j),
-    ], dim=-1)
+    ], axis=-1)
 
 
-def _scatter_max(src: Tensor, index: Tensor, dim_size: int) -> Tensor:
-    out = src.new_zeros((dim_size, src.size(-1)))
-    # index: [E], src: [E, D]
-    for i in range(dim_size):
-        mask = (index == i)
-        if mask.any():
-            out[i] = src[mask].max(dim=0)[0]
+def _scatter_sum(src, index, dim_size):
+    out = np.zeros((dim_size,) + src.shape[1:], dtype=src.dtype)
+    np.add.at(out, index, src)
     return out
 
 
-def _scatter_mean(src: Tensor, index: Tensor, dim_size: int) -> Tensor:
-    out = src.new_zeros((dim_size,) + src.shape[1:])
-    counts = src.new_zeros((dim_size,) + (1,) * (src.dim() - 1))
-    for i in range(dim_size):
-        mask = (index == i)
-        cnt = mask.sum().item()
-        if cnt > 0:
-            out[i] = src[mask].sum(dim=0) / cnt
-            counts[i] = cnt
-    return out
+def _scatter_mean(src, index, dim_size):
+    count = np.bincount(index, minlength=dim_size).reshape((-1,) + (1,) * (src.ndim - 1))
+    return _scatter_sum(src, index, dim_size) / np.maximum(count, 1)
 
 
-def _scatter_sum(src: Tensor, index: Tensor, dim_size: int) -> Tensor:
-    out = src.new_zeros((dim_size,) + src.shape[1:])
-    for i in range(dim_size):
-        mask = (index == i)
-        if mask.any():
-            out[i] = src[mask].sum(dim=0)
-    return out
+def _scatter_max(src, index, dim_size):
+    out = np.full((dim_size,) + src.shape[1:], -np.inf, dtype=src.dtype)
+    np.maximum.at(out, index, src)
+    return np.where(np.isinf(out), 0, out)
+
+
+def _edges(data):
+    edge_index = _np(data.edge_index)
+    return edge_index[0], edge_index[1], _np(data.pos)
 
 
 @functional_transform('distance')
@@ -101,23 +120,18 @@ class Distance(BaseTransform):
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
         assert data.edge_index is not None
-        (row, col), pos, pseudo = data.edge_index, data.pos, data.edge_attr
+        row, col, pos = _edges(data)
 
-        dist = torch.norm(pos[col] - pos[row], p=2, dim=-1).view(-1, 1)
+        dist = np.linalg.norm(pos[col] - pos[row], axis=-1).reshape(-1, 1)
 
-        if self.norm and dist.numel() > 0:
+        if self.norm and dist.size > 0:
             max_val = dist.max() if self.max is None else self.max
             if max_val > 0:
                 dist = dist / max_val
             length = self.interval[1] - self.interval[0]
             dist = length * dist + self.interval[0]
 
-        if pseudo is not None and self.cat:
-            pseudo = pseudo.view(-1, 1) if pseudo.dim() == 1 else pseudo
-            data.edge_attr = torch.cat([pseudo, dist.type_as(pseudo)], dim=-1)
-        else:
-            data.edge_attr = dist
-
+        _set_edge_attr(data, dist, self.cat, data.pos)
         return data
 
     def __repr__(self) -> str:
@@ -156,25 +170,21 @@ class Cartesian(BaseTransform):
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
         assert data.edge_index is not None
-        (row, col), pos, pseudo = data.edge_index, data.pos, data.edge_attr
+        row, col, pos = _edges(data)
 
         cart = pos[row] - pos[col]
-        cart = cart.view(-1, 1) if cart.dim() == 1 else cart
+        cart = cart.reshape(-1, 1) if cart.ndim == 1 else cart
 
-        if self.norm and cart.numel() > 0:
-            max_val = cart.abs().max() if self.max is None else self.max
+        if self.norm and cart.size > 0:
+            max_val = np.abs(cart).max() if self.max is None else self.max
             length = self.interval[1] - self.interval[0]
+            center = (self.interval[0] + self.interval[1]) / 2
             if max_val > 0:
-                cart = length * (cart / (2 * max_val)) + (self.interval[0] + self.interval[1]) / 2
+                cart = length * (cart / (2 * max_val)) + center
             else:
-                cart = cart + (self.interval[0] + self.interval[1]) / 2
+                cart = cart + center
 
-        if pseudo is not None and self.cat:
-            pseudo = pseudo.view(-1, 1) if pseudo.dim() == 1 else pseudo
-            data.edge_attr = torch.cat([pseudo, cart.type_as(pseudo)], dim=-1)
-        else:
-            data.edge_attr = cart
-
+        _set_edge_attr(data, cart, self.cat, data.pos)
         return data
 
     def __repr__(self) -> str:
@@ -184,7 +194,8 @@ class Cartesian(BaseTransform):
 
 @functional_transform('local_cartesian')
 class LocalCartesian(BaseTransform):
-    r"""Saves relative Cartesian coordinates neighborhood-normalized to interval."""
+    r"""Saves relative Cartesian coordinates, normalized per neighborhood to an interval
+    (functional name: :obj:`local_cartesian`)."""
     def __init__(
         self,
         norm: bool = True,
@@ -198,37 +209,27 @@ class LocalCartesian(BaseTransform):
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
         assert data.edge_index is not None
-        (row, col), pos, pseudo = data.edge_index, data.pos, data.edge_attr
+        row, col, pos = _edges(data)
 
         cart = pos[row] - pos[col]
-        cart = cart.view(-1, 1) if cart.dim() == 1 else cart
+        cart = cart.reshape(-1, 1) if cart.ndim == 1 else cart
 
-        if self.norm and cart.numel() > 0:
-            try:
-                from torch_geometric.utils import scatter
-                max_value = scatter(cart.abs(), col, 0, pos.size(0), reduce='max')
-            except Exception:
-                max_value = _scatter_max(cart.abs(), col, pos.size(0))
-            max_value = max_value.max(dim=-1, keepdim=True)[0]
-
+        if self.norm and cart.size > 0:
+            max_value = _scatter_max(np.abs(cart), col, pos.shape[0]).max(axis=-1, keepdims=True)
             length = self.interval[1] - self.interval[0]
             center = (self.interval[0] + self.interval[1]) / 2
             denom = 2 * max_value[col]
-            denom = torch.where(denom == 0, torch.ones_like(denom), denom)
+            denom = np.where(denom == 0, 1.0, denom)
             cart = length * cart / denom + center
 
-        if pseudo is not None and self.cat:
-            pseudo = pseudo.view(-1, 1) if pseudo.dim() == 1 else pseudo
-            data.edge_attr = torch.cat([pseudo, cart.type_as(pseudo)], dim=-1)
-        else:
-            data.edge_attr = cart
-
+        _set_edge_attr(data, cart, self.cat, data.pos)
         return data
 
 
 @functional_transform('polar')
 class Polar(BaseTransform):
-    r"""Saves the polar coordinates of linked nodes in its edge attributes."""
+    r"""Saves the polar coordinates of linked nodes in its edge attributes
+    (functional name: :obj:`polar`)."""
     def __init__(
         self,
         norm: bool = True,
@@ -242,14 +243,13 @@ class Polar(BaseTransform):
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
         assert data.edge_index is not None
-        (row, col), pos, pseudo = data.edge_index, data.pos, data.edge_attr
-        assert pos.dim() == 2 and pos.size(1) == 2
+        row, col, pos = _edges(data)
+        assert pos.ndim == 2 and pos.shape[1] == 2
 
         cart = pos[col] - pos[row]
-        rho = torch.norm(cart, p=2, dim=-1).view(-1, 1)
-
-        theta = torch.atan2(cart[..., 1], cart[..., 0]).view(-1, 1)
-        theta = theta + (theta < 0).type_as(theta) * (2 * math.pi)
+        rho = np.linalg.norm(cart, axis=-1).reshape(-1, 1)
+        theta = np.arctan2(cart[..., 1], cart[..., 0]).reshape(-1, 1)
+        theta = theta + (theta < 0) * (2 * math.pi)
 
         if self.norm:
             max_val = rho.max() if self.max is None else self.max
@@ -257,14 +257,7 @@ class Polar(BaseTransform):
                 rho = rho / max_val
             theta = theta / (2 * math.pi)
 
-        polar = torch.cat([rho, theta], dim=-1)
-
-        if pseudo is not None and self.cat:
-            pseudo = pseudo.view(-1, 1) if pseudo.dim() == 1 else pseudo
-            data.edge_attr = torch.cat([pseudo, polar.type_as(pos)], dim=-1)
-        else:
-            data.edge_attr = polar
-
+        _set_edge_attr(data, np.concatenate([rho, theta], axis=-1), self.cat, data.pos)
         return data
 
     def __repr__(self) -> str:
@@ -274,7 +267,8 @@ class Polar(BaseTransform):
 
 @functional_transform('spherical')
 class Spherical(BaseTransform):
-    r"""Saves the spherical coordinates of linked nodes in its edge attributes."""
+    r"""Saves the spherical coordinates of linked nodes in its edge attributes
+    (functional name: :obj:`spherical`)."""
     def __init__(
         self,
         norm: bool = True,
@@ -288,19 +282,15 @@ class Spherical(BaseTransform):
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
         assert data.edge_index is not None
-        (row, col), pos, pseudo = data.edge_index, data.pos, data.edge_attr
-        assert pos.dim() == 2 and pos.size(1) == 3
+        row, col, pos = _edges(data)
+        assert pos.ndim == 2 and pos.shape[1] == 3
 
         cart = pos[col] - pos[row]
-        rho = torch.norm(cart, p=2, dim=-1).view(-1, 1)
-
-        theta = torch.atan2(cart[..., 1], cart[..., 0]).view(-1, 1)
-        theta = theta + (theta < 0).type_as(theta) * (2 * math.pi)
-
-        denom = rho.view(-1)
-        denom_safe = torch.where(denom == 0, torch.ones_like(denom), denom)
-        cos_phi = torch.clamp(cart[..., 2] / denom_safe, -1.0, 1.0)
-        phi = torch.acos(cos_phi).view(-1, 1)
+        rho = np.linalg.norm(cart, axis=-1).reshape(-1, 1)
+        theta = np.arctan2(cart[..., 1], cart[..., 0]).reshape(-1, 1)
+        theta = theta + (theta < 0) * (2 * math.pi)
+        denom = np.where(rho[:, 0] == 0, 1.0, rho[:, 0])
+        phi = np.arccos(np.clip(cart[..., 2] / denom, -1.0, 1.0)).reshape(-1, 1)
 
         if self.norm:
             max_val = rho.max() if self.max is None else self.max
@@ -309,14 +299,7 @@ class Spherical(BaseTransform):
             theta = theta / (2 * math.pi)
             phi = phi / math.pi
 
-        spher = torch.cat([rho, theta, phi], dim=-1)
-
-        if pseudo is not None and self.cat:
-            pseudo = pseudo.view(-1, 1) if pseudo.dim() == 1 else pseudo
-            data.edge_attr = torch.cat([pseudo, spher.type_as(pos)], dim=-1)
-        else:
-            data.edge_attr = spher
-
+        _set_edge_attr(data, np.concatenate([rho, theta, phi], axis=-1), self.cat, data.pos)
         return data
 
     def __repr__(self) -> str:
@@ -326,27 +309,20 @@ class Spherical(BaseTransform):
 
 @functional_transform('point_pair_features')
 class PointPairFeatures(BaseTransform):
-    r"""Computes rotation-invariant Point Pair Features in edge attributes."""
+    r"""Computes rotation-invariant Point Pair Features in edge attributes
+    (functional name: :obj:`point_pair_features`)."""
     def __init__(self, cat: bool = True) -> None:
         self.cat = cat
 
     def forward(self, data: Data) -> Data:
         assert data.edge_index is not None
         assert data.pos is not None and data.norm is not None
-        assert data.pos.size(-1) == 3
-        assert data.pos.size() == data.norm.size()
-
-        row, col = data.edge_index
-        pos, norm, pseudo = data.pos, data.norm, data.edge_attr
+        row, col, pos = _edges(data)
+        norm = _np(data.norm)
+        assert pos.shape[-1] == 3 and pos.shape == norm.shape
 
         ppf = _point_pair_features(pos[row], pos[col], norm[row], norm[col])
-
-        if pseudo is not None and self.cat:
-            pseudo = pseudo.view(-1, 1) if pseudo.dim() == 1 else pseudo
-            data.edge_attr = torch.cat([pseudo, ppf.type_as(pseudo)], dim=-1)
-        else:
-            data.edge_attr = ppf
-
+        _set_edge_attr(data, ppf, self.cat, data.pos)
         return data
 
 
@@ -361,61 +337,57 @@ class Center(BaseTransform):
     ) -> Union[Data, HeteroData]:
         for store in data.node_stores:
             if hasattr(store, 'pos') and store.pos is not None:
-                store.pos = store.pos - store.pos.mean(dim=-2, keepdim=True)
+                pos = _np(store.pos)
+                store.pos = _out(pos - pos.mean(axis=-2, keepdims=True), store.pos)
         return data
 
 
 @functional_transform('normalize_rotation')
 class NormalizeRotation(BaseTransform):
-    r"""Rotates all points according to the eigenvectors of the point cloud."""
+    r"""Rotates all points according to the eigenvectors of the point cloud
+    (functional name: :obj:`normalize_rotation`)."""
     def __init__(self, max_points: int = -1, sort: bool = False) -> None:
         self.max_points = max_points
         self.sort = sort
 
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
-        pos = data.pos
+        pos_all = _np(data.pos)
+        pos = pos_all
 
-        if self.max_points > 0 and pos.size(0) > self.max_points:
-            perm = torch.randperm(pos.size(0))
-            pos = pos[perm[:self.max_points]]
+        if self.max_points > 0 and pos.shape[0] > self.max_points:
+            pos = pos[np.random.permutation(pos.shape[0])[:self.max_points]]
 
-        pos = pos - pos.mean(dim=0, keepdim=True)
-        C = torch.matmul(pos.t(), pos)
-        e, v = torch.linalg.eig(C)
-        e, v = torch.view_as_real(e), v.real
-
+        pos = pos - pos.mean(axis=0, keepdims=True)
+        e, v = np.linalg.eigh(pos.T @ pos)
         if self.sort:
-            indices = e[:, 0].argsort(descending=True)
-            v = v.t()[indices].t()
+            v = v[:, np.argsort(-e)]
 
-        data.pos = torch.matmul(data.pos, v)
-
+        data.pos = _out(pos_all @ v, data.pos)
         if 'normal' in data and data.normal is not None:
-            data.normal = F.normalize(torch.matmul(data.normal, v), p=2, dim=-1)
-
+            data.normal = _out(_normalize(_np(data.normal) @ v), data.normal)
         return data
 
 
 @functional_transform('normalize_scale')
 class NormalizeScale(BaseTransform):
-    r"""Centers and normalizes node positions to the interval :math:`(-1, 1)`."""
+    r"""Centers and normalizes node positions to the interval :math:`(-1, 1)`
+    (functional name: :obj:`normalize_scale`)."""
     def __init__(self) -> None:
         self.center = Center()
 
     def forward(self, data: Data) -> Data:
         data = self.center(data)
-
         assert data.pos is not None
-        scale = (1.0 / data.pos.abs().max()) * 0.999999
-        data.pos = data.pos * scale
-
+        pos = _np(data.pos)
+        data.pos = _out(pos * ((1.0 / np.abs(pos).max()) * 0.999999), data.pos)
         return data
 
 
 @functional_transform('random_jitter')
 class RandomJitter(BaseTransform):
-    r"""Translates node positions by randomly sampled translation values within a given interval."""
+    r"""Translates node positions by randomly sampled translation values within a given interval
+    (functional name: :obj:`random_jitter`)."""
     def __init__(
         self,
         translate: Union[float, int, Sequence[Union[float, int]]],
@@ -424,19 +396,17 @@ class RandomJitter(BaseTransform):
 
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
-        num_nodes, dim = data.pos.size()
+        pos = _np(data.pos)
+        dim = pos.shape[-1]
 
         if isinstance(self.translate, (int, float)):
-            translate = list(repeat(self.translate, times=dim))
+            translate = [self.translate] * dim
         else:
             assert len(self.translate) == dim
             translate = self.translate
 
-        jitter = data.pos.new_empty(num_nodes, dim)
-        for d in range(dim):
-            jitter[:, d].uniform_(-abs(translate[d]), abs(translate[d]))
-
-        data.pos = data.pos + jitter
+        bound = np.abs(np.asarray(translate, dtype=np.float64))
+        data.pos = _out(pos + np.random.uniform(-bound, bound, size=pos.shape), data.pos)
         return data
 
     def __repr__(self) -> str:
@@ -445,18 +415,18 @@ class RandomJitter(BaseTransform):
 
 @functional_transform('random_flip')
 class RandomFlip(BaseTransform):
-    """Flips node positions along a given axis randomly with a given probability."""
+    """Flips node positions along a given axis randomly with a given probability
+    (functional name: :obj:`random_flip`)."""
     def __init__(self, axis: int, p: float = 0.5) -> None:
         self.axis = axis
         self.p = p
 
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
-
         if random.random() < self.p:
-            pos = data.pos.clone()
+            pos = _np(data.pos).copy()
             pos[..., self.axis] = -pos[..., self.axis]
-            data.pos = pos
+            data.pos = _out(pos, data.pos)
         return data
 
     def __repr__(self) -> str:
@@ -465,15 +435,14 @@ class RandomFlip(BaseTransform):
 
 @functional_transform('linear_transformation')
 class LinearTransformation(BaseTransform):
-    r"""Transforms node positions :obj:`data.pos` with a square transformation matrix."""
-    def __init__(self, matrix: Tensor):
-        if not isinstance(matrix, Tensor):
-            matrix = torch.tensor(matrix)
-        assert matrix.dim() == 2, 'Transformation matrix should be two-dimensional.'
-        assert matrix.size(0) == matrix.size(1), (
-            f'Transformation matrix should be square (got {matrix.size()})')
-
-        self.matrix = matrix.t()
+    r"""Transforms node positions :obj:`data.pos` with a square transformation matrix
+    (functional name: :obj:`linear_transformation`)."""
+    def __init__(self, matrix: Any):
+        matrix = np.asarray(_np(matrix))
+        assert matrix.ndim == 2, 'Transformation matrix should be two-dimensional.'
+        assert matrix.shape[0] == matrix.shape[1], (
+            f'Transformation matrix should be square (got {matrix.shape})')
+        self.matrix = matrix.T
 
     def forward(
         self,
@@ -482,30 +451,28 @@ class LinearTransformation(BaseTransform):
         for store in data.node_stores:
             if not hasattr(store, 'pos') or store.pos is None:
                 continue
-
-            pos = store.pos.view(-1, 1) if store.pos.dim() == 1 else store.pos
-            assert pos.size(-1) == self.matrix.size(-2), (
+            pos = _np(store.pos)
+            pos = pos.reshape(-1, 1) if pos.ndim == 1 else pos
+            assert pos.shape[-1] == self.matrix.shape[-2], (
                 'Node position matrix and transformation matrix have incompatible shape')
-            store.pos = pos @ self.matrix.to(pos.device, pos.dtype)
-
+            store.pos = _out(pos @ self.matrix.astype(pos.dtype), store.pos)
         return data
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(\n{self.matrix.cpu().numpy()}\n)'
+        return f'{self.__class__.__name__}(\n{self.matrix}\n)'
 
 
 @functional_transform('random_scale')
 class RandomScale(BaseTransform):
-    r"""Scales node positions by a randomly sampled factor within a given interval."""
+    r"""Scales node positions by a randomly sampled factor within a given interval
+    (functional name: :obj:`random_scale`)."""
     def __init__(self, scales: Tuple[float, float]) -> None:
         assert isinstance(scales, (tuple, list)) and len(scales) == 2
         self.scales = scales
 
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
-
-        scale = random.uniform(*self.scales)
-        data.pos = data.pos * scale
+        data.pos = _out(_np(data.pos) * random.uniform(*self.scales), data.pos)
         return data
 
     def __repr__(self) -> str:
@@ -514,7 +481,8 @@ class RandomScale(BaseTransform):
 
 @functional_transform('random_rotate')
 class RandomRotate(BaseTransform):
-    r"""Rotates node positions around a specific axis by a randomly sampled angle."""
+    r"""Rotates node positions around a specific axis by a randomly sampled angle
+    (functional name: :obj:`random_rotate`)."""
     def __init__(
         self,
         degrees: Union[Tuple[float, float], float],
@@ -532,17 +500,16 @@ class RandomRotate(BaseTransform):
         degree = math.pi * random.uniform(*self.degrees) / 180.0
         sin, cos = math.sin(degree), math.cos(degree)
 
-        if data.pos.size(-1) == 2:
+        if data.pos.shape[-1] == 2:
             matrix = [[cos, sin], [-sin, cos]]
+        elif self.axis == 0:
+            matrix = [[1, 0, 0], [0, cos, sin], [0, -sin, cos]]
+        elif self.axis == 1:
+            matrix = [[cos, 0, -sin], [0, 1, 0], [sin, 0, cos]]
         else:
-            if self.axis == 0:
-                matrix = [[1, 0, 0], [0, cos, sin], [0, -sin, cos]]
-            elif self.axis == 1:
-                matrix = [[cos, 0, -sin], [0, 1, 0], [sin, 0, cos]]
-            else:
-                matrix = [[cos, sin, 0], [-sin, cos, 0], [0, 0, 1]]
+            matrix = [[cos, sin, 0], [-sin, cos, 0], [0, 0, 1]]
 
-        return LinearTransformation(torch.tensor(matrix, dtype=torch.float32))(data)
+        return LinearTransformation(np.array(matrix, dtype=np.float32))(data)
 
     def __repr__(self) -> str:
         return (f'{self.__class__.__name__}({self.degrees}, '
@@ -551,18 +518,16 @@ class RandomRotate(BaseTransform):
 
 @functional_transform('random_shear')
 class RandomShear(BaseTransform):
-    r"""Shears node positions by randomly sampled factors within a given interval."""
+    r"""Shears node positions by randomly sampled factors within a given interval
+    (functional name: :obj:`random_shear`)."""
     def __init__(self, shear: Union[float, int]) -> None:
         self.shear = abs(shear)
 
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
-
-        dim = data.pos.size(-1)
-        matrix = data.pos.new_empty(dim, dim).uniform_(-self.shear, self.shear)
-        eye = torch.arange(dim, dtype=torch.long)
-        matrix[eye, eye] = 1
-
+        dim = data.pos.shape[-1]
+        matrix = np.random.uniform(-self.shear, self.shear, size=(dim, dim))
+        np.fill_diagonal(matrix, 1)
         return LinearTransformation(matrix)(data)
 
     def __repr__(self) -> str:
@@ -572,38 +537,28 @@ class RandomShear(BaseTransform):
 @functional_transform('face_to_edge')
 class FaceToEdge(BaseTransform):
     r"""Converts mesh faces of shape :obj:`[3, num_faces]` or :obj:`[4, num_faces]`
-    to edge indices of shape :obj:`[2, num_edges]`.
+    to edge indices of shape :obj:`[2, num_edges]` (functional name: :obj:`face_to_edge`).
     """
     def __init__(self, remove_faces: bool = True) -> None:
         self.remove_faces = remove_faces
 
     def forward(self, data: Data) -> Data:
         if hasattr(data, 'face') and data.face is not None:
-            face = data.face
+            face = _np(data.face)
 
-            if face.size(0) not in [3, 4]:
+            if face.shape[0] not in [3, 4]:
                 raise RuntimeError(f"Expected 'face' tensor with shape "
                                    f"[3, num_faces] or [4, num_faces] "
-                                   f"(got {list(face.size())})")
+                                   f"(got {list(face.shape)})")
 
-            if face.size(0) == 3:
-                edge_index = torch.cat([
-                    face[:2],
-                    face[1:],
-                    face[::2],
-                ], dim=1)
+            if face.shape[0] == 3:
+                edge_index = np.concatenate([face[:2], face[1:], face[::2]], axis=1)
             else:
-                edge_index = torch.cat([
-                    face[:2],
-                    face[1:3],
-                    face[2:4],
-                    face[::2],
-                    face[1::2],
-                    face[::3],
-                ], dim=1)
+                edge_index = np.concatenate(
+                    [face[:2], face[1:3], face[2:4], face[::2], face[1::2], face[::3]], axis=1)
 
-            edge_index = to_undirected(edge_index, num_nodes=data.num_nodes)
-            data.edge_index = edge_index
+            edge_index = _np(to_undirected(edge_index, num_nodes=data.num_nodes))
+            data.edge_index = _out(edge_index, data.face)
             if self.remove_faces:
                 data.face = None
 
@@ -612,7 +567,8 @@ class FaceToEdge(BaseTransform):
 
 @functional_transform('sample_points')
 class SamplePoints(BaseTransform):
-    r"""Uniformly samples a fixed number of points on the mesh surfaces."""
+    r"""Uniformly samples a fixed number of points on the mesh surfaces
+    (functional name: :obj:`sample_points`)."""
     def __init__(
         self,
         num: int,
@@ -626,39 +582,29 @@ class SamplePoints(BaseTransform):
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
         assert data.face is not None
+        like = data.pos
+        pos, face = _np(data.pos).astype(np.float64), _np(data.face)
+        assert pos.shape[1] == 3 and face.shape[0] == 3
 
-        pos, face = data.pos, data.face
-        assert pos.size(1) == 3 and face.size(0) == 3
-
-        pos_max = pos.abs().max()
+        pos_max = np.abs(pos).max()
         pos = pos / pos_max
 
-        area = (pos[face[1]] - pos[face[0]]).cross(
-            pos[face[2]] - pos[face[0]],
-            dim=1,
-        )
-        area = area.norm(p=2, dim=1).abs() / 2
-
-        prob = area / area.sum()
-        sample = torch.multinomial(prob, self.num, replacement=True)
+        area = np.linalg.norm(np.cross(pos[face[1]] - pos[face[0]], pos[face[2]] - pos[face[0]]), axis=1) / 2
+        sample = np.random.choice(face.shape[1], self.num, replace=True, p=area / area.sum())
         face = face[:, sample]
 
-        frac = torch.rand(self.num, 2, device=pos.device)
-        mask = frac.sum(dim=-1) > 1
+        frac = np.random.rand(self.num, 2)
+        mask = frac.sum(axis=-1) > 1
         frac[mask] = 1 - frac[mask]
 
         vec1 = pos[face[1]] - pos[face[0]]
         vec2 = pos[face[2]] - pos[face[0]]
 
         if self.include_normals:
-            data.normal = F.normalize(vec1.cross(vec2, dim=1), p=2, dim=-1)
+            data.normal = _out(_normalize(np.cross(vec1, vec2)), like)
 
-        pos_sampled = pos[face[0]]
-        pos_sampled += frac[:, :1] * vec1
-        pos_sampled += frac[:, 1:] * vec2
-
-        pos_sampled = pos_sampled * pos_max
-        data.pos = pos_sampled
+        pos_sampled = pos[face[0]] + frac[:, :1] * vec1 + frac[:, 1:] * vec2
+        data.pos = _out(pos_sampled * pos_max, like)
 
         if self.remove_faces:
             data.face = None
@@ -671,7 +617,8 @@ class SamplePoints(BaseTransform):
 
 @functional_transform('fixed_points')
 class FixedPoints(BaseTransform):
-    r"""Samples a fixed number of points and features from a point cloud."""
+    r"""Samples a fixed number of points and features from a point cloud
+    (functional name: :obj:`fixed_points`)."""
     def __init__(
         self,
         num: int,
@@ -687,23 +634,22 @@ class FixedPoints(BaseTransform):
         assert num_nodes is not None
 
         if self.replace:
-            choice = torch.from_numpy(
-                np.random.choice(num_nodes, self.num, replace=True)).long()
+            choice = np.random.choice(num_nodes, self.num, replace=True)
         elif not self.allow_duplicates:
-            choice = torch.randperm(num_nodes)[:self.num]
+            choice = np.random.permutation(num_nodes)[:self.num]
         else:
-            choice = torch.cat([
-                torch.randperm(num_nodes)
+            choice = np.concatenate([
+                np.random.permutation(num_nodes)
                 for _ in range(math.ceil(self.num / num_nodes))
-            ], dim=0)[:self.num]
+            ])[:self.num]
 
         for key, value in list(data.items()):
             if key == 'num_nodes':
-                data.num_nodes = choice.size(0)
+                data.num_nodes = len(choice)
             elif bool(re.search('edge', key)):
                 continue
-            elif isinstance(value, Tensor) and value.size(0) == num_nodes and value.size(0) != 1:
-                data[key] = value[choice]
+            elif _is_tensor(value) and value.shape[0] == num_nodes and value.shape[0] != 1:
+                data[key] = _out(_np(value)[choice], value)
 
         return data
 
@@ -713,59 +659,48 @@ class FixedPoints(BaseTransform):
 
 @functional_transform('generate_mesh_normals')
 class GenerateMeshNormals(BaseTransform):
-    r"""Generate normal vectors for each mesh node based on neighboring faces."""
+    r"""Generate normal vectors for each mesh node based on neighboring faces
+    (functional name: :obj:`generate_mesh_normals`)."""
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
         assert data.face is not None
-        pos, face = data.pos, data.face
+        pos, face = _np(data.pos), _np(data.face)
 
-        vec1 = pos[face[1]] - pos[face[0]]
-        vec2 = pos[face[2]] - pos[face[0]]
-        face_norm = F.normalize(vec1.cross(vec2, dim=1), p=2, dim=-1)
-
-        face_norm = face_norm.repeat(3, 1)
-        idx = face.view(-1)
-
-        try:
-            from torch_geometric.utils import scatter
-            norm = scatter(face_norm, idx, 0, pos.size(0), reduce='sum')
-        except Exception:
-            norm = _scatter_sum(face_norm, idx, pos.size(0))
-
-        norm = F.normalize(norm, p=2, dim=-1)
-        data.norm = norm
+        face_norm = _normalize(np.cross(pos[face[1]] - pos[face[0]], pos[face[2]] - pos[face[0]]))
+        norm = _scatter_sum(np.tile(face_norm, (3, 1)), face.reshape(-1), pos.shape[0])
+        data.norm = _out(_normalize(norm), data.pos)
         return data
 
 
 @functional_transform('delaunay')
 class Delaunay(BaseTransform):
-    r"""Computes the delaunay triangulation of a set of points."""
+    r"""Computes the delaunay triangulation of a set of points
+    (functional name: :obj:`delaunay`)."""
     def forward(self, data: Data) -> Data:
         assert data.pos is not None
-        device = data.pos.device
+        num_points = data.pos.shape[0]
 
-        if data.pos.size(0) < 2:
-            data.edge_index = torch.empty(2, 0, dtype=torch.long, device=device)
-        elif data.pos.size(0) == 2:
-            data.edge_index = torch.tensor([[0, 1], [1, 0]], device=device)
-        elif data.pos.size(0) == 3:
-            data.face = torch.tensor([[0], [1], [2]], device=device)
+        if num_points < 2:
+            data.edge_index = _out(np.zeros((2, 0)), None, dtype="int64")
+        elif num_points == 2:
+            data.edge_index = _out(np.array([[0, 1], [1, 0]]), None, dtype="int64")
+        elif num_points == 3:
+            data.face = _out(np.array([[0], [1], [2]]), None, dtype="int64")
         else:
             try:
                 import scipy.spatial
-                pos = data.pos.cpu().numpy()
-                tri = scipy.spatial.Delaunay(pos, qhull_options='QJ')
-                face = torch.from_numpy(tri.simplices)
-                data.face = face.t().contiguous().to(device, torch.long)
+                tri = scipy.spatial.Delaunay(_np(data.pos), qhull_options='QJ')
             except Exception as e:
                 raise RuntimeError(f"Delaunay triangulation failed: {e}")
+            data.face = _out(tri.simplices.T, None, dtype="int64")
 
         return data
 
 
 @functional_transform('to_slic')
 class ToSLIC(BaseTransform):
-    r"""Converts an image to a superpixel representation using SLIC."""
+    r"""Converts an image of shape ``[channels, height, width]`` to a superpixel graph using SLIC
+    (functional name: :obj:`to_slic`)."""
     def __init__(
         self,
         add_seg: bool = False,
@@ -776,47 +711,38 @@ class ToSLIC(BaseTransform):
         self.add_img = add_img
         self.kwargs = kwargs
 
-    def forward(self, img: Tensor) -> Data:
+    def forward(self, img: Any) -> Data:
         try:
             from skimage.segmentation import slic
         except ImportError:
             raise ImportError("ToSLIC requires scikit-image to be installed.")
 
-        img_t = img.permute(1, 2, 0)
-        h, w, c = img_t.size()
+        img_t = np.transpose(_np(img), (1, 2, 0))
+        h, w, c = img_t.shape
 
-        seg = slic(img_t.to(torch.double).cpu().numpy(), start_label=0, **self.kwargs)
-        seg = torch.from_numpy(seg).to(img.device)
+        seg = slic(img_t.astype(np.float64), start_label=0, **self.kwargs)
+        num_segments = int(seg.max()) + 1
+        x = _scatter_mean(img_t.reshape(h * w, c), seg.reshape(-1), num_segments)
 
-        num_segments = int(seg.max().item()) + 1
-        x = _scatter_mean(img_t.view(h * w, c), seg.view(h * w), num_segments)
+        pos_y, pos_x = np.meshgrid(np.arange(h, dtype=np.float32), np.arange(w, dtype=np.float32), indexing="ij")
+        pos = _scatter_mean(np.stack([pos_x.reshape(-1), pos_y.reshape(-1)], axis=-1), seg.reshape(-1), num_segments)
 
-        pos_y = torch.arange(h, dtype=torch.float, device=img.device)
-        pos_y = pos_y.view(-1, 1).repeat(1, w).view(h * w)
-        pos_x = torch.arange(w, dtype=torch.float, device=img.device)
-        pos_x = pos_x.view(1, -1).repeat(h, 1).view(h * w)
-
-        pos = torch.stack([pos_x, pos_y], dim=-1)
-        pos = _scatter_mean(pos, seg.view(h * w), num_segments)
-
-        data = Data(x=x, pos=pos)
-
+        data = Data(x=_out(x, img), pos=_out(pos, img, dtype="float32"))
         if self.add_seg:
-            data.seg = seg.view(1, h, w)
+            data.seg = _out(seg.reshape(1, h, w), None, dtype="int64")
         if self.add_img:
-            data.img = img_t.permute(2, 0, 1).view(1, c, h, w)
-
+            data.img = _out(np.transpose(img_t, (2, 0, 1)).reshape(1, c, h, w), img)
         return data
 
 
 @functional_transform('grid_sampling')
 class GridSampling(BaseTransform):
-    r"""Clusters points into fixed-sized voxels."""
+    r"""Clusters points into fixed-sized voxels (functional name: :obj:`grid_sampling`)."""
     def __init__(
         self,
-        size: Union[float, List[float], Tensor],
-        start: Optional[Union[float, List[float], Tensor]] = None,
-        end: Optional[Union[float, List[float], Tensor]] = None,
+        size: Union[float, List[float], Any],
+        start: Optional[Union[float, List[float], Any]] = None,
+        end: Optional[Union[float, List[float], Any]] = None,
     ) -> None:
         self.size = size
         self.start = start
@@ -826,48 +752,38 @@ class GridSampling(BaseTransform):
         num_nodes = data.num_nodes
         assert data.pos is not None
 
-        pos = data.pos
-        if pos.dim() == 1:
-            pos = pos.unsqueeze(-1)
-        dim = pos.size(-1)
+        pos = _np(data.pos)
+        if pos.ndim == 1:
+            pos = pos[:, None]
+        dim = pos.shape[-1]
 
-        size = self.size
-        if not isinstance(size, Tensor):
-            size = torch.tensor(size, dtype=pos.dtype, device=pos.device)
-        if size.numel() == 1:
-            size = size.repeat(dim)
+        size = np.broadcast_to(np.asarray(_np(self.size), dtype=pos.dtype), (dim,))
+        start = pos.min(axis=0) if self.start is None else np.broadcast_to(
+            np.asarray(_np(self.start), dtype=pos.dtype), (dim,))
 
-        start = self.start
-        if start is None:
-            start = pos.min(dim=0)[0]
-        elif not isinstance(start, Tensor):
-            start = torch.tensor(start, dtype=pos.dtype, device=pos.device)
-            if start.numel() == 1:
-                start = start.repeat(dim)
+        coord = np.floor((pos - start) / size).astype(np.int64)
+        if getattr(data, 'batch', None) is not None:
+            coord = np.concatenate([coord, _np(data.batch).reshape(-1, 1)], axis=-1)
 
-        coord = torch.floor((pos - start) / size).long()
-        if hasattr(data, 'batch') and data.batch is not None:
-            coord = torch.cat([coord, data.batch.view(-1, 1)], dim=-1)
-
-        unique, c = torch.unique(coord, dim=0, sorted=True, return_inverse=True)
-        perm = torch.arange(c.size(0), dtype=c.dtype, device=c.device)
-        perm = c.new_empty(unique.size(0)).scatter_(0, c, perm)
-
-        num_clusters = unique.size(0)
+        unique, c = np.unique(coord, axis=0, return_inverse=True)
+        c = c.reshape(-1)
+        num_clusters = unique.shape[0]
+        perm = np.zeros(num_clusters, dtype=np.int64)
+        perm[c] = np.arange(len(c))
 
         for key, item in list(data.items()):
             if bool(re.search('edge', key)):
                 raise ValueError(f"'{self.__class__.__name__}' does not support coarsening of edges")
 
-            if torch.is_tensor(item) and item.size(0) == num_nodes:
+            if _is_tensor(item) and item.shape[0] == num_nodes:
+                value = _np(item)
                 if key == 'y':
-                    one_hot_y = F.one_hot(item)
-                    y_sum = _scatter_sum(one_hot_y.to(torch.float32), c, num_clusters)
-                    data[key] = y_sum.argmax(dim=-1)
+                    one_hot = np.eye(int(value.max()) + 1, dtype=np.float32)[value]
+                    data[key] = _out(_scatter_sum(one_hot, c, num_clusters).argmax(axis=-1), item)
                 elif key == 'batch':
-                    data[key] = item[perm]
+                    data[key] = _out(value[perm], item)
                 else:
-                    data[key] = _scatter_mean(item, c, num_clusters)
+                    data[key] = _out(_scatter_mean(value, c, num_clusters), item)
 
         data.num_nodes = num_clusters
         return data

@@ -1,6 +1,7 @@
 from typing import Optional
 from keras import ops
 import numpy as np
+from k3_node.ops.host import to_numpy
 
 
 def graclus(
@@ -23,12 +24,12 @@ def graclus(
         print(tuple(cluster.shape))  # (10,): a cluster id for every node
         ```
     """
-    edge_index_np = ops.convert_to_numpy(edge_index).astype(np.int64)
+    edge_index_np = to_numpy(edge_index).astype(np.int64)
     if num_nodes is None:
         num_nodes = int(np.max(edge_index_np)) + 1 if edge_index_np.size > 0 else 0
 
     if weight is not None:
-        weight_np = ops.convert_to_numpy(weight)
+        weight_np = to_numpy(weight)
     else:
         weight_np = np.ones(edge_index_np.shape[1], dtype=np.float32)
 

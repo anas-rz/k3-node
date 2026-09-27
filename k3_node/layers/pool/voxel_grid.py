@@ -1,6 +1,7 @@
 from typing import List, Optional, Union
 from keras import ops
 import numpy as np
+from k3_node.ops.host import to_numpy
 
 
 def voxel_grid(
@@ -24,7 +25,7 @@ def voxel_grid(
         print(tuple(cluster.shape))  # (10,)
         ```
     """
-    pos_np = ops.convert_to_numpy(pos)
+    pos_np = to_numpy(pos)
     if pos_np.ndim == 1:
         pos_np = pos_np[:, None]
     dim = pos_np.shape[1]
@@ -62,7 +63,7 @@ def voxel_grid(
         multiplier *= num_bins[d]
 
     if batch is not None:
-        batch_np = ops.convert_to_numpy(batch).astype(np.int64)
+        batch_np = to_numpy(batch).astype(np.int64)
         cluster_np += batch_np * multiplier
 
     return ops.convert_to_tensor(cluster_np, dtype="int64")

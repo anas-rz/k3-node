@@ -440,3 +440,17 @@ def test_host_side_pooling_refuses_compiled_execution(layer_name):
         compiled = tf.function(lambda x: layer(x, edge_index, batch)[0])
     with pytest.raises(Exception, match="run_eagerly"):
         compiled(x)
+
+
+def test_mem_pooling_respects_batch():
+    import numpy as np
+    from k3_node.layers import MemPooling
+
+    x = np.random.rand(7, 4).astype("float32")
+    batch = np.array([0, 0, 0, 1, 1, 2, 2])  # three graphs
+    pool = MemPooling(4, 8, heads=2, num_clusters=3)
+    out, S = pool(x, batch)
+    assert tuple(out.shape) == (3, 3, 8)  # one pooled set per graph
+    # Pooling a graph alone gives the same result as pooling it within the batch
+    alone, _ = pool(x[3:5], np.zeros(2, dtype="int32"))
+    np.testing.assert_allclose(ops.convert_to_numpy(out)[1], ops.convert_to_numpy(alone)[0], rtol=1e-5, atol=1e-6)

@@ -1,6 +1,7 @@
 from typing import Tuple
 from keras import ops
 import numpy as np
+from k3_node.ops.host import to_numpy
 
 
 def consecutive_cluster(src) -> Tuple[any, any]:
@@ -17,7 +18,7 @@ def consecutive_cluster(src) -> Tuple[any, any]:
         print(tuple(new_cluster.shape), tuple(perm.shape))  # (5,) (3,)
         ```
     """
-    src_np = ops.convert_to_numpy(src)
+    src_np = to_numpy(src)
     unique, inv = np.unique(src_np, return_inverse=True)
     perm = np.empty(len(unique), dtype=inv.dtype)
     arange = np.arange(len(inv), dtype=inv.dtype)

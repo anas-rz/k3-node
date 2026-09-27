@@ -18,9 +18,11 @@ def to_numpy(x: Any) -> np.ndarray:
         return None
     if isinstance(x, np.ndarray):
         return x
-    if is_torch_tensor(x):
+    from k3_node.ops.host import to_numpy as host_to_numpy
+
+    if is_torch_tensor(x) and x.device.type != "meta":
         return x.detach().cpu().numpy()
-    return ops.convert_to_numpy(x)
+    return host_to_numpy(x)
 
 
 def as_tensor(x: Any, dtype: Optional[Any] = None, like: Optional[Any] = None) -> Any:

@@ -3,6 +3,7 @@ from keras import ops
 import numpy as np
 
 from .knn import knn
+from k3_node.ops.host import to_numpy
 
 
 def fps(
@@ -27,13 +28,13 @@ def fps(
         print(tuple(index.shape))  # (4,)
         ```
     """
-    x_np = ops.convert_to_numpy(x)
+    x_np = to_numpy(x)
     num_nodes = x_np.shape[0]
 
     if batch is None:
         batch_np = np.zeros(num_nodes, dtype=np.int64)
     else:
-        batch_np = ops.convert_to_numpy(batch).astype(np.int64)
+        batch_np = to_numpy(batch).astype(np.int64)
 
     unique_batches = np.unique(batch_np)
     selected_indices = []
@@ -92,8 +93,8 @@ def radius(
         print(assign.shape[0])  # 2: rows: (query index, point index)
         ```
     """
-    x_np = ops.convert_to_numpy(x)
-    y_np = ops.convert_to_numpy(y)
+    x_np = to_numpy(x)
+    y_np = to_numpy(y)
     if x_np.ndim == 1:
         x_np = x_np[:, None]
     if y_np.ndim == 1:
@@ -105,12 +106,12 @@ def radius(
     if batch_x is None:
         batch_x_np = np.zeros(N, dtype=np.int64)
     else:
-        batch_x_np = ops.convert_to_numpy(batch_x).astype(np.int64)
+        batch_x_np = to_numpy(batch_x).astype(np.int64)
 
     if batch_y is None:
         batch_y_np = np.zeros(M, dtype=np.int64)
     else:
-        batch_y_np = ops.convert_to_numpy(batch_y).astype(np.int64)
+        batch_y_np = to_numpy(batch_y).astype(np.int64)
 
     rows = []
     cols = []
@@ -173,7 +174,7 @@ def radius_graph(
         batch_y=batch,
         max_num_neighbors=max_num_neighbors if loop else max_num_neighbors + 1,
     )
-    edge_index_np = ops.convert_to_numpy(edge_index)
+    edge_index_np = to_numpy(edge_index)
 
     if not loop and edge_index_np.shape[1] > 0:
         mask = edge_index_np[0] != edge_index_np[1]

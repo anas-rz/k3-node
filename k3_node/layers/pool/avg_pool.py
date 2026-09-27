@@ -2,14 +2,15 @@ from typing import Callable, Optional, Tuple
 from keras import ops
 
 from .consecutive import consecutive_cluster
-from .pool import pool_batch, pool_edge, pool_pos
+from .pool import as_mutable_graph, pool_batch, pool_edge, pool_pos
 from k3_node.ops.segment import segment_sum
+from k3_node.ops.host import to_numpy
 
 
 def _avg_pool_x(cluster, x, size: Optional[int] = None):
     cluster = ops.cast(cluster, dtype="int32")
     if size is None:
-        size = int(ops.max(cluster)) + 1 if ops.shape(cluster)[0] > 0 else 0
+        size = int(to_numpy(cluster).max()) + 1 if ops.shape(cluster)[0] > 0 else 0
     sum_x = segment_sum(x, cluster, num_segments=size)
     ones = ops.ones_like(x)
     count = segment_sum(ones, cluster, num_segments=size)
@@ -40,7 +41,7 @@ def avg_pool_x(
     """
     if size is not None:
         if batch_size is None:
-            batch_size = int(ops.max(batch)) + 1
+            batch_size = int(to_numpy(batch).max()) + 1
         return _avg_pool_x(cluster, x, batch_size * size), None
 
     cluster, perm = consecutive_cluster(cluster)
@@ -77,6 +78,7 @@ def avg_pool(
     cluster, perm = consecutive_cluster(cluster)
 
     if hasattr(data, "x"):
+        data = as_mutable_graph(data)
         x = getattr(data, "x", None)
         if x is not None:
             data.x = _avg_pool_x(cluster, x)

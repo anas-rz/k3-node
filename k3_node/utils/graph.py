@@ -171,3 +171,29 @@ def subgraph(
         edge_mask_tensor = ops.convert_to_tensor(edge_mask, dtype="bool")
         return sub_edge_index, sub_edge_attr, edge_mask_tensor
     return sub_edge_index, sub_edge_attr
+
+
+def normalized_cut(edge_index, edge_attr, num_nodes: Optional[int] = None):
+    r"""Computes the normalized cut :math:`\mathbf{e}_{i,j} \cdot
+    \left( \frac{1}{\deg(i)} + \frac{1}{\deg(j)} \right)` of a weighted graph.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.utils import normalized_cut
+
+        edge_index = np.array([[0, 1, 1, 2], [1, 0, 2, 1]])  # a path 0 - 1 - 2
+        edge_attr = np.ones(4, dtype="float32")  # every edge has weight 1
+
+        print(np.asarray(normalized_cut(edge_index, edge_attr, num_nodes=3)))  # [1.5 1.5 1.5 1.5]
+        ```
+    """
+    from k3_node.ops.segment import segment_sum
+
+    edge_index = ops.convert_to_tensor(edge_index)
+    edge_attr = ops.convert_to_tensor(edge_attr)
+    row, col = edge_index[0], edge_index[1]
+    if num_nodes is None:
+        num_nodes = int(ops.max(edge_index)) + 1
+    deg_inv = 1.0 / segment_sum(ops.ones_like(edge_attr), row, num_segments=num_nodes)
+    return edge_attr * (ops.take(deg_inv, row, axis=0) + ops.take(deg_inv, col, axis=0))

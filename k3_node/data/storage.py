@@ -285,6 +285,10 @@ class NodeStorage(BaseStorage):
             if is_tensor_like(value) and "node" in key:
                 cat_dim = parent.__cat_dim__(key, value, self) if parent is not None else 0
                 return get_shape(value)[cat_dim]
+        edge_index = self.get("edge_index")
+        if is_tensor_like(edge_index) and get_shape(edge_index)[-1] > 0:
+            # As in PyG: without node-level attributes, infer the count from the edges
+            return int(np.asarray(to_numpy(edge_index)).max()) + 1
         return 0
 
     @property

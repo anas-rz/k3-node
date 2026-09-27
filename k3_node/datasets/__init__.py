@@ -28,8 +28,10 @@ from .qm7 import QM7b
 from .molecule_net import MoleculeNet
 from .ppi import PPI
 from .reddit import Reddit
+from .digits import Digits
 
 __all__ = [
+    "Digits",
     "KarateClub",
     "FakeDataset",
     "FakeHeteroDataset",

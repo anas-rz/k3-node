@@ -1,6 +1,7 @@
 from typing import Tuple, Union
 from keras import ops
 import numpy as np
+from k3_node.ops.host import to_numpy
 
 
 def decimation_indices(
@@ -25,7 +26,7 @@ def decimation_indices(
             f"equal to) 1 for downsampling. (got {decimation_factor})"
         )
 
-    ptr_np = ops.convert_to_numpy(ptr)
+    ptr_np = to_numpy(ptr)
     batch_size = len(ptr_np) - 1
     count = ptr_np[1:] - ptr_np[:-1]
     decim_count = np.maximum(count // int(decimation_factor), 1)
