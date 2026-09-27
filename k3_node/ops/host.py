@@ -19,4 +19,22 @@ def to_numpy(x):
         import torch
 
         return np.zeros(tuple(x.shape), dtype=torch.empty(0, dtype=x.dtype).numpy().dtype)
-    return ops.convert_to_numpy(x)
+    try:
+        return ops.convert_to_numpy(x)
+    except Exception:
+        # TensorFlow and JAX trace symbolic tensors during Keras' shape inference
+        shape = tuple(x.shape)
+        if _in_shape_inference() and all(isinstance(d, int) for d in shape):
+            import keras
+
+            return np.zeros(shape, dtype=keras.backend.standardize_dtype(x.dtype))
+        raise
+
+
+def _in_shape_inference() -> bool:
+    try:
+        from keras.src.backend.common.symbolic_scope import in_symbolic_scope
+
+        return in_symbolic_scope()
+    except ImportError:
+        return False
