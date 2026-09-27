@@ -2,7 +2,12 @@ from keras import ops
 from keras.layers import Dense
 
 from k3_node.layers.conv.message_passing import MessagePassing
-from k3_node.layers.conv.utils import remove_self_loops, add_self_loops
+from k3_node.layers.conv.utils import (
+    add_self_loops,
+    degree,
+    extend_mask_for_self_loops,
+    remove_self_loops_masked,
+)
 
 
 class FeaStConv(MessagePassing):
@@ -71,24 +76,37 @@ class FeaStConv(MessagePassing):
             x_src = x_dst = x
 
         num_nodes = ops.shape(x_dst)[0]
+        keep_mask = None
         if self.add_self_loops:
-            edge_index, _ = remove_self_loops(edge_index)
+            edge_index, _, keep_mask = remove_self_loops_masked(edge_index)
             edge_index, _ = add_self_loops(edge_index, num_nodes=num_nodes)
+            keep_mask = extend_mask_for_self_loops(keep_mask, num_nodes)
 
         out = self.propagate(
             edge_index,
             x=(x_src, x_dst),
+            keep_mask=keep_mask,
             size=(ops.shape(x_src)[0], num_nodes),
         )
+        if keep_mask is not None and self.aggr == "mean":
+            # Masked messages are zero but still counted by the mean; rescale to the kept count.
+            col = ops.cast(edge_index[1], "int32")
+            count_all = degree(col, num_nodes=num_nodes, dtype=out.dtype)
+            count_kept = ops.segment_sum(ops.cast(keep_mask, out.dtype), col, num_segments=num_nodes)
+            out = out * ops.expand_dims(count_all / ops.maximum(count_kept, 1.0), -1)
 
         if self.bias is not None:
             out = out + self.bias
 
         return out
 
-    def message(self, x_i, x_j):
+    def message(self, x_i, x_j, keep_mask=None):
         q = ops.matmul(x_j - x_i, self.u) + self.c
         q = ops.softmax(q, axis=-1)
         x_j_mapped = ops.reshape(self.lin(x_j), (-1, self.heads, self.out_channels))
-        return ops.sum(x_j_mapped * ops.expand_dims(q, -1), axis=1)
+        msg = ops.sum(x_j_mapped * ops.expand_dims(q, -1), axis=1)
+        # For max/min a duplicated self-loop message is harmless, so only sum/mean need masking.
+        if keep_mask is not None and self.aggr in ("add", "sum", "mean"):
+            msg = msg * ops.expand_dims(ops.cast(keep_mask, msg.dtype), -1)
+        return msg
 

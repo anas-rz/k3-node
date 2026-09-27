@@ -2,7 +2,13 @@ from typing import Optional
 from keras import ops
 
 from k3_node.layers.conv.message_passing import MessagePassing
-from k3_node.layers.conv.utils import remove_self_loops, add_self_loops, softmax
+from k3_node.layers.conv.utils import (
+    add_self_loops,
+    extend_mask_for_self_loops,
+    mask_edge_logits,
+    remove_self_loops_masked,
+    softmax,
+)
 
 
 class AGNNConv(MessagePassing):
@@ -70,17 +76,19 @@ class AGNNConv(MessagePassing):
             out = self.propagate(x, edge_index, x_norm=x_norm)
         else:
             num_nodes = x.shape[0] if hasattr(x, "shape") and x.shape[0] is not None else ops.shape(x)[0]
+            keep_mask = None
             if self.add_self_loops:
-                edge_index, _ = remove_self_loops(edge_index)
+                edge_index, _, keep_mask = remove_self_loops_masked(edge_index)
                 edge_index, _ = add_self_loops(edge_index, num_nodes=num_nodes)
-            out = self.propagate(edge_index, x=x, x_norm=x_norm, size=(num_nodes, num_nodes))
+                keep_mask = extend_mask_for_self_loops(keep_mask, num_nodes)
+            out = self.propagate(edge_index, x=x, x_norm=x_norm, keep_mask=keep_mask, size=(num_nodes, num_nodes))
 
         if self.activation is not None:
             out = self.activation(out)
 
         return out
 
-    def message(self, x=None, x_j=None, x_norm=None, x_norm_i=None, x_norm_j=None, index=None, size_i=None):
+    def message(self, x=None, x_j=None, x_norm=None, x_norm_i=None, x_norm_j=None, index=None, size_i=None, keep_mask=None):
         beta = self.beta if self.beta is not None else 1.0
 
         # Legacy Spektral path
@@ -94,5 +102,6 @@ class AGNNConv(MessagePassing):
 
         # PyG path
         alpha = beta * ops.sum(x_norm_i * x_norm_j, axis=-1)
+        alpha = mask_edge_logits(alpha, keep_mask)
         alpha = softmax(alpha, index, num_nodes=size_i, dim=0)
         return x_j * ops.expand_dims(alpha, -1)

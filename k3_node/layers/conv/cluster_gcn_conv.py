@@ -1,7 +1,12 @@
 from keras import layers, ops
 
 from k3_node.layers.conv.message_passing import MessagePassing
-from k3_node.layers.conv.utils import add_self_loops, remove_self_loops, degree
+from k3_node.layers.conv.utils import (
+    add_self_loops,
+    degree,
+    extend_mask_for_self_loops,
+    remove_self_loops_masked,
+)
 
 
 class ClusterGCNConv(MessagePassing):
@@ -51,18 +56,25 @@ class ClusterGCNConv(MessagePassing):
 
         num_nodes = ops.shape(x)[self.node_dim]
 
+        keep_mask = None
         if self.add_self_loops:
-            edge_index, _ = remove_self_loops(edge_index)
+            edge_index, _, keep_mask = remove_self_loops_masked(edge_index)
             edge_index, _ = add_self_loops(edge_index, num_nodes=num_nodes)
+            keep_mask = extend_mask_for_self_loops(keep_mask, num_nodes)
 
         row, col = edge_index[0], edge_index[1]
         col_cast = ops.cast(col, "int32")
-        deg = degree(col_cast, num_nodes=num_nodes)
+        if keep_mask is None:
+            deg = degree(col_cast, num_nodes=num_nodes)
+        else:
+            deg = ops.segment_sum(ops.cast(keep_mask, x.dtype), col_cast, num_segments=num_nodes)
         deg_inv = 1.0 / ops.maximum(ops.cast(deg, x.dtype), 1.0)
 
         edge_weight = ops.take(deg_inv, col_cast, axis=0)
         loop_mask = ops.equal(row, col)
         edge_weight = ops.where(loop_mask, edge_weight + self.diag_lambda * ops.take(deg_inv, col_cast, axis=0), edge_weight)
+        if keep_mask is not None:
+            edge_weight = edge_weight * ops.cast(keep_mask, edge_weight.dtype)
 
         out = self.propagate(edge_index, x=x, edge_weight=edge_weight)
         return self.lin_out(out) + self.lin_root(x)

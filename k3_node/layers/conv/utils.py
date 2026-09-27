@@ -78,6 +78,43 @@ def remove_self_loops(
     return edge_index, edge_attr
 
 
+def remove_self_loops_masked(
+    edge_index,
+    edge_attr=None,
+) -> Tuple:
+    """Removes self-loops in a way that is also correct under static-shape tracing.
+
+    Eagerly, self-loops are dropped (as in :func:`remove_self_loops`) and the
+    returned mask is ``None``. Under tracing (XLA / ``jax.jit``) the edge count
+    must stay static, so all edges are kept and a boolean ``keep_mask`` of shape
+    ``[E]`` is returned that is ``False`` at the original self-loops. Callers must
+    exclude masked edges from aggregation.
+
+    Returns:
+        ``(edge_index, edge_attr, keep_mask)``
+    """
+    if not is_tracing(edge_index):
+        edge_index, edge_attr = remove_self_loops(edge_index, edge_attr)
+        return edge_index, edge_attr, None
+    edge_index = ops.convert_to_tensor(edge_index)
+    return edge_index, edge_attr, ops.not_equal(edge_index[0], edge_index[1])
+
+
+def extend_mask_for_self_loops(keep_mask, num_nodes):
+    """Extends a ``keep_mask`` to cover the ``num_nodes`` loops appended by :func:`add_self_loops`."""
+    if keep_mask is None:
+        return None
+    return ops.concatenate([keep_mask, ops.ones((num_nodes,), dtype="bool")], axis=0)
+
+
+def mask_edge_logits(alpha, keep_mask):
+    """Sets the logits of masked edges to ``-inf`` so they receive zero softmax weight."""
+    if keep_mask is None:
+        return alpha
+    mask = ops.reshape(keep_mask, (-1,) + (1,) * (len(alpha.shape) - 1))
+    return ops.where(mask, alpha, ops.full_like(alpha, float("-inf")))
+
+
 def add_self_loops(
     edge_index,
     edge_attr=None,

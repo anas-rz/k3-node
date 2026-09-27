@@ -380,3 +380,25 @@ def test_chgnet_hub_save_load_predict():
         url = model.push_to_hub("anas-rz/chgnet-mp-2026", token="dummy_token")
         assert url == "https://huggingface.co/anas-rz/chgnet-mp-2026"
 
+
+
+def test_hub_injection_keeps_model_specific_from_pretrained():
+    """Models that load original checkpoints must keep their own ``from_pretrained``."""
+    from k3_node.models import GraphMAE2, Graphormer, Graphormer3D
+
+    for cls in (GraphMAE2, Graphormer, Graphormer3D):
+        assert cls.from_pretrained.__func__ is vars(cls)["from_pretrained"].__func__, cls.__name__
+
+
+def test_hub_injection_keeps_keras_batched_predict():
+    """Array inputs must still go through Keras' batched ``Model.predict``; graph inputs use the hub path."""
+    from k3_node.models import MLP, GCN
+
+    mlp = MLP([8, 16, 3])
+    x = np.random.randn(10, 8).astype("float32")
+    expected = ops.convert_to_numpy(mlp(x, training=False))
+    np.testing.assert_allclose(mlp.predict(x, batch_size=4, verbose=0), expected, rtol=1e-5, atol=1e-6)
+
+    gcn = GCN(in_channels=8, hidden_channels=16, num_layers=2, out_channels=3)
+    graph = Data(x=x, edge_index=np.array([[0, 1, 2, 3], [1, 2, 3, 0]], dtype="int32"))
+    assert tuple(ops.shape(gcn.predict(graph))) == (10, 3)

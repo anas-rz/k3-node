@@ -3,7 +3,13 @@ from keras import ops
 from keras.layers import Dense
 
 from k3_node.layers.conv.message_passing import MessagePassing
-from k3_node.layers.conv.utils import remove_self_loops, add_self_loops, softmax
+from k3_node.layers.conv.utils import (
+    add_self_loops,
+    extend_mask_for_self_loops,
+    mask_edge_logits,
+    remove_self_loops_masked,
+    softmax,
+)
 
 
 class SuperGATConv(MessagePassing):
@@ -89,14 +95,16 @@ class SuperGATConv(MessagePassing):
             self.build()
 
         num_nodes = ops.shape(x)[0]
+        keep_mask = None
         if self.add_self_loops:
-            edge_index, _ = remove_self_loops(edge_index)
+            edge_index, _, keep_mask = remove_self_loops_masked(edge_index)
             edge_index, _ = add_self_loops(edge_index, num_nodes=num_nodes)
+            keep_mask = extend_mask_for_self_loops(keep_mask, num_nodes)
 
         x = self.lin(x)
         x = ops.reshape(x, (-1, self.heads, self.out_channels))
 
-        out = self.propagate(edge_index, x=x, size=(num_nodes, num_nodes))
+        out = self.propagate(edge_index, x=x, keep_mask=keep_mask, size=(num_nodes, num_nodes))
 
         if self.concat:
             out = ops.reshape(out, (-1, self.heads * self.out_channels))
@@ -108,7 +116,7 @@ class SuperGATConv(MessagePassing):
 
         return out
 
-    def message(self, x_i, x_j, index=None, size_i=None):
+    def message(self, x_i, x_j, index=None, size_i=None, keep_mask=None):
         if self.attention_type == "MX":
             logits = ops.sum(x_i * x_j, axis=-1)
             alpha = ops.sum(x_j * self.att_l, axis=-1) + ops.sum(x_i * self.att_r, axis=-1)
@@ -117,5 +125,6 @@ class SuperGATConv(MessagePassing):
             alpha = ops.sum(x_i * x_j, axis=-1) / math.sqrt(self.out_channels)
 
         alpha = ops.leaky_relu(alpha, negative_slope=self.negative_slope)
+        alpha = mask_edge_logits(alpha, keep_mask)
         alpha = softmax(alpha, index, num_nodes=size_i, dim=0)
         return x_j * ops.expand_dims(alpha, -1)

@@ -383,14 +383,41 @@ __all__ = [
 import keras
 from k3_node.hub.hub_mixin import K3NodeHubMixin
 
+def _defines_own(cls, attr):
+    """True if a k3_node class in ``cls``'s MRO defines ``attr`` itself (e.g. a model-specific
+    ``from_pretrained`` that loads original checkpoints), which must not be overwritten."""
+    return any(attr in vars(klass) for klass in cls.__mro__ if klass.__module__.startswith("k3_node"))
+
+
+def _is_graph_input(data):
+    if hasattr(data, "edge_index") or (hasattr(data, "z") and hasattr(data, "pos")):
+        return True
+    return isinstance(data, dict) and any(k in data for k in ("edge_index", "pos", "z"))
+
+
+def _graph_aware_predict(self, data=None, *args, **kwargs):
+    """Graph inputs (``Data``, ``Batch``, graph dicts) use the hub-style ``predict``; everything
+    else keeps Keras' batched ``Model.predict`` (arrays, ``tf.data``, ``PyDataset``, ...)."""
+    if _is_graph_input(data):
+        return K3NodeHubMixin.predict(self, data, *args, **kwargs)
+    return keras.Model.predict(self, data, *args, **kwargs)
+
+
 for _name in list(__all__):
     _obj = globals().get(_name)
     if isinstance(_obj, type) and issubclass(_obj, (keras.Model, keras.layers.Layer)):
         if not issubclass(_obj, K3NodeHubMixin):
-            _obj.from_pretrained = classmethod(K3NodeHubMixin.from_pretrained.__func__)
-            _obj.save_pretrained = K3NodeHubMixin.save_pretrained
-            _obj.push_to_hub = K3NodeHubMixin.push_to_hub
-            _obj.predict = K3NodeHubMixin.predict
+            if not _defines_own(_obj, "from_pretrained"):
+                _obj.from_pretrained = classmethod(K3NodeHubMixin.from_pretrained.__func__)
+            if not _defines_own(_obj, "save_pretrained"):
+                _obj.save_pretrained = K3NodeHubMixin.save_pretrained
+            if not _defines_own(_obj, "push_to_hub"):
+                _obj.push_to_hub = K3NodeHubMixin.push_to_hub
+            if not _defines_own(_obj, "predict"):
+                if issubclass(_obj, keras.Model):
+                    _obj.predict = _graph_aware_predict
+                else:
+                    _obj.predict = K3NodeHubMixin.predict
             if not hasattr(_obj, "_get_config"):
                 _obj._get_config = K3NodeHubMixin._get_config
 

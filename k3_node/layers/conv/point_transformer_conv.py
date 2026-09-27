@@ -3,7 +3,13 @@ from keras import ops
 from keras.layers import Dense
 
 from k3_node.layers.conv.message_passing import MessagePassing
-from k3_node.layers.conv.utils import remove_self_loops, add_self_loops, softmax
+from k3_node.layers.conv.utils import (
+    add_self_loops,
+    extend_mask_for_self_loops,
+    mask_edge_logits,
+    remove_self_loops_masked,
+    softmax,
+)
 
 
 class PointTransformerConv(MessagePassing):
@@ -78,9 +84,11 @@ class PointTransformerConv(MessagePassing):
             pos_src = pos_dst = pos
 
         num_nodes = ops.shape(pos_dst)[0]
+        keep_mask = None
         if self.add_self_loops:
-            edge_index, _ = remove_self_loops(edge_index)
+            edge_index, _, keep_mask = remove_self_loops_masked(edge_index)
             edge_index, _ = add_self_loops(edge_index, num_nodes=num_nodes)
+            keep_mask = extend_mask_for_self_loops(keep_mask, num_nodes)
 
         alpha = (self.lin_src(x_src), self.lin_dst(x_dst))
         x_mapped = (self.lin(x_src), x_dst)
@@ -90,12 +98,13 @@ class PointTransformerConv(MessagePassing):
             x=x_mapped,
             pos=(pos_src, pos_dst),
             alpha=alpha,
+            keep_mask=keep_mask,
             size=(ops.shape(pos_src)[0], num_nodes),
         )
 
         return out
 
-    def message(self, x_j, pos_i, pos_j, alpha_i, alpha_j, index=None, size_i=None):
+    def message(self, x_j, pos_i, pos_j, alpha_i, alpha_j, index=None, size_i=None, keep_mask=None):
         delta = pos_i - pos_j
         if self.pos_nn is not None:
             delta = self.pos_nn(delta)
@@ -104,5 +113,6 @@ class PointTransformerConv(MessagePassing):
         if self.attn_nn is not None:
             alpha = self.attn_nn(alpha)
 
+        alpha = mask_edge_logits(alpha, keep_mask)
         alpha = softmax(alpha, index, num_nodes=size_i, dim=0)
         return (x_j + delta) * alpha

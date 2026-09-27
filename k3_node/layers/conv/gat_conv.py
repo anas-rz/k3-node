@@ -2,7 +2,13 @@ from typing import Optional, Union, Tuple
 from keras import layers, ops
 
 from k3_node.layers.conv.message_passing import MessagePassing
-from k3_node.layers.conv.utils import add_self_loops, remove_self_loops, softmax
+from k3_node.layers.conv.utils import (
+    add_self_loops,
+    extend_mask_for_self_loops,
+    mask_edge_logits,
+    remove_self_loops_masked,
+    softmax,
+)
 
 
 class GATConv(MessagePassing):
@@ -157,10 +163,13 @@ class GATConv(MessagePassing):
                 num_nodes = ops.shape(x_src)[0]
                 if x_dst is not None:
                     num_nodes = ops.minimum(num_nodes, ops.shape(x_dst)[0])
-            edge_index, edge_attr = remove_self_loops(edge_index, edge_attr)
+            edge_index, edge_attr, keep_mask = remove_self_loops_masked(edge_index, edge_attr)
             edge_index, edge_attr = add_self_loops(
                 edge_index, edge_attr, fill_value=self.fill_value, num_nodes=num_nodes
             )
+            keep_mask = extend_mask_for_self_loops(keep_mask, num_nodes)
+        else:
+            keep_mask = None
 
         row, col = edge_index[0], edge_index[1]
         row, col = ops.cast(row, "int32"), ops.cast(col, "int32")
@@ -174,6 +183,7 @@ class GATConv(MessagePassing):
             alpha = alpha + ops.sum(edge_attr_proj * self.att_edge, axis=-1)
 
         alpha = ops.leaky_relu(alpha, negative_slope=self.negative_slope)
+        alpha = mask_edge_logits(alpha, keep_mask)
         num_nodes_dst = ops.shape(x_dst)[0] if x_dst is not None else ops.shape(x_src)[0]
         alpha = softmax(alpha, col, num_nodes=num_nodes_dst, dim=0)
 
