@@ -1415,6 +1415,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#k3_node.hub.hub_mixin.K3NodeHubMixin.predict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#k3_node.hub.hub_mixin.K3NodeHubMixin.push_to_hub" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1849,6 +1860,14 @@ K3-Node GNN models and tasks to/from the Hugging Face Hub.</p>
                 </div>
               </td>
             </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="predict(data=None, *args, **kwargs) (k3_node.hub.hub_mixin.K3NodeHubMixin.predict)" href="#k3_node.hub.hub_mixin.K3NodeHubMixin.predict">predict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Runs inference on graph data (PyG Data, molecular structures, dicts, or tensors).</p>
+                </div>
+              </td>
+            </tr>
       </tbody>
     </table>
 
@@ -1911,7 +1930,7 @@ K3-Node GNN models and tasks to/from the Hugging Face Hub.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Local directory path or Hugging Face repo ID (e.g. <code>"org/cora-gcn"</code>).</p>
+                <p>Local directory path or Hugging Face repo ID (e.g. <code>"k3-node/schnet-qm9"</code>).</p>
               </div>
             </td>
             <td>
@@ -2000,7 +2019,114 @@ K3-Node GNN models and tasks to/from the Hugging Face Hub.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Restored and initialized task instance with loaded weights.</p>
+                <p>Restored and initialized model or task instance with loaded weights.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.hub.hub_mixin.K3NodeHubMixin.predict" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Infers predictions on graph or molecular data.</p>
+<p>Supports PyG / K3-Node <code>Data</code> objects (extracting <code>(z, pos, batch)</code>
+for molecular models or <code>(x, edge_index, ...)</code> for standard GNNs),
+dictionaries, tuples of tensors, or direct positional tensors.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Input graph or molecule Data, dict, or tensor.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>*args</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additional positional arguments.</p>
+              </div>
+            </td>
+            <td>
+                  <code>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additional keyword arguments.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Model prediction tensor or array.</p>
               </div>
             </td>
           </tr>
@@ -2429,7 +2555,7 @@ and markdown documentation for a K3-Node GNN model.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Name of the task (e.g. 'NodeClassifier', 'GraphClassifier').</p>
+                <p>Name of the task or model (e.g. 'NodeClassifier', 'SchNet').</p>
               </div>
             </td>
             <td>
@@ -2445,7 +2571,7 @@ and markdown documentation for a K3-Node GNN model.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Name of the backbone architecture (e.g. 'gcn', 'gin', 'sage').</p>
+                <p>Name of the backbone architecture (e.g. 'gcn', 'schnet', 'chgnet').</p>
               </div>
             </td>
             <td>

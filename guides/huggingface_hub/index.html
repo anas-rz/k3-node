@@ -1637,15 +1637,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-graph-dataset-hub-integration" class="md-nav__link">
+  <a href="#5-direct-model-architecture-hub-integration-k3models" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Graph Dataset Hub Integration
+        5. Direct Model Architecture Hub Integration (k3.models.*)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="5. Graph Dataset Hub Integration">
+    <nav class="md-nav" aria-label="5. Direct Model Architecture Hub Integration (k3.models.*)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supported-model-families" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Model Families
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-graph-dataset-hub-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Graph Dataset Hub Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Graph Dataset Hub Integration">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1676,10 +1704,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-summary-table" class="md-nav__link">
+  <a href="#7-summary-table" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Summary Table
+        7. Summary Table
       
     </span>
   </a>
@@ -1875,32 +1903,52 @@
 - <a href="file:///home/anas/k3-node/k3_node/tasks/graph_regression.py"><code>GraphRegressor</code></a>
 - <a href="file:///home/anas/k3-node/k3_node/tasks/link_prediction.py"><code>LinkPredictor</code></a></p>
 <hr />
-<h2 id="5-graph-dataset-hub-integration">5. Graph Dataset Hub Integration</h2>
+<h2 id="5-direct-model-architecture-hub-integration-k3models">5. Direct Model Architecture Hub Integration (<code>k3.models.*</code>)</h2>
+<p>Beyond the task estimators, <strong>all models in <code>k3_node.models</code></strong> natively support saving, loading, inference, and pushing to the Hugging Face Hub:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">k3_node</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">k3</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># 1. Load pre-trained weights with one line</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">k3</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">SchNet</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">"k3-node/schnet-qm9"</span><span class="p">)</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># 2. Predict directly on molecular or graph Data</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">energy</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">molecule_data</span><span class="p">)</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="c1"># 3. Push community checkpoints directly to the hub</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="n">model</span><span class="o">.</span><span class="n">push_to_hub</span><span class="p">(</span><span class="s2">"anas-rz/chgnet-mp-2026"</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="supported-model-families">Supported Model Families</h3>
+<p>Every model in <code>k3_node.models</code> has this capability built in, including:
+- <strong>3D Molecular &amp; Quantum GNNs</strong>: <a href="file:///home/anas/k3-node/k3_node/models/schnet.py"><code>SchNet</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/dimenet.py"><code>DimeNet</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/dimenet.py"><code>DimeNetPlusPlus</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/visnet.py"><code>ViSNet</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/gnnff.py"><code>GNNFF</code></a>
+- <strong>Materials &amp; Crystal Models</strong>: <a href="file:///home/anas/k3-node/k3_node/models/materials/chgnet.py"><code>CHGNet</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/materials/megnet.py"><code>MEGNet</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/materials/m3gnet.py"><code>M3GNet</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/materials/tensornet.py"><code>TensorNet</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/materials/so3net.py"><code>SO3Net</code></a>
+- <strong>Classical &amp; Modern GNNs</strong>: <a href="file:///home/anas/k3-node/k3_node/models/basic_gnn.py"><code>GCN</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/basic_gnn.py"><code>GraphSAGE</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/basic_gnn.py"><code>GIN</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/basic_gnn.py"><code>GAT</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/basic_gnn.py"><code>PNA</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/basic_gnn.py"><code>EdgeCNN</code></a>
+- <strong>Transformers &amp; Foundation Models</strong>: <a href="file:///home/anas/k3-node/k3_node/models/graphormer.py"><code>Graphormer</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/gps_model.py"><code>GPSModel</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/unimol.py"><code>UniMolModel</code></a>, <a href="file:///home/anas/k3-node/k3_node/models/mole_bert.py"><code>MoleBERT</code></a></p>
+<hr />
+<h2 id="6-graph-dataset-hub-integration">6. Graph Dataset Hub Integration</h2>
 <p>Sharing graph datasets (single graphs or collections of graphs) is just as simple:</p>
 <h3 id="pushing-a-graph-dataset-to-the-hub">Pushing a Graph Dataset to the Hub</h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.hub</span><span class="w"> </span><span class="kn">import</span> <span class="n">push_dataset_to_hub</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">TUDataset</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Load a collection of molecular graphs</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">mutag</span> <span class="o">=</span> <span class="n">TUDataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s2">"/tmp/MUTAG"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"MUTAG"</span><span class="p">)</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Push to Hugging Face Hub as a dataset repo</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">dataset_url</span> <span class="o">=</span> <span class="n">push_dataset_to_hub</span><span class="p">(</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">dataset</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">mutag</span><span class="p">),</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">repo_id</span><span class="o">=</span><span class="s2">"your-username/mutag-graphs"</span><span class="p">,</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">"MUTAG mutagenic aromatic and heteroaromatic nitro compounds graph benchmark."</span><span class="p">,</span>
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="p">)</span>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="nb">print</span><span class="p">(</span><span class="s2">"Dataset published at:"</span><span class="p">,</span> <span class="n">dataset_url</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.hub</span><span class="w"> </span><span class="kn">import</span> <span class="n">push_dataset_to_hub</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">TUDataset</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Load a collection of molecular graphs</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">mutag</span> <span class="o">=</span> <span class="n">TUDataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s2">"/tmp/MUTAG"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"MUTAG"</span><span class="p">)</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Push to Hugging Face Hub as a dataset repo</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">dataset_url</span> <span class="o">=</span> <span class="n">push_dataset_to_hub</span><span class="p">(</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">dataset</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">mutag</span><span class="p">),</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">repo_id</span><span class="o">=</span><span class="s2">"your-username/mutag-graphs"</span><span class="p">,</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">"MUTAG mutagenic aromatic and heteroaromatic nitro compounds graph benchmark."</span><span class="p">,</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="p">)</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="nb">print</span><span class="p">(</span><span class="s2">"Dataset published at:"</span><span class="p">,</span> <span class="n">dataset_url</span><span class="p">)</span>
 </span></code></pre></div>
 <h3 id="loading-a-graph-dataset-from-the-hub">Loading a Graph Dataset from the Hub</h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.hub</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dataset_from_hub</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># Load directly into K3-Node Data structures</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">graphs</span> <span class="o">=</span> <span class="n">load_dataset_from_hub</span><span class="p">(</span><span class="s2">"your-username/mutag-graphs"</span><span class="p">)</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">graphs</span><span class="p">)</span><span class="si">}</span><span class="s2"> graphs! Sample: </span><span class="si">{</span><span class="n">graphs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.hub</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dataset_from_hub</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># Load directly into K3-Node Data structures</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">graphs</span> <span class="o">=</span> <span class="n">load_dataset_from_hub</span><span class="p">(</span><span class="s2">"your-username/mutag-graphs"</span><span class="p">)</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">graphs</span><span class="p">)</span><span class="si">}</span><span class="s2"> graphs! Sample: </span><span class="si">{</span><span class="n">graphs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h2 id="6-summary-table">6. Summary Table</h2>
+<h2 id="7-summary-table">7. Summary Table</h2>
 <table>
 <thead>
 <tr>
