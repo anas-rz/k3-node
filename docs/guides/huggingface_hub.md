@@ -65,28 +65,42 @@ preds = generic_clf.predict(data)
 
 ---
 
-## 2. Publishing Models to Hugging Face Hub
+## 2. Authentication & Setup
+
+Before creating or uploading models and datasets to the Hugging Face Hub, you need a Hugging Face user access token with **write** permissions:
+
+1. **Create a Write Token**: Generate a write-enabled access token at:  
+   👉 [**https://huggingface.co/settings/tokens/new?preset=write**](https://huggingface.co/settings/tokens/new?preset=write)
+
+2. **Log in to Hugging Face**: In your terminal, run the official login command:
+   ```bash
+   hf auth login
+   ```
+
+Once authenticated, your credentials will be cached locally and used automatically by `push_to_hub()`. You can also pass your token explicitly in Python using `token="hf_..."`.
+
+---
+
+## 3. Publishing Models to Hugging Face Hub
 
 Push your trained model directly to your Hugging Face account:
 
 ```python
-# Authenticate (or run `huggingface-cli login` in your terminal)
-# token = "hf_..."
-
-# Push to Hub
+# Push to Hub (uses cached credentials from `hf auth login` or explicit token)
 repo_url = clf.push_to_hub(
     repo_id="your-username/cora-node-gcn",
     metrics=metrics,
     dataset_name="Cora",
     commit_message="Initial release of trained Cora GCN",
     private=False,
+    # token="hf_...",  # optional if logged in via `hf auth login`
 )
 print("Model published at:", repo_url)
 ```
 
 ---
 
-## 3. Loading Pretrained Models from the Hub
+## 4. Loading Pretrained Models from the Hub
 
 Anyone can load and run your published model with a single line of code:
 
@@ -112,7 +126,7 @@ All 4 high-level task estimators support `save_pretrained`, `from_pretrained`, a
 
 ---
 
-## 4. Graph Dataset Hub Integration
+## 5. Graph Dataset Hub Integration
 
 Sharing graph datasets (single graphs or collections of graphs) is just as simple:
 
@@ -146,7 +160,7 @@ print(f"Loaded {len(graphs)} graphs! Sample: {graphs[0]}")
 
 ---
 
-## 5. Summary Table
+## 6. Summary Table
 
 | Operation | Model Hub Function / Method | Dataset Hub Function |
 | :--- | :--- | :--- |
