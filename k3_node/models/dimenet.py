@@ -84,6 +84,18 @@ class Envelope(keras.layers.Layer):
 
 
 class BesselBasisLayer(keras.layers.Layer):
+    """Layer ``BesselBasisLayer``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import BesselBasisLayer
+
+        dist = np.array([0.9, 1.5, 3.2], dtype="float32")  # interatomic distances
+        rbf = BesselBasisLayer(num_radial=6, cutoff=5.0)(dist)  # radial basis expansion
+        print(tuple(rbf.shape))  # (3, 6)
+        ```
+    """
     def __init__(self, num_radial: int, cutoff: float = 5.0, envelope_exponent: int = 5, **kwargs):
         super().__init__(**kwargs)
         self.num_radial = num_radial
@@ -105,6 +117,20 @@ class BesselBasisLayer(keras.layers.Layer):
 
 
 class SphericalBasisLayer(keras.layers.Layer):
+    """Layer ``SphericalBasisLayer``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import SphericalBasisLayer
+
+        dist = np.array([0.9, 1.5, 3.2], dtype="float32")  # edge lengths
+        angle = np.array([1.2, 2.0], dtype="float32")  # angles of two edge triplets
+        idx_kj = np.array([0, 2])  # edge (k -> j) of each triplet
+        sbf = SphericalBasisLayer(num_spherical=3, num_radial=6, cutoff=5.0)(dist, angle, idx_kj)
+        print(tuple(sbf.shape))  # (2, 18): num_spherical * num_radial features per triplet
+        ```
+    """
     def __init__(
         self,
         num_spherical: int,
@@ -399,6 +425,21 @@ class DimeNet(keras.layers.Layer):
     r"""The directional message passing neural network (DimeNet) from the
     `"Directional Message Passing for Molecular Graphs"
     <https://arxiv.org/abs/2003.03123>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import DimeNet
+
+        z = np.array([6, 8, 1, 1, 1])  # atomic numbers of a small molecule
+        pos = np.random.rand(5, 3).astype("float32") * 2.0  # 3D coordinates (Angstrom)
+        batch = np.array([0, 0, 0, 1, 1])  # two molecules: atoms 0-2 and atoms 3-4
+
+        model = DimeNet(hidden_channels=16, out_channels=1, num_blocks=2, num_bilinear=8,
+                        num_spherical=3, num_radial=6, cutoff=5.0)
+        energy = model(z, pos, batch=batch)  # one prediction per molecule
+        print(tuple(energy.shape))  # (2, 1)
+        ```
     """
     def __init__(
         self,
@@ -513,6 +554,21 @@ class DimeNetPlusPlus(DimeNet):
     r"""The DimeNet++ from the `"Fast and Uncertainty-Aware
     Directional Message Passing for Non-Equilibrium Molecules"
     <https://arxiv.org/abs/2011.14115>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import DimeNetPlusPlus
+
+        z = np.array([6, 8, 1, 1, 1])  # atomic numbers of a small molecule
+        pos = np.random.rand(5, 3).astype("float32") * 2.0  # 3D coordinates (Angstrom)
+        batch = np.array([0, 0, 0, 1, 1])  # two molecules: atoms 0-2 and atoms 3-4
+
+        model = DimeNetPlusPlus(hidden_channels=16, out_channels=1, num_blocks=2, int_emb_size=8,
+                                basis_emb_size=8, out_emb_channels=16, num_spherical=3, num_radial=6, cutoff=5.0)
+        energy = model(z, pos, batch=batch)
+        print(tuple(energy.shape))  # (2, 1)
+        ```
     """
     def __init__(
         self,

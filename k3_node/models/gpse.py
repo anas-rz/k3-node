@@ -31,6 +31,20 @@ class BatchNorm1dEdge(keras.layers.Layer):
 
 
 class GeneralLayer(keras.layers.Layer):
+    """Layer ``GeneralLayer``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GeneralLayer
+
+        x = np.random.rand(6, 16).astype("float32")
+        edge_index = np.array([[0, 1, 2, 3, 4, 5], [1, 2, 0, 4, 5, 3]])
+
+        layer = GeneralLayer("resgatedgcnconv", in_channels=16, out_channels=32)  # conv + batch norm + activation
+        print(tuple(layer(x, edge_index).shape))  # (6, 32)
+        ```
+    """
     def __init__(
         self,
         name: str,
@@ -92,6 +106,20 @@ class GeneralLayer(keras.layers.Layer):
 
 
 class GeneralMultiLayer(keras.layers.Layer):
+    """Layer ``GeneralMultiLayer``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GeneralMultiLayer
+
+        x = np.random.rand(6, 16).astype("float32")
+        edge_index = np.array([[0, 1, 2, 3, 4, 5], [1, 2, 0, 4, 5, 3]])
+
+        layer = GeneralMultiLayer("linear", in_channels=16, out_channels=32, num_layers=2)
+        print(tuple(layer(x).shape))  # (6, 32)
+        ```
+    """
     def __init__(
         self,
         name: str,
@@ -135,6 +163,20 @@ class GeneralMultiLayer(keras.layers.Layer):
 
 
 class GNNStackStage(keras.layers.Layer):
+    """Layer ``GNNStackStage``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GNNStackStage
+
+        x = np.random.rand(6, 16).astype("float32")
+        edge_index = np.array([[0, 1, 2, 3, 4, 5], [1, 2, 0, 4, 5, 3]])
+
+        stage = GNNStackStage(in_channels=16, out_channels=16, num_layers=2)  # stack of message-passing layers
+        print(tuple(stage(x, edge_index).shape))  # (6, 16)
+        ```
+    """
     def __init__(
         self,
         in_channels: int,
@@ -196,7 +238,23 @@ class IdentityHead(keras.layers.Layer):
 
 
 class GNNInductiveHybridMultiHead(keras.layers.Layer):
-    r"""GNN prediction head for inductive node and graph prediction tasks."""
+    r"""GNN prediction head for inductive node and graph prediction tasks.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GNNInductiveHybridMultiHead
+
+        x = np.random.rand(6, 16).astype("float32")
+        edge_index = np.array([[0, 1, 2, 3, 4, 5], [1, 2, 0, 4, 5, 3]])
+        batch = np.array([0, 0, 0, 1, 1, 1])  # two graphs
+
+        head = GNNInductiveHybridMultiHead(dim_in=16, dim_out=4, num_node_targets=3, num_graph_targets=2,
+                                           layers_post_mp=1)
+        node_pred, graph_pred = head(x, batch=batch, batch_size=2)
+        print(tuple(node_pred.shape), tuple(graph_pred.shape))  # (6, 3) (2, 2)
+        ```
+    """
     def __init__(
         self,
         dim_in: int,
@@ -273,6 +331,18 @@ class GPSE(keras.layers.Layer):
     r"""The Graph Positional and Structural Encoder (GPSE) model from the
     `"Graph Positional and Structural Encoder"
     <https://arxiv.org/abs/2307.07107>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GPSE
+
+        x = np.random.rand(6, 16).astype("float32")
+        edge_index = np.array([[0, 1, 2, 3, 4, 5], [1, 2, 0, 4, 5, 3]])
+
+        model = GPSE(dim_in=16, dim_inner=32, layers_pre_mp=1, layers_mp=2, layers_post_mp=1, use_repr=True)
+        print(tuple(model(x, edge_index).shape))  # (6, 32): positional/structural encodings per node
+        ```
     """
     def __init__(
         self,
@@ -398,6 +468,19 @@ class GPSENodeEncoder(keras.layers.Layer):
         n_layers (int, optional): Number of MLP layers. (default: 2)
         dropout_be (float, optional): Dropout before encoding. (default: 0.5)
         dropout_ae (float, optional): Dropout after encoding. (default: 0.2)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GPSENodeEncoder
+
+        x = np.random.rand(6, 16).astype("float32")
+        edge_index = np.array([[0, 1, 2, 3, 4, 5], [1, 2, 0, 4, 5, 3]])
+        pos_enc = np.random.rand(6, 32).astype("float32")  # encodings produced by GPSE
+
+        encoder = GPSENodeEncoder(dim_emb=64, dim_pe_in=32, dim_pe_out=16, dim_in=16, expand_x=True)
+        print(tuple(encoder(x, pos_enc).shape))  # (6, 64): node features concatenated with projected encodings
+        ```
     """
     def __init__(
         self,

@@ -669,6 +669,20 @@ class ViSNet(keras.layers.Layer):
     r"""The equivariant vector-scalar interactive graph neural network (ViSNet)
     from the `"Enhancing Geometric Representations for Molecules with Equivariant
     Vector-Scalar Interactive Message Passing" <https://arxiv.org/abs/2210.16518>`_ paper.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import ViSNet
+
+        z = np.array([6, 8, 1, 1, 1])  # atomic numbers of a small molecule
+        pos = np.random.rand(5, 3).astype("float32") * 2.0  # 3D coordinates (Angstrom)
+        batch = np.array([0, 0, 0, 1, 1])  # two molecules: atoms 0-2 and atoms 3-4
+
+        model = ViSNet(lmax=1, num_heads=2, num_layers=2, hidden_channels=16, num_rbf=8, cutoff=5.0)
+        energy, forces = model(z, pos, batch=batch)  # forces are None unless derivative=True
+        print(tuple(energy.shape))  # (2, 1)
+        ```
     """
     def __init__(
         self,

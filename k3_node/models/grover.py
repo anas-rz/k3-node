@@ -452,7 +452,31 @@ class PositionwiseFeedForward(layers.Layer):
 
 
 class GTransEncoder(layers.Layer):
-    """Dual-track Graph Transformer Encoder of GROVER."""
+    """Dual-track Graph Transformer Encoder of GROVER.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GTransEncoder
+
+        # Chemprop-style molecule batch; index 0 is a zero padding atom/bond.
+        f_atoms = np.random.rand(5, 151).astype("float32")  # atom features
+        f_bonds = np.random.rand(7, 165).astype("float32")  # (directed) bond features
+        f_atoms[0], f_bonds[0] = 0.0, 0.0
+        a2b = np.array([[0, 0], [2, 0], [1, 4], [3, 0], [0, 0]])  # incoming bonds of each atom
+        b2a = np.array([0, 1, 2, 2, 3, 1, 3])  # source atom of each bond
+        b2revb = np.array([0, 2, 1, 4, 3, 6, 5])  # reverse bond of each bond
+        a_scope = np.array([[1, 2], [3, 2]])  # (start, size) of each molecule's atoms
+        b_scope = np.array([[1, 3], [4, 3]])
+        a2a = b2a[a2b]  # neighboring atoms
+        batch = (f_atoms, f_bonds, a2b, b2a, b2revb, a_scope, b_scope, a2a)
+
+        encoder = GTransEncoder(hidden_size=32, edge_fdim=165, node_fdim=151, num_mt_block=1,
+                                num_attn_head=2, depth=3, atom_emb_output="both")
+        out = encoder(f_atoms, f_bonds, a2b, b2a, b2revb, a2a)
+        print(tuple(out["atom_from_atom"].shape), tuple(out["bond_from_bond"].shape))  # (5, 32) (7, 32)
+        ```
+    """
 
     def __init__(
         self,
@@ -679,7 +703,20 @@ class GTransEncoder(layers.Layer):
 
 
 class Readout(layers.Layer):
-    """Scope-based Readout layer for graph-level representations."""
+    """Scope-based Readout layer for graph-level representations.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import Readout
+
+        emb = np.random.rand(8, 32).astype("float32")  # atom embeddings of 3 molecules
+        scope = np.array([[0, 3], [3, 4], [7, 1]])  # (start, size) of each molecule
+        print(tuple(Readout(rtype="mean", hidden_size=32)(emb, scope).shape))  # (3, 32)
+        readout = Readout(rtype="self_attention", hidden_size=32, attn_hidden=16, attn_out=4)
+        print(tuple(readout(emb, scope).shape))  # (3, 128)
+        ```
+    """
 
     def __init__(
         self,
@@ -746,7 +783,32 @@ class Readout(layers.Layer):
 
 
 class GROVER(keras.Model):
-    """Complete GROVER Model."""
+    """Complete GROVER Model.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GROVER
+
+        # Chemprop-style molecule batch; index 0 is a zero padding atom/bond.
+        f_atoms = np.random.rand(5, 151).astype("float32")  # atom features
+        f_bonds = np.random.rand(7, 165).astype("float32")  # (directed) bond features
+        f_atoms[0], f_bonds[0] = 0.0, 0.0
+        a2b = np.array([[0, 0], [2, 0], [1, 4], [3, 0], [0, 0]])  # incoming bonds of each atom
+        b2a = np.array([0, 1, 2, 2, 3, 1, 3])  # source atom of each bond
+        b2revb = np.array([0, 2, 1, 4, 3, 6, 5])  # reverse bond of each bond
+        a_scope = np.array([[1, 2], [3, 2]])  # (start, size) of each molecule's atoms
+        b_scope = np.array([[1, 3], [4, 3]])
+        a2a = b2a[a2b]  # neighboring atoms
+        batch = (f_atoms, f_bonds, a2b, b2a, b2revb, a_scope, b_scope, a2a)
+
+        model = GROVER(hidden_size=32, edge_fdim=165, node_fdim=151, num_mt_block=1, num_attn_head=2,
+                       depth=3, atom_emb_output="both", readout_type="mean")
+        out = model(batch)
+        print(tuple(out["atom_from_atom"].shape))  # (5, 32): atom embeddings
+        print(tuple(model.get_fingerprint(batch, fingerprint_source="both").shape))  # (2, 128): one per molecule
+        ```
+    """
 
     def __init__(
         self,

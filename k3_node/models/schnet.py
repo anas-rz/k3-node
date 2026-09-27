@@ -24,7 +24,17 @@ DEFAULT_ATOMIC_MASSES = [
 
 
 class ShiftedSoftplus(keras.layers.Layer):
-    r"""Shifted softplus activation function: :math:`\ln(1 + e^x) - \ln(2)`."""
+    r"""Shifted softplus activation function: :math:`\ln(1 + e^x) - \ln(2)`.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import ShiftedSoftplus
+
+        x = np.array([-1.0, 0.0, 1.0], dtype="float32")
+        print(tuple(ShiftedSoftplus()(x).shape))  # (3,): softplus(x) - log(2)
+        ```
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.shift = float(np.log(2.0))
@@ -34,7 +44,17 @@ class ShiftedSoftplus(keras.layers.Layer):
 
 
 class GaussianSmearing(keras.layers.Layer):
-    r"""Smears interatomic distances using Gaussian basis functions."""
+    r"""Smears interatomic distances using Gaussian basis functions.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GaussianSmearing
+
+        dist = np.array([0.9, 1.5, 3.2], dtype="float32")
+        print(tuple(GaussianSmearing(start=0.0, stop=5.0, num_gaussians=10)(dist).shape))  # (3, 10)
+        ```
+    """
     def __init__(
         self,
         start: float = 0.0,
@@ -66,6 +86,19 @@ class GaussianSmearing(keras.layers.Layer):
 class RadiusInteractionGraph(keras.layers.Layer):
     r"""Creates edges based on atom positions :obj:`pos` to all points within
     the cutoff distance.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import RadiusInteractionGraph
+
+        z = np.array([6, 8, 1, 1, 1])  # atomic numbers of a small molecule
+        pos = np.random.rand(5, 3).astype("float32") * 2.0  # 3D coordinates (Angstrom)
+
+        graph = RadiusInteractionGraph(cutoff=1.5)  # connect atoms closer than 1.5 Angstrom
+        edge_index, edge_weight = graph(pos)  # edge_weight holds the distances
+        print(edge_index.shape[0], edge_weight.shape == (edge_index.shape[1],))  # 2 True
+        ```
     """
     def __init__(self, cutoff: float = 10.0, max_num_neighbors: int = 32, **kwargs):
         super().__init__(**kwargs)
@@ -88,7 +121,24 @@ class RadiusInteractionGraph(keras.layers.Layer):
 
 
 class CFConv(MessagePassing):
-    r"""Continuous-filter convolution layer."""
+    r"""Continuous-filter convolution layer.
+
+    Example:
+        ```python
+        import numpy as np
+        import keras
+        from k3_node.models import CFConv
+
+        x = np.random.rand(4, 16).astype("float32")  # atom embeddings
+        edge_index = np.array([[0, 1, 0, 2, 1, 3], [1, 0, 2, 0, 3, 1]])
+        dist = np.random.rand(6).astype("float32") * 3.0  # edge lengths
+        edge_attr = np.random.rand(6, 10).astype("float32")  # expanded distances (e.g. GaussianSmearing)
+
+        filter_net = keras.Sequential([keras.layers.Dense(16, activation="softplus"), keras.layers.Dense(16)])
+        conv = CFConv(in_channels=16, out_channels=16, num_filters=16, nn=filter_net, cutoff=5.0)
+        print(tuple(conv(x, edge_index, dist, edge_attr).shape))  # (4, 16): continuous-filter convolution
+        ```
+    """
     def __init__(
         self,
         in_channels: int,
@@ -125,7 +175,22 @@ class CFConv(MessagePassing):
 
 
 class InteractionBlock(keras.layers.Layer):
-    r"""Interaction block used in SchNet."""
+    r"""Interaction block used in SchNet.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import SchNetInteractionBlock
+
+        x = np.random.rand(4, 16).astype("float32")
+        edge_index = np.array([[0, 1, 0, 2, 1, 3], [1, 0, 2, 0, 3, 1]])
+        dist = np.random.rand(6).astype("float32") * 3.0  # edge lengths
+        edge_attr = np.random.rand(6, 10).astype("float32")  # expanded distances (e.g. GaussianSmearing)
+
+        block = SchNetInteractionBlock(hidden_channels=16, num_gaussians=10, num_filters=16, cutoff=5.0)
+        print(tuple(block(x, edge_index, dist, edge_attr).shape))  # (4, 16)
+        ```
+    """
     def __init__(
         self,
         hidden_channels: int,
@@ -174,6 +239,20 @@ class SchNet(K3NodeHubMixin, keras.Model):
         mean (float, optional): Mean of target property. (default: None)
         std (float, optional): Standard deviation of target property. (default: None)
         atomref (tensor, optional): Reference atomic values. (default: None)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import SchNet
+
+        z = np.array([6, 8, 1, 1, 1])  # atomic numbers of a small molecule
+        pos = np.random.rand(5, 3).astype("float32") * 2.0  # 3D coordinates (Angstrom)
+        batch = np.array([0, 0, 0, 1, 1])  # two molecules: atoms 0-2 and atoms 3-4
+
+        model = SchNet(hidden_channels=16, num_filters=16, num_interactions=2, num_gaussians=10, cutoff=5.0)
+        energy = model(z, pos, batch=batch)
+        print(tuple(energy.shape))  # (2, 1)
+        ```
     """
     def __init__(
         self,

@@ -39,6 +39,20 @@ class AtomEncoder(layers.Layer):
         feature_dims (List[int], optional): Categorical feature vocabulary sizes for each
             atom feature column. (default: ``[119, 4, 12, 12, 10, 6, 6, 2, 2]``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import AtomEncoder
+
+        # OGB-style integer atom and bond features (9 per atom, 3 per bond)
+        x = np.random.randint(0, 2, size=(5, 9))
+        edge_index = np.array([[0, 1, 1, 2, 3, 4], [1, 0, 2, 1, 4, 3]])
+        edge_attr = np.random.randint(0, 2, size=(6, 3))
+        batch = np.array([0, 0, 0, 1, 1])  # two graphs
+
+        print(tuple(AtomEncoder(emb_dim=32)(x).shape))  # (5, 32): sum of per-feature embeddings
+        ```
     """
 
     def __init__(
@@ -84,6 +98,20 @@ class BondEncoder(layers.Layer):
         feature_dims (List[int], optional): Categorical feature vocabulary sizes for each
             bond feature column. (default: ``[5, 6, 2]``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import BondEncoder
+
+        # OGB-style integer atom and bond features (9 per atom, 3 per bond)
+        x = np.random.randint(0, 2, size=(5, 9))
+        edge_index = np.array([[0, 1, 1, 2, 3, 4], [1, 0, 2, 1, 4, 3]])
+        edge_attr = np.random.randint(0, 2, size=(6, 3))
+        batch = np.array([0, 0, 0, 1, 1])  # two graphs
+
+        print(tuple(BondEncoder(emb_dim=32)(edge_attr).shape))  # (6, 32)
+        ```
     """
 
     def __init__(
@@ -131,6 +159,15 @@ class RWSEEncoder(layers.Layer):
         num_rw_steps (int): Number of random walk steps. (default: ``16``)
         pe_dim (int): Output structural encoding dimension. (default: ``20``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import RWSEEncoder
+
+        rwse = np.random.rand(5, 16).astype("float32")  # 16-step random-walk return probabilities
+        print(tuple(RWSEEncoder(num_rw_steps=16, pe_dim=8)(rwse).shape))  # (5, 8)
+        ```
     """
 
     def __init__(
@@ -176,6 +213,21 @@ class CustomGatedGCN(layers.Layer):
         residual (bool, optional): Whether to use residual connections. (default: ``True``)
         act (str, optional): Activation function. (default: ``"gelu"``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import CustomGatedGCN
+
+        x = np.random.rand(5, 32).astype("float32")  # node features
+        e = np.random.rand(6, 32).astype("float32")  # edge features
+        edge_index = np.array([[0, 1, 1, 2, 3, 4], [1, 0, 2, 1, 4, 3]])
+        batch = np.array([0, 0, 0, 1, 1])  # two graphs
+
+        layer = CustomGatedGCN(in_dim=32, out_dim=32, dropout=0.0, residual=True)
+        x_out, e_out = layer(x, edge_index, e)  # updates node and edge features
+        print(tuple(x_out.shape), tuple(e_out.shape))  # (5, 32) (6, 32)
+        ```
     """
 
     def __init__(
@@ -363,6 +415,22 @@ class GPSLayer(layers.Layer):
         layer_norm (bool, optional): Whether to use LayerNorm. (default: ``False``)
         batch_norm (bool, optional): Whether to use BatchNorm. (default: ``True``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GPSLayer
+
+        x = np.random.rand(5, 32).astype("float32")  # node features
+        e = np.random.rand(6, 32).astype("float32")  # edge features
+        edge_index = np.array([[0, 1, 1, 2, 3, 4], [1, 0, 2, 1, 4, 3]])
+        batch = np.array([0, 0, 0, 1, 1])  # two graphs
+
+        # Local message passing plus global attention over each graph's nodes
+        layer = GPSLayer(dim_h=32, local_gnn_type="CustomGatedGCN", global_model_type="Transformer", num_heads=4)
+        x_out, e_out = layer(x, edge_index, e, batch=batch)
+        print(tuple(x_out.shape), tuple(e_out.shape))  # (5, 32) (6, 32)
+        ```
     """
 
     def __init__(
@@ -538,6 +606,20 @@ class SANGraphHead(layers.Layer):
         act (str, optional): Activation function. (default: ``"gelu"``)
         pooling (str, optional): Graph pooling method ('mean', 'add', 'max'). (default: ``"mean"``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import SANGraphHead
+
+        x = np.random.rand(5, 32).astype("float32")  # node features
+        e = np.random.rand(6, 32).astype("float32")  # edge features
+        edge_index = np.array([[0, 1, 1, 2, 3, 4], [1, 0, 2, 1, 4, 3]])
+        batch = np.array([0, 0, 0, 1, 1])  # two graphs
+
+        head = SANGraphHead(dim_in=32, dim_out=1, L=2, pooling="mean")
+        print(tuple(head(x, batch=batch).shape))  # (2, 1): one prediction per graph
+        ```
     """
 
     def __init__(
@@ -620,6 +702,25 @@ class GPSModel(keras.Model):
         graph_pooling (str, optional): Graph pooling type ('mean', 'add', 'max'). (default: ``"mean"``)
         head_layers (int, optional): Number of hidden layers in prediction head. (default: ``2``)
         **kwargs: Additional model arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GPSModel
+
+        # OGB-style integer atom and bond features (9 per atom, 3 per bond)
+        x = np.random.randint(0, 2, size=(5, 9))
+        edge_index = np.array([[0, 1, 1, 2, 3, 4], [1, 0, 2, 1, 4, 3]])
+        edge_attr = np.random.randint(0, 2, size=(6, 3))
+        batch = np.array([0, 0, 0, 1, 1])  # two graphs
+        rwse = np.random.rand(5, 16).astype("float32")  # random-walk structural encodings
+
+        model = GPSModel(dim_in=32, dim_out=1, num_layers=2, dim_hidden=32, num_heads=4,
+                         node_encoder_type="Atom+RWSE", edge_encoder_type="Bond",
+                         rwse_num_steps=16, rwse_dim_pe=8)
+        pred = model(x, edge_index, edge_attr=edge_attr, pestat_RWSE=rwse, batch=batch, batch_size=2)
+        print(tuple(pred.shape))  # (2, 1): one prediction per graph
+        ```
     """
 
     def __init__(

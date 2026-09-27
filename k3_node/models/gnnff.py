@@ -10,7 +10,17 @@ from k3_node.models.dimenet import triplets
 
 
 class GaussianFilter(keras.layers.Layer):
-    r"""Gaussian filter for edge distances."""
+    r"""Gaussian filter for edge distances.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GaussianFilter
+
+        dist = np.array([0.9, 1.5, 3.2], dtype="float32")
+        print(tuple(GaussianFilter(start=0.0, stop=5.0, num_gaussians=10)(dist).shape))  # (3, 10)
+        ```
+    """
     def __init__(self, start: float = 0.0, stop: float = 5.0, num_gaussians: int = 50, **kwargs):
         super().__init__(**kwargs)
         offset = np.linspace(start, stop, num_gaussians, dtype=np.float32)
@@ -30,6 +40,22 @@ class GaussianFilter(keras.layers.Layer):
 
 
 class NodeBlock(keras.layers.Layer):
+    """Layer ``NodeBlock``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import NodeBlock, triplets
+
+        edge_index = np.array([[0, 1, 0, 2, 1, 2], [1, 0, 2, 0, 2, 1]])  # a triangle, both directions
+        col, row, idx_i, idx_j, idx_k, idx_kj, idx_ji = triplets(edge_index, num_nodes=3)
+        node_emb = np.random.rand(3, 16).astype("float32")
+        edge_emb = np.random.rand(6, 16).astype("float32")
+
+        block = NodeBlock(hidden_node_channels=16, hidden_edge_channels=16)
+        print(tuple(block(node_emb, edge_emb, row).shape))  # (3, 16): updated node embeddings
+        ```
+    """
     def __init__(self, hidden_node_channels: int, hidden_edge_channels: int, **kwargs):
         super().__init__(**kwargs)
         self.hidden_node_channels = hidden_node_channels
@@ -54,6 +80,23 @@ class NodeBlock(keras.layers.Layer):
 
 
 class EdgeBlock(keras.layers.Layer):
+    """Layer ``EdgeBlock``.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import EdgeBlock, triplets
+
+        edge_index = np.array([[0, 1, 0, 2, 1, 2], [1, 0, 2, 0, 2, 1]])  # a triangle, both directions
+        col, row, idx_i, idx_j, idx_k, idx_kj, idx_ji = triplets(edge_index, num_nodes=3)
+        node_emb = np.random.rand(3, 16).astype("float32")
+        edge_emb = np.random.rand(6, 16).astype("float32")
+
+        block = EdgeBlock(hidden_node_channels=16, hidden_edge_channels=16)
+        out = block(node_emb, edge_emb, row, col, idx_i, idx_j, idx_k, idx_ji, idx_kj)
+        print(tuple(out.shape))  # (6, 16): updated edge embeddings
+        ```
+    """
     def __init__(self, hidden_node_channels: int, hidden_edge_channels: int, **kwargs):
         super().__init__(**kwargs)
         self.hidden_edge_channels = hidden_edge_channels
@@ -117,6 +160,19 @@ class GNNFF(keras.layers.Layer):
         num_layers (int): Number of message passing blocks.
         cutoff (float, optional): Cutoff distance. (default: 5.0)
         max_num_neighbors (int, optional): Maximum neighbors per node. (default: 32)
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GNNFF
+
+        z = np.array([6, 8, 1, 1, 1])  # atomic numbers of a small molecule
+        pos = np.random.rand(5, 3).astype("float32") * 2.0  # 3D coordinates (Angstrom)
+
+        model = GNNFF(hidden_node_channels=16, hidden_edge_channels=16, num_layers=2)
+        forces = model(z, pos)  # predicts a 3D force vector for every atom
+        print(tuple(forces.shape))  # (5, 3)
+        ```
     """
     def __init__(
         self,

@@ -17,6 +17,18 @@ class GraphNodeFeature(layers.Layer):
         num_out_degree (int): Maximum out-degree value.
         hidden_dim (int): Embedding dimension.
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GraphNodeFeature
+
+        x = np.random.randint(1, 16, size=(2, 5))  # atom types of 2 graphs with 5 nodes
+        in_degree = np.random.randint(0, 10, size=(2, 5))
+        out_degree = np.random.randint(0, 10, size=(2, 5))
+        layer = GraphNodeFeature(num_atoms=16, num_in_degree=10, num_out_degree=10, hidden_dim=32)
+        print(tuple(layer(x, in_degree, out_degree).shape))  # (2, 6, 32): nodes + a virtual graph token
+        ```
     """
 
     def __init__(
@@ -115,6 +127,20 @@ class GraphAttnBias(layers.Layer):
             (default: ``"multi_hop"``)
         multi_hop_max_dist (int, optional): Maximum distance for multi-hop paths. (default: ``20``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GraphAttnBias
+
+        attn_bias = np.zeros((2, 5, 5), dtype="float32")  # 2 graphs, 4 nodes + graph token
+        spatial_pos = np.random.randint(0, 10, size=(2, 4, 4))  # shortest-path distances
+        x = np.zeros((2, 4, 1), dtype="int32")
+        edge_input = np.random.randint(0, 8, size=(2, 4, 4, 3, 2))  # edge types along each shortest path
+        layer = GraphAttnBias(num_heads=4, num_atoms=16, num_edges=8, num_spatial=10, num_edge_dis=5)
+        bias = layer(attn_bias=attn_bias, spatial_pos=spatial_pos, x=x, edge_input=edge_input)
+        print(tuple(bias.shape))  # (2, 4, 5, 5): one attention bias per head
+        ```
     """
 
     def __init__(
@@ -274,6 +300,18 @@ class GraphormerMultiheadAttention(layers.Layer):
         dropout (float, optional): Attention dropout probability. (default: ``0.0``)
         bias (bool, optional): Whether to use bias in linear projections. (default: ``True``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GraphormerMultiheadAttention
+
+        x = np.random.rand(2, 6, 32).astype("float32")  # [batch, tokens, embed_dim]
+        attn_bias = np.zeros((2, 4, 6, 6), dtype="float32")  # structural bias per head
+        attn = GraphormerMultiheadAttention(embed_dim=32, num_heads=4, dropout=0.0)
+        out, weights = attn(x, attn_bias=attn_bias)
+        print(tuple(out.shape), tuple(weights.shape))  # (2, 6, 32) (2, 4, 6, 6)
+        ```
     """
 
     def __init__(
@@ -377,6 +415,17 @@ class GraphormerGraphEncoderLayer(layers.Layer):
         activation_fn (str, optional): Activation function (``"gelu"`` or ``"relu"``). (default: ``"gelu"``)
         pre_layernorm (bool, optional): Whether to use Pre-LN. (default: ``False``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GraphormerGraphEncoderLayer
+
+        x = np.random.rand(2, 6, 32).astype("float32")
+        attn_bias = np.zeros((2, 4, 6, 6), dtype="float32")
+        layer = GraphormerGraphEncoderLayer(embedding_dim=32, ffn_embedding_dim=64, num_attention_heads=4)
+        print(tuple(layer(x, attn_bias=attn_bias).shape))  # (2, 6, 32)
+        ```
     """
 
     def __init__(
@@ -493,6 +542,28 @@ class GraphormerGraphEncoder(layers.Layer):
         encoder_normalize_before (bool, optional): Whether to normalize before encoder blocks. (default: ``False``)
         activation_fn (str, optional): Activation function name. (default: ``"gelu"``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GraphormerGraphEncoder
+
+        # A batch of 2 graphs padded to 4 nodes, preprocessed into Graphormer's dense inputs
+        data = {
+            "x": np.random.randint(1, 15, size=(2, 4, 2)),  # 2 categorical features per node
+            "in_degree": np.random.randint(0, 7, size=(2, 4)),
+            "out_degree": np.random.randint(0, 7, size=(2, 4)),
+            "attn_bias": np.zeros((2, 5, 5), dtype="float32"),  # +1 for the virtual graph token
+            "spatial_pos": np.random.randint(0, 7, size=(2, 4, 4)),  # shortest-path distances
+            "edge_input": np.random.randint(0, 7, size=(2, 4, 4, 2, 2)),  # edge types along shortest paths
+        }
+
+        encoder = GraphormerGraphEncoder(num_atoms=16, num_in_degree=8, num_out_degree=8, num_edges=8,
+                                         num_spatial=8, num_edge_dis=4, num_encoder_layers=2,
+                                         embedding_dim=32, ffn_embedding_dim=64, num_attention_heads=4)
+        node_states, graph_rep = encoder(**data)
+        print(tuple(node_states.shape), tuple(graph_rep.shape))  # (2, 5, 32) (2, 32): per-token states, graph-token embedding
+        ```
     """
 
     def __init__(
@@ -662,6 +733,28 @@ class Graphormer(keras.Model):
         num_classes (int, optional): Output dimension for prediction head. (default: ``1``)
         activation_fn (str, optional): Activation function. (default: ``"gelu"``)
         **kwargs: Additional model arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import Graphormer
+
+        # A batch of 2 graphs padded to 4 nodes, preprocessed into Graphormer's dense inputs
+        data = {
+            "x": np.random.randint(1, 15, size=(2, 4, 2)),  # 2 categorical features per node
+            "in_degree": np.random.randint(0, 7, size=(2, 4)),
+            "out_degree": np.random.randint(0, 7, size=(2, 4)),
+            "attn_bias": np.zeros((2, 5, 5), dtype="float32"),  # +1 for the virtual graph token
+            "spatial_pos": np.random.randint(0, 7, size=(2, 4, 4)),  # shortest-path distances
+            "edge_input": np.random.randint(0, 7, size=(2, 4, 4, 2, 2)),  # edge types along shortest paths
+        }
+
+        model = Graphormer(num_atoms=16, num_in_degree=8, num_out_degree=8, num_edges=8, num_spatial=8,
+                           num_edge_dis=4, num_encoder_layers=2, embedding_dim=32, ffn_embedding_dim=64,
+                           num_attention_heads=4, num_classes=1)
+        out = model(data)  # one prediction per graph
+        print(tuple(out.shape))  # (2, 1)
+        ```
     """
 
     def __init__(

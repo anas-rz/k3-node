@@ -74,7 +74,19 @@ UNIMOL_PLUS_ALIASES = {
 # ==============================================================================
 
 class EnergyHead(layers.Layer):
-    r"""Head for quantum chemical property or energy prediction."""
+    r"""Head for quantum chemical property or energy prediction.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolPlusEnergyHead
+
+        x = np.random.rand(2, 5, 32).astype("float32")  # [batch, atoms, embed_dim]
+
+        head = UniMolPlusEnergyHead(embed_dim=32, output_dim=1)
+        print(tuple(head(x).shape))  # (2, 5, 1)
+        ```
+    """
 
     def __init__(self, embed_dim: int, hidden_dim: Optional[int] = None, output_dim: int = 1, **kwargs):
         super().__init__(**kwargs)
@@ -208,6 +220,18 @@ class UniMolPlusPCQModel(keras.Model):
         num_heads (int, optional): Number of attention heads. (default: ``48``)
         output_dim (int, optional): Number of predicted quantum properties. (default: ``1``)
         **kwargs: Additional model arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolPlusPCQModel
+
+        atom_types = np.random.randint(0, 64, size=(2, 5))
+        coords = np.random.rand(2, 5, 3).astype("float32") * 3.0  # initial (e.g. RDKit) conformation
+        model = UniMolPlusPCQModel(num_layers=2, embed_dim=32, pair_dim=16, num_heads=4, output_dim=1)
+        pred = model(atom_types, coords=coords)  # HOMO-LUMO gap (PCQM4Mv2) per structure
+        print(tuple(pred.shape))  # (2, 1)
+        ```
     """
 
     def __init__(
@@ -306,7 +330,20 @@ class UniMolPlusPCQModel(keras.Model):
 
 
 class UniMolPlusOC20Model(UniMolPlusPCQModel):
-    r"""Uni-Mol+ Model for initial structure to relaxed energy prediction on OC20."""
+    r"""Uni-Mol+ Model for initial structure to relaxed energy prediction on OC20.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolPlusOC20Model
+
+        atom_types = np.random.randint(0, 64, size=(2, 5))
+        coords = np.random.rand(2, 5, 3).astype("float32") * 3.0  # initial (e.g. RDKit) conformation
+        model = UniMolPlusOC20Model(num_layers=2, embed_dim=32, pair_dim=16, num_heads=4, output_dim=1)
+        pred = model(atom_types, coords=coords)  # relaxed energy (OC20) per structure
+        print(tuple(pred.shape))  # (2, 1)
+        ```
+    """
     pass
 
 

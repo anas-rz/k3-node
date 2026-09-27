@@ -101,6 +101,18 @@ class GaussianLayer(layers.Layer):
         num_kernel (int, optional): Number of Gaussian kernels. (default: ``128``)
         edge_types (int, optional): Number of distinct pairwise edge types. (default: ``1024``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolGaussianLayer
+
+        dist = np.random.rand(2, 5, 5).astype("float32") * 5.0  # pairwise atom distances
+        edge_type = np.random.randint(0, 128, size=(2, 5, 5))  # atom-pair type ids
+
+        layer = UniMolGaussianLayer(num_kernel=32, edge_types=128)
+        print(tuple(layer(dist, edge_type).shape))  # (2, 5, 5, 32): Gaussian distance features per atom pair
+        ```
     """
 
     def __init__(self, num_kernel: int = 128, edge_types: int = 1024, **kwargs):
@@ -147,7 +159,20 @@ class GaussianLayer(layers.Layer):
 
 
 class NumericalEmbed(layers.Layer):
-    r"""Numerical embedding layer for continuous edge features."""
+    r"""Numerical embedding layer for continuous edge features.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolNumericalEmbed
+
+        dist = np.random.rand(2, 5, 5).astype("float32") * 5.0  # pairwise atom distances
+        edge_type = np.random.randint(0, 128, size=(2, 5, 5))  # atom-pair type ids
+
+        layer = UniMolNumericalEmbed(num_kernel=32, edge_types=128)
+        print(tuple(layer(dist, edge_type).shape))  # (2, 5, 5, 32)
+        ```
+    """
 
     def __init__(self, num_kernel: int = 128, edge_types: int = 1024, activation_fn: str = "gelu", **kwargs):
         super().__init__(**kwargs)
@@ -180,7 +205,19 @@ class NumericalEmbed(layers.Layer):
 
 
 class NonLinearHead(layers.Layer):
-    r"""Two-layer feed-forward network with activation for feature projection."""
+    r"""Two-layer feed-forward network with activation for feature projection.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolNonLinearHead
+
+        x = np.random.rand(2, 5, 32).astype("float32")  # [batch, atoms, embed_dim]
+
+        head = UniMolNonLinearHead(input_dim=32, out_dim=16, activation_fn="gelu")
+        print(tuple(head(x).shape))  # (2, 5, 16)
+        ```
+    """
 
     def __init__(
         self,
@@ -215,7 +252,17 @@ class NonLinearHead(layers.Layer):
 
 
 class DistanceHead(layers.Layer):
-    r"""Symmetrized distance prediction head from pair representations."""
+    r"""Symmetrized distance prediction head from pair representations.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolDistanceHead
+
+        pair = np.random.rand(2, 6, 6, 8).astype("float32")  # pair representation with 8 heads
+        print(tuple(UniMolDistanceHead(heads=8)(pair).shape))  # (2, 6, 6): predicted distance matrix
+        ```
+    """
 
     def __init__(self, heads: int, activation_fn: Union[str, Callable] = "gelu", **kwargs):
         super().__init__(**kwargs)
@@ -249,7 +296,19 @@ class DistanceHead(layers.Layer):
 
 
 class LinearHead(layers.Layer):
-    r"""Linear classification/regression head."""
+    r"""Linear classification/regression head.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolLinearHead
+
+        x = np.random.rand(2, 5, 32).astype("float32")  # [batch, atoms, embed_dim]
+
+        head = UniMolLinearHead(input_dim=32, num_classes=3)
+        print(tuple(head(x).shape))  # (2, 5, 3)
+        ```
+    """
 
     def __init__(self, input_dim: int, num_classes: int, pooler_dropout: float = 0.0, **kwargs):
         super().__init__(**kwargs)
@@ -273,7 +332,19 @@ class LinearHead(layers.Layer):
 
 
 class ClassificationHead(layers.Layer):
-    r"""Two-layer sentence/graph-level classification head."""
+    r"""Two-layer sentence/graph-level classification head.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolClassificationHead
+
+        x = np.random.rand(2, 5, 32).astype("float32")  # [batch, atoms, embed_dim]
+
+        head = UniMolClassificationHead(input_dim=32, inner_dim=32, num_classes=3)
+        print(tuple(head(x).shape))  # (2, 3): classifies from the first ([CLS]) token
+        ```
+    """
 
     def __init__(
         self,
@@ -316,7 +387,19 @@ class ClassificationHead(layers.Layer):
 
 
 class MaskLMHead(layers.Layer):
-    r"""Masked language modeling head for predicting masked atom tokens."""
+    r"""Masked language modeling head for predicting masked atom tokens.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolMaskLMHead
+
+        x = np.random.rand(2, 5, 32).astype("float32")  # [batch, atoms, embed_dim]
+
+        head = UniMolMaskLMHead(embed_dim=32, output_dim=64)  # logits over a 64-token vocabulary
+        print(tuple(head(x).shape))  # (2, 5, 64)
+        ```
+    """
 
     def __init__(
         self,
@@ -488,6 +571,22 @@ class UniMolModel(keras.Model):
         activation_fn (str, optional): Activation function name. (default: ``"gelu"``)
         post_ln (bool, optional): Post-LN flag. (default: ``False``)
         **kwargs: Additional model arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolModel
+
+        tokens = np.random.randint(1, 64, size=(2, 6))  # atom tokens of 2 molecules with 6 atoms
+        coords = np.random.rand(2, 6, 3).astype("float32") * 3.0  # 3D conformations
+
+        model = UniMolModel(output_dim=2, vocab_size=64, encoder_layers=2, encoder_embed_dim=32, encoder_ffn_embed_dim=64,
+                            encoder_attention_heads=4, num_kernel=16)
+        logits = model(tokens, src_coord=coords)  # molecule-level predictions
+        print(tuple(logits.shape))  # (2, 2)
+        reprs = model(tokens, src_coord=coords, return_repr=True)
+        print(tuple(reprs["cls_repr"].shape), tuple(reprs["encoder_rep"].shape))  # (2, 32) (2, 6, 32): molecule and atom embeddings
+        ```
     """
 
     def __init__(
@@ -657,7 +756,22 @@ class UniMolModel(keras.Model):
 
 
 class UniMolConfGenModel(UniMolModel):
-    r"""Uni-Mol Conformation Generation Model for iterative 3D geometry prediction."""
+    r"""Uni-Mol Conformation Generation Model for iterative 3D geometry prediction.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolConfGenModel
+
+        tokens = np.random.randint(1, 64, size=(2, 6))  # atom tokens of 2 molecules with 6 atoms
+        coords = np.random.rand(2, 6, 3).astype("float32") * 3.0  # 3D conformations
+
+        model = UniMolConfGenModel(vocab_size=64, encoder_layers=2, encoder_embed_dim=32, encoder_ffn_embed_dim=64,
+                                   encoder_attention_heads=4, num_kernel=16)
+        new_coords, pred_dist = model(tokens, src_coord=coords)  # refined conformation, predicted distances
+        print(tuple(new_coords.shape), tuple(pred_dist.shape))  # (2, 6, 3) (2, 6, 6)
+        ```
+    """
 
     def call(
         self,
@@ -719,7 +833,22 @@ class UniMolConfGenModel(UniMolModel):
 
 
 class UniMolDockingModel(UniMolModel):
-    r"""Uni-Mol Protein-Ligand Binding Pose Prediction Model."""
+    r"""Uni-Mol Protein-Ligand Binding Pose Prediction Model.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMolDockingModel
+
+        tokens = np.random.randint(1, 64, size=(2, 6))  # atom tokens of 2 molecules with 6 atoms
+        coords = np.random.rand(2, 6, 3).astype("float32") * 3.0  # 3D conformations
+
+        model = UniMolDockingModel(vocab_size=64, encoder_layers=2, encoder_embed_dim=32, encoder_ffn_embed_dim=64,
+                                   encoder_attention_heads=4, num_kernel=16)
+        pose, pred_dist = model(tokens, src_coord=coords)
+        print(tuple(pose.shape), tuple(pred_dist.shape))  # (2, 6, 3) (2, 6, 6)
+        ```
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

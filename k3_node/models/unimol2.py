@@ -78,7 +78,17 @@ UNIMOL2_CONFIGS: Dict[str, Dict[str, Any]] = {
 # ==============================================================================
 
 class AtomFeature(layers.Layer):
-    r"""Multi-attribute atomic embedding layer (atom types, formal charges, degrees)."""
+    r"""Multi-attribute atomic embedding layer (atom types, formal charges, degrees).
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMol2AtomFeature
+
+        tokens = np.random.randint(0, 128, size=(2, 5))
+        print(tuple(UniMol2AtomFeature(num_atom=128, embed_dim=32)(tokens).shape))  # (2, 5, 32)
+        ```
+    """
 
     def __init__(
         self,
@@ -112,7 +122,17 @@ class AtomFeature(layers.Layer):
 
 
 class EdgeFeature(layers.Layer):
-    r"""Pairwise edge feature embedding (bonds, shortest path distance)."""
+    r"""Pairwise edge feature embedding (bonds, shortest path distance).
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMol2EdgeFeature
+
+        edge_types = np.random.randint(0, 32, size=(2, 5, 5))
+        print(tuple(UniMol2EdgeFeature(num_edge=32, pair_dim=16)(edge_types).shape))  # (2, 5, 5, 16)
+        ```
+    """
 
     def __init__(
         self,
@@ -141,7 +161,17 @@ class EdgeFeature(layers.Layer):
 
 
 class SE3InvariantKernel(layers.Layer):
-    r"""SE(3)-invariant geometric kernel combining Gaussian radial distances."""
+    r"""SE(3)-invariant geometric kernel combining Gaussian radial distances.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMol2SE3Kernel
+
+        dist = np.random.rand(2, 5, 5).astype("float32") * 5.0
+        print(tuple(UniMol2SE3Kernel(num_kernel=32, pair_dim=16)(dist).shape))  # (2, 5, 5, 16): invariant distance features
+        ```
+    """
 
     def __init__(
         self,
@@ -185,7 +215,19 @@ class SE3InvariantKernel(layers.Layer):
 
 
 class MovementPredictionHead(layers.Layer):
-    r"""SE(3)-equivariant coordinate movement prediction head for Uni-Mol2."""
+    r"""SE(3)-equivariant coordinate movement prediction head for Uni-Mol2.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMol2MovementHead
+
+        coords = np.random.rand(2, 6, 3).astype("float32")
+        pair = np.random.rand(2, 6, 6, 16).astype("float32")
+        head = UniMol2MovementHead(pair_dim=16, hidden_dim=32)
+        print(tuple(head(coords, pair).shape))  # (2, 6, 3): updated coordinates
+        ```
+    """
 
     def __init__(self, pair_dim: int, hidden_dim: int = 64, **kwargs):
         super().__init__(**kwargs)
@@ -345,6 +387,20 @@ class UniMol2Model(keras.Model):
         num_attention_heads (int, optional): Number of attention heads.
         pair_embed_dim (int, optional): Pair feature dimension.
         **kwargs: Additional model arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import UniMol2Model
+
+        atom_types = np.random.randint(0, 128, size=(2, 6))
+        coords = np.random.rand(2, 6, 3).astype("float32") * 3.0
+        model = UniMol2Model(output_dim=2, num_encoder_layers=2, encoder_embed_dim=32, num_attention_heads=4,
+                             pair_embed_dim=16, ffn_embedding_dim=64, pair_hidden_dim=8)
+        print(tuple(model(atom_types, coords=coords).shape))  # (2, 2)
+        logits, new_coords, x, pair = model(atom_types, coords=coords, return_coords=True, return_repr=True)
+        print(tuple(new_coords.shape), tuple(x.shape), tuple(pair.shape))  # (2, 6, 3) (2, 6, 32) (2, 6, 6, 16)
+        ```
     """
 
     def __init__(

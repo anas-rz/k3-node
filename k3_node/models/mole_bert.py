@@ -21,6 +21,18 @@ class MoleBERTGINConv(MessagePassing):
     """Extension of GIN aggregation to incorporate categorical edge information with self-loops.
 
     Matches the GINConv variant from Hu et al. used in Mole-BERT.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MoleBERTGINConv
+
+        x = np.random.rand(4, 32).astype("float32")  # atom embeddings
+        edge_index = np.array([[0, 1, 1, 2], [1, 0, 2, 1]])
+        edge_attr = np.array([[0, 0], [0, 0], [1, 0], [1, 0]])  # bond type, bond direction
+        conv = MoleBERTGINConv(emb_dim=32)
+        print(tuple(conv(x, edge_index, edge_attr).shape))  # (4, 32)
+        ```
     """
 
     def __init__(
@@ -89,7 +101,22 @@ class MoleBERTGINConv(MessagePassing):
 
 
 class MoleBERTGNN(layers.Layer):
-    """5-layer GIN encoder backbone of Mole-BERT with Jumping Knowledge."""
+    """5-layer GIN encoder backbone of Mole-BERT with Jumping Knowledge.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MoleBERTGNN
+
+        x = np.stack([np.random.randint(0, 119, size=5), np.random.randint(0, 3, size=5)], axis=1)  # atom type, chirality
+        edge_index = np.array([[0, 1, 1, 2, 3, 4], [1, 0, 2, 1, 4, 3]])
+        edge_attr = np.stack([np.random.randint(0, 5, size=6), np.random.randint(0, 3, size=6)], axis=1)  # bond type, direction
+        batch = np.array([0, 0, 0, 1, 1])  # two molecules
+
+        gnn = MoleBERTGNN(num_layer=3, emb_dim=32, JK="last")
+        print(tuple(gnn(x, edge_index, edge_attr).shape))  # (5, 32)
+        ```
+    """
 
     def __init__(
         self,
@@ -167,7 +194,23 @@ class MoleBERTGNN(layers.Layer):
 
 
 class MoleBERT(keras.Model):
-    """Complete Mole-BERT Model with graph-level pooling and property prediction head."""
+    """Complete Mole-BERT Model with graph-level pooling and property prediction head.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import MoleBERT
+
+        x = np.stack([np.random.randint(0, 119, size=5), np.random.randint(0, 3, size=5)], axis=1)  # atom type, chirality
+        edge_index = np.array([[0, 1, 1, 2, 3, 4], [1, 0, 2, 1, 4, 3]])
+        edge_attr = np.stack([np.random.randint(0, 5, size=6), np.random.randint(0, 3, size=6)], axis=1)  # bond type, direction
+        batch = np.array([0, 0, 0, 1, 1])  # two molecules
+
+        model = MoleBERT(num_layer=3, emb_dim=32, num_tasks=2, graph_pooling="mean")
+        logits, node_rep = model((x, edge_index, edge_attr, batch))
+        print(tuple(logits.shape), tuple(node_rep.shape))  # (2, 2) (5, 32): per-molecule predictions, per-atom embeddings
+        ```
+    """
 
     def __init__(
         self,

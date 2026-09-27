@@ -50,6 +50,21 @@ class DockingPoseModelV2(keras.Model):
         num_layers (int, optional): Number of joint transformer layers. (default: ``12``)
         num_heads (int, optional): Number of multihead attention heads. (default: ``32``)
         **kwargs: Additional model arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import DockingPoseModelV2
+
+        mol_tokens = np.random.randint(0, 64, size=(2, 4))  # ligand atoms
+        pocket_tokens = np.random.randint(0, 64, size=(2, 6))  # protein pocket atoms
+        mol_coords = np.random.rand(2, 4, 3).astype("float32")
+        pocket_coords = np.random.rand(2, 6, 3).astype("float32")
+        model = DockingPoseModelV2(mol_vocab_size=64, pocket_vocab_size=64, embed_dim=32, pair_dim=16,
+                                   num_layers=2, num_heads=4)
+        docked_coords, pred_dist = model(mol_tokens, pocket_tokens, mol_coords=mol_coords, pocket_coords=pocket_coords)
+        print(tuple(docked_coords.shape), tuple(pred_dist.shape))  # (2, 4, 3) (2, 10, 10)
+        ```
     """
 
     def __init__(

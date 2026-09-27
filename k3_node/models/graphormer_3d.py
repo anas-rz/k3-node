@@ -13,6 +13,17 @@ class GaussianLayer(layers.Layer):
         num_kernel (int, optional): Number of Gaussian basis kernels. (default: ``128``)
         edge_types (int, optional): Number of pairwise edge types. (default: ``4096``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import GaussianLayer
+
+        dist = np.random.rand(2, 4, 4).astype("float32") * 3.0  # pairwise distances of 2 structures
+        edge_types = np.random.randint(0, 16, size=(2, 4, 4))  # type of each atom pair
+        layer = GaussianLayer(num_kernel=32, edge_types=16)
+        print(tuple(layer(dist, edge_types).shape))  # (2, 4, 4, 32): distance expansion per atom pair
+        ```
     """
 
     def __init__(self, num_kernel: int = 128, edge_types: int = 4096, **kwargs):
@@ -77,6 +88,17 @@ class RBF(layers.Layer):
         num_kernel (int): Number of radial basis kernels.
         edge_types (int): Number of edge types.
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import RBF
+
+        dist = np.random.rand(2, 4, 4).astype("float32") * 3.0  # pairwise distances of 2 structures
+        edge_types = np.random.randint(0, 16, size=(2, 4, 4))  # type of each atom pair
+        layer = RBF(num_kernel=32, edge_types=16)
+        print(tuple(layer(dist, edge_types).shape))  # (2, 4, 4, 32): distance expansion per atom pair
+        ```
     """
 
     def __init__(self, num_kernel: int = 128, edge_types: int = 4096, **kwargs):
@@ -249,6 +271,17 @@ class Graphormer3DEncoderLayer(layers.Layer):
         attention_dropout (float, optional): Attention dropout. (default: ``0.1``)
         activation_dropout (float, optional): Activation dropout. (default: ``0.1``)
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import Graphormer3DEncoderLayer
+
+        x = np.random.rand(2, 4, 32).astype("float32")
+        attn_bias = np.zeros((2 * 4, 4, 4), dtype="float32")  # [batch * heads, atoms, atoms]
+        layer = Graphormer3DEncoderLayer(embedding_dim=32, ffn_embedding_dim=64, num_attention_heads=4)
+        print(tuple(layer(x, attn_bias=attn_bias).shape))  # (2, 4, 32)
+        ```
     """
 
     def __init__(
@@ -319,6 +352,18 @@ class NodeTaskHead(layers.Layer):
         embed_dim (int): Embedding dimension.
         num_heads (int): Number of attention heads.
         **kwargs: Additional layer arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import NodeTaskHead
+
+        query = np.random.rand(2, 5, 32).astype("float32")  # atom representations
+        attn_bias = np.zeros((2 * 4, 5, 5), dtype="float32")
+        delta_pos = np.random.rand(2, 5, 5, 3).astype("float32")  # pairwise displacement vectors
+        head = NodeTaskHead(embed_dim=32, num_heads=4)
+        print(tuple(head(query, attn_bias, delta_pos).shape))  # (2, 5, 3): a force vector per atom
+        ```
     """
 
     def __init__(self, embed_dim: int, num_heads: int, **kwargs):
@@ -412,6 +457,20 @@ class Graphormer3D(keras.Model):
         activation_dropout (float, optional): FFN activation dropout. (default: ``0.0``)
         input_dropout (float, optional): Input features dropout. (default: ``0.0``)
         **kwargs: Additional model arguments.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.models import Graphormer3D
+
+        atoms = np.array([[1, 2, 3, 4, 0], [2, 3, 4, 0, 0]])  # atom types, 0 = padding
+        tags = np.array([[1, 1, 2, 2, 0], [1, 2, 2, 0, 0]])  # e.g. surface/adsorbate tags (OC20)
+        pos = np.random.rand(2, 5, 3).astype("float32")
+        model = Graphormer3D(layers=2, blocks=2, embed_dim=32, ffn_embed_dim=64, attention_heads=4,
+                             num_kernel=16, atom_types=16)
+        energy, forces = model(atoms, tags, pos)
+        print(tuple(energy.shape), tuple(forces.shape))  # (2,) (2, 5, 3)
+        ```
     """
 
     def __init__(
