@@ -1,6 +1,6 @@
 # Biological & Macromolecular Models
 
-The `k3_node.bio` module (backed by `k3_node.models`) provides multi-backend Keras 3 ports of Uni-Mol's protein–ligand **binding-pose prediction** models, for docking a small-molecule ligand into a protein pocket given 3D structural input.
+The `k3_node.applications.bio` module provides multi-backend Keras 3 ports of Uni-Mol's protein–ligand **binding-pose prediction** models, for docking a small-molecule ligand into a protein pocket given 3D structural input.
 
 ---
 

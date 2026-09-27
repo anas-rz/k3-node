@@ -30,9 +30,6 @@ from k3_node import loader
 from k3_node import transforms
 from k3_node import models
 from k3_node import applications
-from k3_node import materials
-from k3_node import bio
-from k3_node import chemistry
 
 from k3_node import tasks
 from k3_node.tasks import (
@@ -82,9 +79,6 @@ __all__ = [
     "transforms",
     "models",
     "applications",
-    "materials",
-    "bio",
-    "chemistry",
     "tasks",
     "NodeClassifier",
     "NodeRegressor",

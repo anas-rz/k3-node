@@ -5,7 +5,7 @@ import numpy as np
 import keras
 from keras import ops
 
-from k3_node.models.materials import (
+from k3_node.applications.materials import (
     MEGNet,
     M3GNet,
     TensorNet,

@@ -1,6 +1,6 @@
 # Materials & Crystal Graph Neural Networks
 
-The `k3_node.materials` module (backed by `k3_node.models.materials`) provides multi-backend Keras 3 ports of the [MatGL](https://github.com/materialsvirtuallab/matgl) family of interatomic potentials and crystal property predictors, plus built-in checkpoint downloaders that load official pretrained PyTorch weights (hosted on the Hugging Face Hub under the `materialyze` organization) directly into the Keras models.
+The `k3_node.applications.materials` module provides multi-backend Keras 3 ports of the [MatGL](https://github.com/materialsvirtuallab/matgl) family of interatomic potentials and crystal property predictors, plus built-in checkpoint downloaders that load official pretrained PyTorch weights (hosted on the Hugging Face Hub under the `materialyze` organization) directly into the Keras models.
 
 All models consume a **crystal graph** input — a `dict` (or `k3_node.data.Data`-like object) with the following keys:
 
