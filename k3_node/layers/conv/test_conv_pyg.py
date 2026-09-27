@@ -533,3 +533,34 @@ def test_supergat_attention_loss():
     layer(x, edge_index, training=True)
     assert float(layer.get_attention_loss()) > 0
     assert len(layer.losses) == 1  # added to the model loss while training
+
+
+def test_rgcn_featureless_nodes_match_one_hot():
+    import numpy as np
+    from keras import ops
+    from k3_node.layers import FastRGCNConv, RGCNConv
+
+    rng = np.random.default_rng(0)
+    edge_index, edge_type = rng.integers(0, 12, (2, 40)), rng.integers(0, 3, 40)
+    for cls in (RGCNConv, FastRGCNConv):
+        for kwargs in ({}, {"num_bases": 2}):
+            conv = cls(12, 5, 3, **kwargs)
+            featureless = ops.convert_to_numpy(conv(None, edge_index, edge_type))
+            one_hot = ops.convert_to_numpy(conv(np.eye(12, dtype="float32"), edge_index, edge_type))
+            np.testing.assert_allclose(featureless, one_hot, atol=1e-5)
+
+
+def test_rgcn_node_transform_matches_per_edge_weights(monkeypatch):
+    import numpy as np
+    from keras import ops
+    from k3_node.layers import RGCNConv
+
+    rng = np.random.default_rng(0)
+    x, edge_index, edge_type = rng.random((15, 6)).astype("float32"), rng.integers(0, 15, (2, 60)), rng.integers(0, 4, 60)
+    for kwargs in ({}, {"num_bases": 2}, {"num_blocks": 2}):
+        conv = RGCNConv(6, 4, 4, **kwargs)
+        outs = []
+        for node_transform in (False, True):
+            monkeypatch.setattr(RGCNConv, "_prefer_node_transform", lambda self, x, e, m=node_transform: m)
+            outs.append(ops.convert_to_numpy(conv(x, edge_index, edge_type)))
+        np.testing.assert_allclose(outs[0], outs[1], atol=1e-5)

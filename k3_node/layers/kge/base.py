@@ -160,6 +160,58 @@ class KGEModel(keras.layers.Layer):
 
         return mean_rank, mrr, hits_at_k
 
+    # ---- Keras-style training -------------------------------------------------------------------
+    def compile(self, optimizer):
+        r"""Sets the optimizer used by :meth:`fit`."""
+        self.optimizer = optimizer
+
+    def fit(self, data, epochs: int = 1, batch_size: int = 1000, validation_data=None,
+            validation_batch_size: int = 20000, verbose: int = 1):
+        r"""Trains on the triplets of ``data`` (``edge_index`` holds heads and tails, ``edge_type``
+        the relations), in shuffled mini-batches.
+
+        Args:
+            data (Data): The training knowledge graph.
+            epochs (int): Passes over all triplets. (default: ``1``)
+            batch_size (int): Triplets per gradient step. (default: ``1000``)
+            validation_data (Data, optional): Evaluated with :meth:`evaluate` after every epoch
+                (this ranks all entities for every triplet, so keep it small).
+            validation_batch_size (int): Entities scored at once during validation.
+            verbose (int): ``0`` is silent, otherwise one line is printed per epoch.
+
+        Returns:
+            dict: The mean loss (and validation metrics) of every epoch.
+        """
+        from k3_node.training import gradient_step
+
+        if getattr(self, "optimizer", None) is None:
+            raise ValueError("Call `compile(optimizer=...)` before `fit`.")
+        head, tail = data.edge_index[0], data.edge_index[1]
+        loader = self.loader(head, data.edge_type, tail, batch_size=batch_size, shuffle=True)
+        history = {"loss": []}
+        for epoch in range(1, epochs + 1):
+            total = count = 0
+            for h, r, t in loader:
+                loss = gradient_step(lambda: self.loss(h, r, t), self.trainable_variables, self.optimizer)
+                total += loss * int(h.shape[0])
+                count += int(h.shape[0])
+            logs = {"loss": total / count}
+            if validation_data is not None:
+                logs.update({f"val_{k}": v for k, v in
+                             self.evaluate(validation_data, batch_size=validation_batch_size).items()})
+            for key, value in logs.items():
+                history.setdefault(key, []).append(value)
+            if verbose:
+                print(f"Epoch {epoch:03d}: " + ", ".join(f"{k}: {v:.4f}" for k, v in logs.items()))
+        return history
+
+    def evaluate(self, data, batch_size: int = 20000, k: int = 10):
+        r"""Ranks the true tail of every triplet in ``data`` among all entities and returns the
+        mean rank, the mean reciprocal rank (MRR) and Hits@``k``."""
+        mean_rank, mrr, hits = self.test(data.edge_index[0], data.edge_type, data.edge_index[1],
+                                         batch_size=batch_size, k=k, log=False)
+        return {"mean_rank": mean_rank, "mrr": mrr, f"hits@{k}": hits}
+
     def random_sample(
         self,
         head_index,

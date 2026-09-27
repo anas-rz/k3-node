@@ -94,3 +94,18 @@ def test_full_graph_dataset_index_split():
     assert "train_idx" not in inputs._fields and "train_y" not in inputs._fields
     np.testing.assert_array_equal(y, [0, 1, 0, 2, 0])
     np.testing.assert_allclose(weight, [0, 2.5, 0, 2.5, 0])  # mean over the 2 indexed nodes
+
+
+def test_full_graph_dataset_fresh_negatives_every_epoch():
+    import numpy as np
+    from k3_node.data import Data
+    from k3_node.loader import FullGraphDataset
+
+    edge_index = np.array([[0, 1, 2, 3], [1, 2, 3, 4]])
+    data = Data(x=np.ones((50, 2), "float32"), edge_index=edge_index, edge_label_index=edge_index,
+                edge_label=np.ones(4, "float32"), num_nodes=50)
+    dataset = FullGraphDataset(data, neg_sampling_ratio=2.0)
+    (inputs1, y1), (inputs2, _) = dataset[0], dataset[0]
+    assert inputs1.edge_label_index.shape == (2, 12)
+    np.testing.assert_array_equal(y1, [1] * 4 + [0] * 8)
+    assert not np.array_equal(inputs1.edge_label_index[:, 4:], inputs2.edge_label_index[:, 4:])

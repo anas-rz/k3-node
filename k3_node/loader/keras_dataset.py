@@ -192,6 +192,8 @@ class FullGraphDataset(keras.utils.PyDataset):
         target (str, optional): Attribute to predict. (default: ``"y"``)
         index (str, optional): For splits stored as node indices: the index attribute (e.g.
             ``"train_idx"``), with ``target`` giving the labels of those nodes (e.g. ``"train_y"``).
+        neg_sampling_ratio (float, optional): For link prediction: adds this many random
+            non-edges per labeled edge (label 0), sampled anew every epoch.
 
     Example:
         ```python
@@ -202,9 +204,11 @@ class FullGraphDataset(keras.utils.PyDataset):
     """
 
     def __init__(self, data, mask: Optional[str] = None, target: Optional[str] = None,
-                 index: Optional[str] = None, **kwargs):
+                 index: Optional[str] = None, neg_sampling_ratio: Optional[float] = None, **kwargs):
         super().__init__(**kwargs)
-        self._batch = to_keras_batch(data, target=target, mask=mask, index=index)
+        self._data, self._neg_sampling_ratio = data, neg_sampling_ratio
+        self._kwargs = dict(target=target, mask=mask, index=index)
+        self._batch = None if neg_sampling_ratio else to_keras_batch(data, **self._kwargs)
 
     def __len__(self):
         return 1
@@ -212,7 +216,32 @@ class FullGraphDataset(keras.utils.PyDataset):
     def __getitem__(self, index):
         if index != 0:
             raise IndexError(index)
+        if self._neg_sampling_ratio:  # fresh negative edges every epoch
+            return to_keras_batch(add_negative_edges(self._data, self._neg_sampling_ratio), **self._kwargs)
         return self._batch
+
+
+def add_negative_edges(data, ratio: float = 1.0):
+    r"""Returns a copy of a link prediction graph with random non-edges added to its labeled edges.
+
+    ``ratio`` negatives are sampled per labeled edge in ``edge_label_index`` (or per edge of
+    ``edge_index`` if there are no labeled edges), avoiding the edges of ``edge_index``. They are
+    appended to ``edge_label_index`` with label 0 in ``edge_label``.
+    """
+    import copy
+
+    from k3_node.models.utils import negative_sampling
+
+    pos = getattr(data, "edge_label_index", None)
+    pos = np.asarray(ops.convert_to_numpy(data.edge_index if pos is None else pos))
+    label = getattr(data, "edge_label", None)
+    label = np.ones(pos.shape[1], np.float32) if label is None else np.asarray(ops.convert_to_numpy(label))
+    neg = np.asarray(ops.convert_to_numpy(negative_sampling(
+        data.edge_index, data.num_nodes, num_neg_samples=int(round(ratio * pos.shape[1])))))
+    out = copy.copy(data)
+    out.edge_label_index = np.concatenate([pos, neg.astype(pos.dtype)], axis=1)
+    out.edge_label = np.concatenate([label, np.zeros(neg.shape[1], label.dtype)])
+    return out
 
 
 def loader_bases(base: type) -> tuple:

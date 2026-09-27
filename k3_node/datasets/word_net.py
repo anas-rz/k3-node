@@ -123,14 +123,24 @@ class WordNet18RR(InMemoryDataset):
         for filename in self.raw_file_names:
             fs.cp(f"{self.url}/{filename}", self.raw_dir)
 
+    @staticmethod
+    def _node_id(node2id, name):
+        if name not in node2id:
+            node2id[name] = len(node2id)
+        return node2id[name]
+
     def process(self):
+        # Entities are WordNet synset offsets; map them to consecutive ids, as PyG does
+        node2id = {}
         srcs, dsts, edge_types = [], [], []
         for path in self.raw_paths:
             with open(path) as f:
-                lines = f.read().split("\n")[:-1]
-                src = [int(line.split()[0]) for line in lines]
-                rel = [self.edge2id[line.split()[1]] for line in lines]
-                dst = [int(line.split()[2]) for line in lines]
+                lines = [line.split() for line in f.read().split("\n")[:-1]]
+                src, dst = [], []
+                for h, _, t in lines:
+                    src.append(self._node_id(node2id, h))
+                    dst.append(self._node_id(node2id, t))
+                rel = [self.edge2id[r] for _, r, _ in lines]
                 srcs.append(np.array(src, dtype=np.int64))
                 dsts.append(np.array(dst, dtype=np.int64))
                 edge_types.append(np.array(rel, dtype=np.int64))
@@ -149,7 +159,7 @@ class WordNet18RR(InMemoryDataset):
         test_mask = np.zeros(len(src), dtype=bool)
         test_mask[n_train + n_val :] = True
 
-        num_nodes = int(max(src.max(), dst.max())) + 1
+        num_nodes = len(node2id)
         perm = np.argsort(num_nodes * src + dst)
 
         edge_index = np.stack([src[perm], dst[perm]], axis=0)

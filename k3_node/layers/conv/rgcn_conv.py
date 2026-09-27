@@ -141,22 +141,59 @@ class RGCNConv(MessagePassing):
 
         edge_index = ops.cast(edge_index, "int32")
         edge_type = ops.cast(edge_type, "int32")
-        num_nodes = ops.shape(x_r)[0]
-        size = (ops.shape(x_l)[0], num_nodes)
+        # Featureless nodes (x=None): node i's input is the one-hot vector e_i, so in_channels is
+        # the number of nodes and x @ W reduces to looking up row i of W.
+        size = (
+            self.in_channels_l if x_l is None else ops.shape(x_l)[0],
+            self.in_channels_r if x_r is None else ops.shape(x_r)[0],
+        )
+
+        # Either transform every source node once per relation and look up each edge's message
+        # ([relations * nodes, out] values), or multiply every edge with its relation's weight
+        # ([edges, in, out] values). Featureless nodes always use the lookup.
+        self._node_messages = None
+        if x_l is None or self._prefer_node_transform(x_l, edge_index):
+            self._node_messages = self._relation_features(x_l)
+            self._num_sources = size[0]
+            x_l = None
 
         out = self.propagate(
             edge_index, x=x_l, edge_type=edge_type, size=size
         )
+        self._node_messages = None
 
         if self.root is not None:
-            out = out + ops.matmul(x_r, self.root)
+            out = out + (self.root if x_r is None else ops.matmul(x_r, self.root))
 
         if self.bias is not None:
             out = out + self.bias
 
         return out
 
+    def _prefer_node_transform(self, x, edge_index) -> bool:
+        num_nodes, num_edges = x.shape[0], edge_index.shape[1]
+        if not isinstance(num_nodes, int) or not isinstance(num_edges, int):
+            return True
+        in_per_block = self.in_channels_l // (self.num_blocks or 1)
+        return self.num_relations * num_nodes <= num_edges * in_per_block
+
+    def _relation_features(self, x):
+        """Returns ``x @ W_r`` for every relation ``r`` and node, flattened to ``[R * N, out]``."""
+        weight = self._get_weight()
+        if x is None:  # featureless: node i's input is the one-hot e_i, so x @ W_r is row i of W_r
+            if self.num_blocks is not None:
+                raise ValueError("Block decomposition does not support featureless nodes (x=None).")
+            h = weight
+        elif self.num_blocks is not None:
+            x_b = ops.reshape(x, (-1, self.num_blocks, self.in_channels_l // self.num_blocks))
+            h = ops.einsum("nbi,rbio->rnbo", x_b, weight)
+        else:
+            h = ops.einsum("ni,rio->rno", x, weight)
+        return ops.reshape(h, (-1, self.out_channels))
+
     def message(self, x_j, edge_type):
+        if x_j is None:  # look up the pre-transformed source node of every edge
+            return ops.take(self._node_messages, edge_type * self._num_sources + self.index_sources, axis=0)
         weight = self._get_weight()
         if self.num_blocks is not None:
             w_r = ops.take(weight, edge_type, axis=0)  # (E, num_blocks, in_b, out_b)
@@ -204,73 +241,6 @@ class FastRGCNConv(RGCNConv):
         print(tuple(out.shape))  # (10, 16)
         ```
     """
-    def call(self, inputs, edge_index=None, edge_type=None, **kwargs):
-        if edge_index is None:
-            if isinstance(inputs, (list, tuple)):
-                if len(inputs) == 3:
-                    x, edge_index, edge_type = inputs
-                elif len(inputs) == 2:
-                    x, edge_index = inputs
-                else:
-                    raise ValueError(f"Unexpected input length {len(inputs)}")
-            else:
-                raise ValueError("Expected (x, edge_index) or x and edge_index")
-        else:
-            x = inputs
-
-        if isinstance(x, (list, tuple)):
-            x_l, x_r = x
-        else:
-            x_l = x_r = x
-
-        edge_index = ops.cast(edge_index, "int32")
-        edge_type = ops.cast(edge_type, "int32")
-        num_nodes = ops.shape(x_r)[0]
-        size = (ops.shape(x_l)[0], num_nodes)
-
-        out = self.propagate(
-            edge_index, x=x_l, edge_type=edge_type, size=size
-        )
-
-        if self.root is not None:
-            out = out + ops.matmul(x_r, self.root)
-
-        if self.bias is not None:
-            out = out + self.bias
-
-        return out
-
-    def message(self, x_j, edge_type):
-        weight = self._get_weight()
-        if self.num_blocks is not None:
-            w_r = ops.take(weight, edge_type, axis=0)  # (E, num_blocks, in_b, out_b)
-            x_j_b = ops.reshape(
-                x_j,
-                (-1, self.num_blocks, 1, self.in_channels_l // self.num_blocks),
-            )
-            msg = ops.matmul(x_j_b, w_r)
-            return ops.reshape(msg, (-1, self.out_channels))
-        else:
-            w_r = ops.take(weight, edge_type, axis=0)  # (E, in_channels, out_channels)
-            # x_j: (E, in_channels) -> (E, 1, in_channels) @ (E, in_channels, out_channels) -> (E, out_channels)
-            x_j_exp = ops.expand_dims(x_j, 1)
-            msg = ops.squeeze(ops.matmul(x_j_exp, w_r), 1)
-            return msg
-
-    def aggregate(self, inputs, edge_index=None, index=None, edge_type=None, dim_size=None, **kwargs):
-        if index is None and edge_index is not None:
-            index = edge_index[1]
-        if self.aggr == "mean" and edge_type is not None and index is not None:
-            # Normalization per relation
-            one_hot = ops.one_hot(edge_type, self.num_relations)
-            norm = scatter(one_hot, index, dim=0, dim_size=dim_size, reduce="sum")
-            norm_per_edge = ops.take(norm, index, axis=0)
-            edge_type_expanded = ops.expand_dims(edge_type, -1)
-            norm_val = ops.take_along_axis(norm_per_edge, edge_type_expanded, axis=1)
-            norm_val = ops.maximum(norm_val, 1.0)
-            inputs = inputs / ops.cast(norm_val, inputs.dtype)
-            return scatter(inputs, index, dim=0, dim_size=dim_size, reduce="sum")
-        return super().aggregate(inputs, edge_index=edge_index, index=index, dim_size=dim_size, **kwargs)
 
 
 class CuGraphRGCNConv(RGCNConv):

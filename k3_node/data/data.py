@@ -274,11 +274,13 @@ class Data(BaseData):
 
     @property
     def num_node_types(self) -> int:
-        return 1
+        node_type = self.get("node_type")
+        return int(np.max(ops.convert_to_numpy(node_type))) + 1 if is_tensor_like(node_type) else 1
 
     @property
     def num_edge_types(self) -> int:
-        return 1
+        edge_type = self.get("edge_type")
+        return int(np.max(ops.convert_to_numpy(edge_type))) + 1 if is_tensor_like(edge_type) else 1
 
     @property
     def num_classes(self) -> Optional[int]:
@@ -387,6 +389,29 @@ class Data(BaseData):
             indices = subset_np
 
         for key in self.node_attrs():
+            val = self[key]
+            if is_tensor_like(val):
+                data[key] = ops.take(val, indices, axis=self.__cat_dim__(key, val))
+        return data
+
+    def edge_subgraph(self, subset) -> "Data":
+        """Returns the graph with only the edges in ``subset`` (a boolean edge mask or edge
+        indices). All nodes are kept; every edge-level attribute is filtered.
+
+        Example:
+            ```python
+            import numpy as np
+            from k3_node.data import Data
+
+            data = Data(edge_index=np.array([[0, 1, 2], [1, 2, 0]]), edge_type=np.array([0, 1, 0]), num_nodes=3)
+            train = data.edge_subgraph(np.array([True, False, True]))
+            print(tuple(train.edge_index.shape), train.num_nodes)  # (2, 2) 3
+            ```
+        """
+        subset_np = np.asarray(ops.convert_to_numpy(subset))
+        indices = np.where(subset_np)[0] if subset_np.dtype == bool else subset_np
+        data = copy.copy(self)
+        for key in self.edge_attrs():
             val = self[key]
             if is_tensor_like(val):
                 data[key] = ops.take(val, indices, axis=self.__cat_dim__(key, val))
