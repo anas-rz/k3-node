@@ -17,6 +17,8 @@ dependencies = [
     "scipy",
     "pynndescent",
     "sympy",
+    "pandas",
+    "huggingface_hub>=0.20.0",
 ]
 
 [project.optional-dependencies]

@@ -3,3 +3,4 @@ scipy
 pynndescent
 sympy
 pandas
+huggingface_hub

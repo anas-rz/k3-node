@@ -83,10 +83,12 @@ nav:
       - Data Loaders & Samplers: api/loader.md
       - Graph Transforms: api/transforms.md
       - Tabular-to-Graph ETL: api/etl.md
+      - Hugging Face Hub: api/hub.md
       - Graph Utilities & Ops: api/ops.md
   - Guides:
       - High-Level Task APIs: guides/tasks.md
       - Tabular-to-Graph ETL: guides/etl.md
+      - Hugging Face Hub: guides/huggingface_hub.md
       - Fine-Tuning Recipes: guides/finetuning.md
   - Porting Checklist: checklist.md
 

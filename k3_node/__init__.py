@@ -52,6 +52,15 @@ from k3_node.etl import (
     relational_to_graph,
 )
 
+from k3_node import hub
+from k3_node.hub import (
+    from_pretrained,
+    push_to_hub,
+    save_pretrained,
+    load_dataset_from_hub,
+    push_dataset_to_hub,
+)
+
 __all__ = [
     "data",
     "Data",
@@ -78,5 +87,11 @@ __all__ = [
     "table_to_graph",
     "RelationalToGraph",
     "relational_to_graph",
+    "hub",
+    "from_pretrained",
+    "push_to_hub",
+    "save_pretrained",
+    "load_dataset_from_hub",
+    "push_dataset_to_hub",
 ]
 

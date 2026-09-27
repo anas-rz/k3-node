@@ -34,6 +34,7 @@ class NodeClassifier(BaseTask):
         in_channels: Optional[int] = None,
         hidden_channels: int = 64,
         out_channels: Optional[int] = None,
+        num_classes: Optional[int] = None,
         num_layers: int = 2,
         dropout: float = 0.5,
         multi_label: bool = False,
@@ -43,7 +44,7 @@ class NodeClassifier(BaseTask):
         self.backbone = backbone
         self.in_channels = in_channels
         self.hidden_channels = hidden_channels
-        self.out_channels = out_channels
+        self.out_channels = out_channels if out_channels is not None else num_classes
         self.num_layers = num_layers
         self.dropout = dropout
         self.multi_label = multi_label

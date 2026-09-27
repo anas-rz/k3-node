@@ -5,9 +5,10 @@ import keras
 from keras import ops
 
 from k3_node.data import BaseData
+from k3_node.hub.hub_mixin import K3NodeHubMixin
 
 
-class BaseTask:
+class BaseTask(K3NodeHubMixin):
     r"""Abstract base task estimator providing common training, evaluation,
     and serialization workflows.
     """
