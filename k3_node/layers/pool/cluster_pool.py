@@ -1,6 +1,7 @@
 from typing import NamedTuple, Optional, Tuple
 from keras import layers, ops
 import numpy as np
+from k3_node.ops.segment import segment_sum
 
 
 class UnpoolInfo(NamedTuple):
@@ -152,8 +153,8 @@ class ClusterPooling(layers.Layer):
         row = ops.cast(edge_index[0], "int32")
         col = ops.cast(edge_index[1], "int32")
         msgs = ops.expand_dims(ops.cast(edge_score, x.dtype), -1) * ops.take(x, row, axis=0)
-        x_out = ops.segment_sum(msgs, ops.take(cluster, col, axis=0), num_segments=num_clusters)
-        x_out = x_out + ops.segment_sum(
+        x_out = segment_sum(msgs, ops.take(cluster, col, axis=0), num_segments=num_clusters)
+        x_out = x_out + segment_sum(
             x * ops.expand_dims(ops.cast(single, x.dtype), -1), cluster, num_segments=num_clusters
         )
 

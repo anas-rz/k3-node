@@ -7,6 +7,7 @@ import keras
 from keras import layers, ops
 from k3_node.layers.pool import global_add_pool, global_mean_pool, global_max_pool
 from .core import MLP, GatedMLP, get_activation, infer_num_graphs
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 class ReduceReadOut(layers.Layer):
@@ -105,7 +106,7 @@ class WeightedAtomReadOut(layers.Layer):
         updated_field = self.mlp(node_feat)
         weights = ops.sigmoid(self.weight_mlp(node_feat))  # [num_nodes, 1]
 
-        weight_sum = ops.segment_sum(weights, batch, num_segments=n_graphs)  # [num_graphs, 1]
+        weight_sum = segment_sum(weights, batch, num_segments=n_graphs)  # [num_graphs, 1]
         ws_len = ops.shape(weight_sum)[0]
         b_safe = ops.clip(batch, 0, ops.maximum(ws_len - 1, 0))
         weight_sum_per_node = ops.take(weight_sum, b_safe, axis=0)
@@ -160,15 +161,15 @@ class Set2SetReadOut(layers.Layer):
             q_taken = ops.take(q, b_safe, axis=0)
             e = ops.sum(x * q_taken, axis=-1, keepdims=True)
 
-            max_e = ops.segment_max(e, batch, num_segments=n_graphs)
+            max_e = segment_max(e, batch, num_segments=n_graphs)
             max_e_taken = ops.take(max_e, b_safe, axis=0)
             exp_e = ops.exp(e - max_e_taken)
 
-            sum_exp_e = ops.segment_sum(exp_e, batch, num_segments=n_graphs)
+            sum_exp_e = segment_sum(exp_e, batch, num_segments=n_graphs)
             sum_exp_e_taken = ops.take(sum_exp_e, b_safe, axis=0)
             alpha = exp_e / ops.maximum(sum_exp_e_taken, 1e-12)
 
-            r = ops.segment_sum(alpha * x, batch, num_segments=n_graphs)
+            r = segment_sum(alpha * x, batch, num_segments=n_graphs)
             q_star = ops.concatenate([q, r], axis=-1)
 
         return q_star
@@ -219,15 +220,15 @@ class EdgeSet2Set(layers.Layer):
             q_taken = ops.take(q, eb_safe, axis=0)
             e = ops.sum(edge_feat * q_taken, axis=-1, keepdims=True)
 
-            max_e = ops.segment_max(e, edge_batch, num_segments=n_graphs)
+            max_e = segment_max(e, edge_batch, num_segments=n_graphs)
             max_e_taken = ops.take(max_e, eb_safe, axis=0)
             exp_e = ops.exp(e - max_e_taken)
 
-            sum_exp_e = ops.segment_sum(exp_e, edge_batch, num_segments=n_graphs)
+            sum_exp_e = segment_sum(exp_e, edge_batch, num_segments=n_graphs)
             sum_exp_e_taken = ops.take(sum_exp_e, eb_safe, axis=0)
             alpha = exp_e / ops.maximum(sum_exp_e_taken, 1e-12)
 
-            r = ops.segment_sum(alpha * edge_feat, edge_batch, num_segments=n_graphs)
+            r = segment_sum(alpha * edge_feat, edge_batch, num_segments=n_graphs)
             q_star = ops.concatenate([q, r], axis=-1)
 
         return q_star

@@ -3,6 +3,7 @@ from keras import layers, ops
 
 from .connect.filter_edges import FilterEdges
 from .select.topk import SelectTopK
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 class GraphConv(layers.Layer):
@@ -43,15 +44,15 @@ class GraphConv(layers.Layer):
             msg = msg * ops.reshape(edge_weight, (-1, 1))
 
         if self.aggr == "add":
-            aggr_out = ops.segment_sum(msg, col, num_segments=num_nodes)
+            aggr_out = segment_sum(msg, col, num_segments=num_nodes)
         elif self.aggr == "mean":
-            sum_val = ops.segment_sum(msg, col, num_segments=num_nodes)
-            count = ops.segment_sum(ops.ones_like(msg), col, num_segments=num_nodes)
+            sum_val = segment_sum(msg, col, num_segments=num_nodes)
+            count = segment_sum(ops.ones_like(msg), col, num_segments=num_nodes)
             aggr_out = sum_val / ops.maximum(count, 1.0)
         elif self.aggr == "max":
-            aggr_out = ops.segment_max(msg, col, num_segments=num_nodes)
+            aggr_out = segment_max(msg, col, num_segments=num_nodes)
         else:
-            aggr_out = ops.segment_sum(msg, col, num_segments=num_nodes)
+            aggr_out = segment_sum(msg, col, num_segments=num_nodes)
 
         return self.lin_rel(aggr_out) + self.lin_root(x)
 

@@ -2,6 +2,7 @@ from typing import Optional
 from keras import initializers, ops
 
 from .base import Aggregation
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 class SumAggregation(Aggregation):
@@ -314,10 +315,10 @@ class SoftmaxAggregation(Aggregation):
         index = ops.cast(index, dtype="int32")
         dim_size = dim_size or (int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0)
 
-        max_val = ops.segment_max(alpha, index, num_segments=dim_size)
+        max_val = segment_max(alpha, index, num_segments=dim_size)
         max_exp = ops.take(max_val, index, axis=0)
         exp_alpha = ops.exp(alpha - max_exp)
-        sum_exp = ops.segment_sum(exp_alpha, index, num_segments=dim_size)
+        sum_exp = segment_sum(exp_alpha, index, num_segments=dim_size)
         sum_exp_taken = ops.take(sum_exp, index, axis=0)
         alpha_sm = exp_alpha / ops.maximum(sum_exp_taken, 1e-12)
 

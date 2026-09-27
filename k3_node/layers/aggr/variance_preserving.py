@@ -2,6 +2,7 @@ from typing import Optional
 from keras import ops
 
 from .base import Aggregation
+from k3_node.ops.segment import segment_sum
 
 
 class VariancePreservingAggregation(Aggregation):
@@ -42,7 +43,7 @@ class VariancePreservingAggregation(Aggregation):
         dim_size = dim_size or (int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0)
 
         ones = ops.ones((ops.shape(index)[0], 1), dtype=out.dtype)
-        count = ops.segment_sum(ones, index, num_segments=dim_size)
+        count = segment_sum(ones, index, num_segments=dim_size)
         count = ops.maximum(ops.sqrt(count), 1.0)
 
         return out / count

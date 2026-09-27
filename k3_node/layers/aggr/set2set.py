@@ -2,6 +2,7 @@ from typing import Optional
 from keras import layers, ops
 
 from .base import Aggregation
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 class Set2Set(Aggregation):
@@ -68,14 +69,14 @@ class Set2Set(Aggregation):
             q_taken = ops.take(q, index, axis=0)
             e = ops.sum(x * q_taken, axis=-1, keepdims=True)
 
-            max_e = ops.segment_max(e, index, num_segments=dim_size)
+            max_e = segment_max(e, index, num_segments=dim_size)
             max_e_exp = ops.take(max_e, index, axis=0)
             exp_e = ops.exp(e - max_e_exp)
-            sum_exp = ops.segment_sum(exp_e, index, num_segments=dim_size)
+            sum_exp = segment_sum(exp_e, index, num_segments=dim_size)
             sum_exp_exp = ops.take(sum_exp, index, axis=0)
             a = exp_e / ops.maximum(sum_exp_exp, 1e-12)
 
-            r = ops.segment_sum(a * x, index, num_segments=dim_size)
+            r = segment_sum(a * x, index, num_segments=dim_size)
             q_star = ops.concatenate([q, r], axis=-1)
 
         return q_star

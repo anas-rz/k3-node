@@ -7,6 +7,7 @@ from keras import layers, ops
 
 from k3_node.layers.conv.utils import softmax
 from k3_node.data.download import download_google_url
+from k3_node.ops.segment import segment_sum
 
 
 def sce_loss(x, y, alpha: float = 3.0):
@@ -168,7 +169,7 @@ class GraphMAE2GATConv(layers.Layer):
             a = self.attn_drop(a, training=training)
 
         msg = a * ops.take(feat_src, row, axis=0)
-        rst = ops.segment_sum(msg, col, num_segments=num_nodes)
+        rst = segment_sum(msg, col, num_segments=num_nodes)
 
         if self.bias is not None:
             rst = rst + ops.reshape(self.bias, (1, self.num_heads, self.out_feats))

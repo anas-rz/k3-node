@@ -6,6 +6,7 @@ from .base import Select, SelectOutput
 
 
 from k3_node.layers.conv.utils import is_tracing
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 def topk(
@@ -46,7 +47,7 @@ def topk(
         pass
 
     if min_score is not None:
-        scores_max = ops.segment_max(x, batch, num_segments=num_graphs)
+        scores_max = segment_max(x, batch, num_segments=num_graphs)
         scores_max_expanded = ops.take(scores_max, batch, axis=0) - tol
         scores_min = ops.minimum(scores_max_expanded, min_score)
         mask = x > scores_min
@@ -58,7 +59,7 @@ def topk(
 
     if ratio is not None:
         ones = ops.ones((num_nodes,), dtype="int32")
-        num_nodes_per_graph = ops.segment_sum(ones, batch, num_segments=num_graphs)
+        num_nodes_per_graph = segment_sum(ones, batch, num_segments=num_graphs)
 
         if ratio >= 1:
             k = ops.full(ops.shape(num_nodes_per_graph), int(ratio), dtype="int32")
@@ -178,10 +179,10 @@ class SelectTopK(Select):
                 num_graphs = int(num_graphs)
             except (TypeError, ValueError):
                 pass
-            score_max = ops.segment_max(score, batch, num_segments=num_graphs)
+            score_max = segment_max(score, batch, num_segments=num_graphs)
             score_max_exp = ops.take(score_max, batch, axis=0)
             exp_score = ops.exp(score - score_max_exp)
-            exp_sum = ops.segment_sum(exp_score, batch, num_segments=num_graphs)
+            exp_sum = segment_sum(exp_score, batch, num_segments=num_graphs)
             exp_sum_exp = ops.take(exp_sum, batch, axis=0)
             score = exp_score / (exp_sum_exp + 1e-12)
 

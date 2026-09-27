@@ -3,13 +3,14 @@ from keras import ops
 
 from .consecutive import consecutive_cluster
 from .pool import pool_batch, pool_edge, pool_pos
+from k3_node.ops.segment import segment_max
 
 
 def _max_pool_x(cluster, x, size: Optional[int] = None):
     cluster = ops.cast(cluster, dtype="int32")
     if size is None:
         size = int(ops.max(cluster)) + 1 if ops.shape(cluster)[0] > 0 else 0
-    return ops.segment_max(x, cluster, num_segments=size)
+    return segment_max(x, cluster, num_segments=size)
 
 
 def max_pool_x(
@@ -149,7 +150,7 @@ def max_pool_neighbor_x(
 
     col = ops.cast(col, dtype="int32")
     x_src = ops.take(x, row, axis=0)
-    out_x = ops.segment_max(x_src, col, num_segments=num_nodes)
+    out_x = segment_max(x_src, col, num_segments=num_nodes)
     if is_data_obj:
         data.x = out_x
         return data

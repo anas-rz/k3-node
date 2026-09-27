@@ -4,6 +4,7 @@ from keras import layers, ops
 
 from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.conv.utils import softmax
+from k3_node.ops.segment import segment_sum
 
 
 class TransformerConv(MessagePassing):
@@ -145,7 +146,7 @@ class TransformerConv(MessagePassing):
             alpha = self.dropout(alpha)
 
         out = ops.expand_dims(alpha, -1) * value_j
-        out = ops.segment_sum(out, col, num_segments=num_nodes_dst)
+        out = segment_sum(out, col, num_segments=num_nodes_dst)
 
         if self.concat:
             out = ops.reshape(out, (-1, H * C))

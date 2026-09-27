@@ -9,6 +9,7 @@ import keras
 from keras import layers, ops
 
 from k3_node.layers.pool import global_add_pool, global_max_pool, global_mean_pool
+from k3_node.ops.segment import segment_sum
 
 
 def _get_act(act_str: str):
@@ -293,8 +294,8 @@ class CustomGatedGCN(layers.Layer):
         sigma_ij = ops.sigmoid(e_ij)
 
         num_nodes = ops.shape(x)[0]
-        sum_sigma_x = ops.segment_sum(sigma_ij * Bx_j, dst, num_segments=num_nodes)
-        sum_sigma = ops.segment_sum(sigma_ij, dst, num_segments=num_nodes)
+        sum_sigma_x = segment_sum(sigma_ij * Bx_j, dst, num_segments=num_nodes)
+        sum_sigma = segment_sum(sigma_ij, dst, num_segments=num_nodes)
         aggr_out = sum_sigma_x / (sum_sigma + 1e-6)
 
         x_out = self.bn_node_x(Ax + aggr_out, training=training)

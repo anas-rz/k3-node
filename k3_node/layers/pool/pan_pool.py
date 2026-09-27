@@ -3,6 +3,7 @@ from keras import initializers, layers, ops
 
 from .connect.filter_edges import FilterEdges
 from .select.topk import SelectTopK
+from k3_node.ops.segment import segment_sum
 
 
 class PANPooling(layers.Layer):
@@ -107,7 +108,7 @@ class PANPooling(layers.Layer):
         edge_weight = ops.cast(edge_weight, dtype=x.dtype)
 
         score1 = ops.sum(x * self.p, axis=-1)
-        score2 = ops.segment_sum(edge_weight, col, num_segments=num_nodes)
+        score2 = segment_sum(edge_weight, col, num_segments=num_nodes)
         score = self.beta[0] * score1 + self.beta[1] * score2
 
         select_out = self.select(score, batch)

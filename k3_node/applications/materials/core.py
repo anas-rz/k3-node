@@ -7,6 +7,7 @@ from typing import Sequence, Callable, Optional, Union
 import keras
 from keras import layers, ops
 import numpy as np
+from k3_node.ops.segment import segment_sum
 
 
 class SoftPlus2(layers.Layer):
@@ -303,15 +304,15 @@ def tensor_norm(tensor):
 def scatter_add(x, index, num_segments: int):
     """Scatter sum x elements into segments indicated by index."""
     index = ops.cast(index, "int32")
-    return ops.segment_sum(x, index, num_segments=num_segments)
+    return segment_sum(x, index, num_segments=num_segments)
 
 
 def scatter_mean(x, index, num_segments: int):
     """Scatter mean x elements into segments indicated by index."""
     index = ops.cast(index, "int32")
-    sums = ops.segment_sum(x, index, num_segments=num_segments)
+    sums = segment_sum(x, index, num_segments=num_segments)
     ones = ops.ones_like(x[..., :1])
-    counts = ops.segment_sum(ones, index, num_segments=num_segments)
+    counts = segment_sum(ones, index, num_segments=num_segments)
     counts = ops.maximum(counts, 1.0)
     return sums / counts
 

@@ -1,5 +1,6 @@
 from typing import List, Optional, Union
 from keras import layers, ops
+from k3_node.ops.segment import segment_sum
 
 
 class LayerNorm(layers.Layer):
@@ -101,14 +102,14 @@ class LayerNorm(layers.Layer):
                 batch = ops.cast(batch, "int32")
                 in_channels = ops.cast(ops.shape(x)[-1], dtype=x.dtype)
                 ones = ops.ones((ops.shape(x)[0], 1), dtype=x.dtype)
-                node_counts = ops.maximum(ops.segment_sum(ones, batch, num_segments=batch_size), 1.0)
+                node_counts = ops.maximum(segment_sum(ones, batch, num_segments=batch_size), 1.0)
                 total_count = node_counts * in_channels
 
-                sum_x = ops.sum(ops.segment_sum(x, batch, num_segments=batch_size), axis=-1, keepdims=True)
+                sum_x = ops.sum(segment_sum(x, batch, num_segments=batch_size), axis=-1, keepdims=True)
                 mean = sum_x / total_count
                 x_centered = x - ops.take(mean, batch, axis=0)
 
-                sum_sq = ops.sum(ops.segment_sum(ops.power(x_centered, 2), batch, num_segments=batch_size), axis=-1, keepdims=True)
+                sum_sq = ops.sum(segment_sum(ops.power(x_centered, 2), batch, num_segments=batch_size), axis=-1, keepdims=True)
                 var = sum_sq / total_count
                 std_x = ops.take(ops.sqrt(var + self.eps), batch, axis=0)
                 out = x_centered / std_x

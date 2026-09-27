@@ -3,6 +3,7 @@ from keras import initializers, ops
 import numpy as np
 
 from .base import Aggregation
+from k3_node.ops.segment import segment_sum
 
 
 class DegreeScalerAggregation(Aggregation):
@@ -101,7 +102,7 @@ class DegreeScalerAggregation(Aggregation):
 
         # Compute degree per index
         ones = ops.ones((ops.shape(index)[0],), dtype=out.dtype)
-        deg = ops.segment_sum(ones, index, num_segments=dim_size)
+        deg = segment_sum(ones, index, num_segments=dim_size)
         deg = ops.reshape(deg, (dim_size,) + (1,) * (len(ops.shape(out)) - 1))
 
         avg_deg_log = self.avg_deg_log

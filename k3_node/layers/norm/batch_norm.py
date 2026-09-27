@@ -1,5 +1,6 @@
 from typing import Optional
 from keras import layers, ops
+from k3_node.ops.segment import segment_sum
 
 
 class BatchNorm(layers.Layer):
@@ -291,10 +292,10 @@ class HeteroBatchNorm(layers.Layer):
             var = self.running_var
         else:
             ones = ops.ones((ops.shape(x)[0], 1), dtype=x.dtype)
-            counts = ops.maximum(ops.segment_sum(ones, type_vec, num_segments=self.num_types), 1.0)
-            mean = ops.segment_sum(x, type_vec, num_segments=self.num_types) / counts
+            counts = ops.maximum(segment_sum(ones, type_vec, num_segments=self.num_types), 1.0)
+            mean = segment_sum(x, type_vec, num_segments=self.num_types) / counts
             x_c = x - ops.take(mean, type_vec, axis=0)
-            var = ops.segment_sum(ops.power(x_c, 2), type_vec, num_segments=self.num_types) / counts
+            var = segment_sum(ops.power(x_c, 2), type_vec, num_segments=self.num_types) / counts
 
         if is_training and self.track_running_stats:
             if self.momentum is None:

@@ -7,6 +7,7 @@ from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.conv.utils import softmax
 from k3_node.layers.pool import global_add_pool
 from k3_node.layers.pool.glob import _infer_size
+from k3_node.ops.segment import segment_sum
 
 try:
     from keras.src.backend.common.symbolic_scope import in_symbolic_scope
@@ -64,7 +65,7 @@ class GATEConv(MessagePassing):
             alpha = self.dropout(alpha, training=training)
 
         message = self.lin2(x_j) * ops.expand_dims(alpha, -1)
-        out = ops.segment_sum(message, col, num_segments=num_nodes)
+        out = segment_sum(message, col, num_segments=num_nodes)
         return out + self.bias
 
 

@@ -1,6 +1,7 @@
 from typing import Callable, List, NamedTuple, Optional, Tuple
 from keras import layers, ops
 import numpy as np
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 class UnpoolInfo(NamedTuple):
@@ -60,10 +61,10 @@ class EdgePooling(layers.Layer):
     @staticmethod
     def compute_edge_score_softmax(raw_edge_score, edge_index, num_nodes: int):
         col = ops.cast(edge_index[1], dtype="int32")
-        max_score = ops.segment_max(raw_edge_score, col, num_segments=num_nodes)
+        max_score = segment_max(raw_edge_score, col, num_segments=num_nodes)
         max_exp = ops.take(max_score, col, axis=0)
         exp_score = ops.exp(raw_edge_score - max_exp)
-        sum_exp = ops.segment_sum(exp_score, col, num_segments=num_nodes)
+        sum_exp = segment_sum(exp_score, col, num_segments=num_nodes)
         sum_exp_taken = ops.take(sum_exp, col, axis=0)
         return exp_score / (sum_exp_taken + 1e-12)
 
@@ -150,7 +151,7 @@ class EdgePooling(layers.Layer):
         )
         num_clusters, num_new_edges = int(num_clusters), int(num_new_edges)
 
-        new_x = ops.segment_sum(x, cluster, num_segments=num_clusters)
+        new_x = segment_sum(x, cluster, num_segments=num_clusters)
 
         # Score of the edge merged into each cluster (1 for unmatched nodes), gathered from the score
         # tensor so gradients reach the scoring layer.

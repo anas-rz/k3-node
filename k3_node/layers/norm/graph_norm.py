@@ -1,5 +1,6 @@
 from keras import layers, ops
 from k3_node.layers.conv.utils import is_tracing
+from k3_node.ops.segment import segment_sum
 
 
 class GraphNorm(layers.Layer):
@@ -91,10 +92,10 @@ class GraphNorm(layers.Layer):
 
         batch = ops.cast(batch, "int32")
         ones = ops.ones((ops.shape(x)[0], 1), dtype=x.dtype)
-        counts = ops.maximum(ops.segment_sum(ones, batch, num_segments=batch_size), 1.0)
-        mean = ops.segment_sum(x, batch, num_segments=batch_size) / counts
+        counts = ops.maximum(segment_sum(ones, batch, num_segments=batch_size), 1.0)
+        mean = segment_sum(x, batch, num_segments=batch_size) / counts
         out = x - ops.take(mean, batch, axis=0) * self.mean_scale
-        var = ops.segment_sum(ops.power(out, 2), batch, num_segments=batch_size) / counts
+        var = segment_sum(ops.power(out, 2), batch, num_segments=batch_size) / counts
         std = ops.take(ops.sqrt(var + self.eps), batch, axis=0)
         return self.weight * out / std + self.bias
 

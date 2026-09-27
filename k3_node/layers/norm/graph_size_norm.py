@@ -1,4 +1,5 @@
 from keras import layers, ops
+from k3_node.ops.segment import segment_sum
 
 
 class GraphSizeNorm(layers.Layer):
@@ -45,7 +46,7 @@ class GraphSizeNorm(layers.Layer):
 
         batch = ops.cast(batch, "int32")
         ones = ops.ones((ops.shape(x)[0], 1), dtype=x.dtype)
-        deg = ops.segment_sum(ones, batch, num_segments=batch_size)
+        deg = segment_sum(ones, batch, num_segments=batch_size)
         inv_sqrt_deg = ops.power(deg, -0.5)
         scale = ops.take(inv_sqrt_deg, batch, axis=0)
         return x * scale

@@ -1,4 +1,5 @@
 from keras import layers, ops
+from k3_node.ops.segment import segment_sum
 
 
 class MeanSubtractionNorm(layers.Layer):
@@ -46,8 +47,8 @@ class MeanSubtractionNorm(layers.Layer):
 
         batch = ops.cast(batch, "int32")
         ones = ops.ones((ops.shape(x)[0], 1), dtype=x.dtype)
-        counts = ops.maximum(ops.segment_sum(ones, batch, num_segments=dim_size), 1.0)
-        mean = ops.segment_sum(x, batch, num_segments=dim_size) / counts
+        counts = ops.maximum(segment_sum(ones, batch, num_segments=dim_size), 1.0)
+        mean = segment_sum(x, batch, num_segments=dim_size) / counts
         return x - ops.take(mean, batch, axis=0)
 
     def compute_output_shape(self, input_shape):

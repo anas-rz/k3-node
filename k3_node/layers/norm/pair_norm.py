@@ -1,4 +1,5 @@
 from keras import layers, ops
+from k3_node.ops.segment import segment_sum
 
 
 class PairNorm(layers.Layer):
@@ -73,13 +74,13 @@ class PairNorm(layers.Layer):
 
         batch = ops.cast(batch, "int32")
         ones = ops.ones((ops.shape(x)[0], 1), dtype=x.dtype)
-        counts = ops.maximum(ops.segment_sum(ones, batch, num_segments=batch_size), 1.0)
-        mean = ops.segment_sum(x, batch, num_segments=batch_size) / counts
+        counts = ops.maximum(segment_sum(ones, batch, num_segments=batch_size), 1.0)
+        mean = segment_sum(x, batch, num_segments=batch_size) / counts
         x = x - ops.take(mean, batch, axis=0)
 
         if not self.scale_individually:
             sq_sum = ops.sum(ops.power(x, 2), axis=-1, keepdims=True)
-            mean_sq = ops.segment_sum(sq_sum, batch, num_segments=batch_size) / counts
+            mean_sq = segment_sum(sq_sum, batch, num_segments=batch_size) / counts
             denom = ops.sqrt(self.eps + ops.take(mean_sq, batch, axis=0))
             return scale * x / denom
         else:

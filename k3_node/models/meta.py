@@ -2,6 +2,7 @@ from typing import Optional, Tuple
 
 import keras
 from keras import ops
+from k3_node.ops.segment import segment_sum
 
 
 class MetaLayer(keras.layers.Layer):
@@ -53,7 +54,7 @@ class MetaLayer(keras.layers.Layer):
             return edge_mlp(keras.ops.concatenate([src, dst, edge_attr], axis=-1))
 
         def node_model(x, edge_index, edge_attr, u, batch):  # update nodes from incoming edges
-            incoming = keras.ops.segment_sum(edge_attr, edge_index[1], num_segments=10)
+            incoming = keras.segment_sum(edge_attr, edge_index[1], num_segments=10)
             return node_mlp(keras.ops.concatenate([x, incoming], axis=-1))
 
         model = MetaLayer(edge_model=edge_model, node_model=node_model)

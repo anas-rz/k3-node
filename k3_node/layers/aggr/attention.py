@@ -2,6 +2,7 @@ from typing import Optional
 from keras import ops
 
 from .base import Aggregation
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 class AttentionalAggregation(Aggregation):
@@ -61,10 +62,10 @@ class AttentionalAggregation(Aggregation):
         dim_size = dim_size or (int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0)
 
         # Graph-wise softmax over groups
-        max_val = ops.segment_max(gate, index, num_segments=dim_size)
+        max_val = segment_max(gate, index, num_segments=dim_size)
         max_exp = ops.take(max_val, index, axis=0)
         exp_gate = ops.exp(gate - max_exp)
-        sum_exp = ops.segment_sum(exp_gate, index, num_segments=dim_size)
+        sum_exp = segment_sum(exp_gate, index, num_segments=dim_size)
         sum_exp_exp = ops.take(sum_exp, index, axis=0)
         alpha = exp_gate / ops.maximum(sum_exp_exp, 1e-12)
 

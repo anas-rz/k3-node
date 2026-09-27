@@ -1,4 +1,5 @@
 from keras import layers, ops
+from k3_node.ops.segment import segment_sum
 
 
 class InstanceNorm(layers.Layer):
@@ -126,12 +127,12 @@ class InstanceNorm(layers.Layer):
 
         if is_training or not self.track_running_stats:
             ones = ops.ones((ops.shape(x)[0], 1), dtype=x.dtype)
-            counts = ops.maximum(ops.segment_sum(ones, batch, num_segments=batch_size), 1.0)
+            counts = ops.maximum(segment_sum(ones, batch, num_segments=batch_size), 1.0)
             unbiased_counts = ops.maximum(counts - 1.0, 1.0)
 
-            mean = ops.segment_sum(x, batch, num_segments=batch_size) / counts
+            mean = segment_sum(x, batch, num_segments=batch_size) / counts
             x_c = x - ops.take(mean, batch, axis=0)
-            sq_diff = ops.segment_sum(ops.power(x_c, 2), batch, num_segments=batch_size)
+            sq_diff = segment_sum(ops.power(x_c, 2), batch, num_segments=batch_size)
             var = sq_diff / counts
             unbiased_var = sq_diff / unbiased_counts
 

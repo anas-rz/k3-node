@@ -3,6 +3,7 @@ from keras import ops
 
 
 from k3_node.layers.conv.utils import is_tracing
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 def _infer_size(batch, size=None):
@@ -67,7 +68,7 @@ def global_add_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
         num_seg = size if size is not None else 0
         return ops.zeros((num_seg,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
     size = _infer_size(batch, size)
-    return ops.segment_sum(x, batch, num_segments=size)
+    return segment_sum(x, batch, num_segments=size)
 
 
 def global_mean_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
@@ -99,9 +100,9 @@ def global_mean_pool(x, batch: Optional[any] = None, size: Optional[int] = None)
         num_seg = size if size is not None else 0
         return ops.zeros((num_seg,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
     size = _infer_size(batch, size)
-    sum_val = ops.segment_sum(x, batch, num_segments=size)
+    sum_val = segment_sum(x, batch, num_segments=size)
     ones = ops.ones_like(x)
-    count = ops.segment_sum(ones, batch, num_segments=size)
+    count = segment_sum(ones, batch, num_segments=size)
     return sum_val / ops.maximum(count, 1.0)
 
 
@@ -134,4 +135,4 @@ def global_max_pool(x, batch: Optional[any] = None, size: Optional[int] = None):
         num_seg = size if size is not None else 0
         return ops.zeros((num_seg,) + tuple(ops.shape(x)[1:]), dtype=x.dtype)
     size = _infer_size(batch, size)
-    return ops.segment_max(x, batch, num_segments=size)
+    return segment_max(x, batch, num_segments=size)

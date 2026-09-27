@@ -8,6 +8,7 @@ from k3_node.layers.conv.utils import (
     extend_mask_for_self_loops,
     remove_self_loops_masked,
 )
+from k3_node.ops.segment import segment_sum
 
 
 class FeaStConv(MessagePassing):
@@ -105,7 +106,7 @@ class FeaStConv(MessagePassing):
             # Masked messages are zero but still counted by the mean; rescale to the kept count.
             col = ops.cast(edge_index[1], "int32")
             count_all = degree(col, num_nodes=num_nodes, dtype=out.dtype)
-            count_kept = ops.segment_sum(ops.cast(keep_mask, out.dtype), col, num_segments=num_nodes)
+            count_kept = segment_sum(ops.cast(keep_mask, out.dtype), col, num_segments=num_nodes)
             out = out * ops.expand_dims(count_all / ops.maximum(count_kept, 1.0), -1)
 
         if self.bias is not None:

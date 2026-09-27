@@ -4,6 +4,7 @@ import numpy as np
 
 from .connect.filter_edges import FilterEdges
 from .select.topk import SelectTopK
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 class LEConv(layers.Layer):
@@ -38,7 +39,7 @@ class LEConv(layers.Layer):
         if edge_weight is not None:
             msg = msg * ops.reshape(edge_weight, (-1, 1))
 
-        out = ops.segment_sum(msg, col, num_segments=num_nodes)
+        out = segment_sum(msg, col, num_segments=num_nodes)
         return out + self.lin3(x)
 
 
@@ -132,17 +133,17 @@ class ASAPooling(layers.Layer):
         col = ops.cast(edge_index[1], dtype="int32")
 
         x_pool_j = ops.take(x_pool, row, axis=0)
-        x_q = ops.segment_max(x_pool_j, col, num_segments=N)
+        x_q = segment_max(x_pool_j, col, num_segments=N)
         x_q = ops.take(self.lin(x_q), col, axis=0)
 
         score = ops.reshape(self.att(ops.concatenate([x_q, x_pool_j], axis=-1)), (-1,))
         score = ops.leaky_relu(score, negative_slope=self.negative_slope)
 
         # Softmax over col
-        score_max = ops.segment_max(score, col, num_segments=N)
+        score_max = segment_max(score, col, num_segments=N)
         score_max_exp = ops.take(score_max, col, axis=0)
         exp_score = ops.exp(score - score_max_exp)
-        sum_exp = ops.segment_sum(exp_score, col, num_segments=N)
+        sum_exp = segment_sum(exp_score, col, num_segments=N)
         sum_exp_exp = ops.take(sum_exp, col, axis=0)
         score = exp_score / (sum_exp_exp + 1e-12)
 
@@ -150,7 +151,7 @@ class ASAPooling(layers.Layer):
             score = self.drop(score, training=training)
 
         v_j = ops.take(x, row, axis=0) * ops.reshape(score, (-1, 1))
-        x_new = ops.segment_sum(v_j, col, num_segments=N)
+        x_new = segment_sum(v_j, col, num_segments=N)
 
         fitness = ops.reshape(ops.sigmoid(self.gnn_score(x_new, edge_index)), (-1,))
         select_out = self.select(fitness, batch)

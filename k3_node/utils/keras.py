@@ -1,12 +1,13 @@
 # ported from spektral
 
 from keras import ops, activations, constraints, initializers, regularizers
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 def segment_softmax(x, indices, n_nodes=None):
     n_nodes = ops.max(indices) + 1 if n_nodes is None else n_nodes
-    e_x = ops.exp(x - ops.take(ops.segment_max(x, indices, n_nodes), indices))
-    e_x /= ops.take(ops.segment_sum(e_x, indices, n_nodes) + 1e-9, indices)
+    e_x = ops.exp(x - ops.take(segment_max(x, indices, n_nodes), indices))
+    e_x /= ops.take(segment_sum(e_x, indices, n_nodes) + 1e-9, indices)
     return e_x
 
 

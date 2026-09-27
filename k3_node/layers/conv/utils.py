@@ -1,5 +1,6 @@
 from typing import Any, Optional, Tuple, Union
 from keras import ops
+from k3_node.ops.segment import segment_max, segment_min, segment_sum
 
 
 def is_tracing(x: Any) -> bool:
@@ -120,7 +121,7 @@ def degree(index, num_nodes: Optional[int] = None, dtype=None):
     except (TypeError, ValueError):
         pass
     ones = ops.ones((ops.shape(index)[0],), dtype=dtype or "float32")
-    deg = ops.segment_sum(ones, index, num_segments=num_nodes)
+    deg = segment_sum(ones, index, num_segments=num_nodes)
     if dtype is not None:
         deg = ops.cast(deg, dtype)
     return deg
@@ -262,7 +263,7 @@ def gcn_norm(
     col_cast = ops.cast(col, "int32")
     idx_cast = ops.cast(idx, "int32")
 
-    deg = ops.segment_sum(edge_weight, idx_cast, num_segments=num_nodes)
+    deg = segment_sum(edge_weight, idx_cast, num_segments=num_nodes)
     deg_inv_sqrt = ops.power(deg, -0.5)
     deg_inv_sqrt = ops.where(
         ops.isinf(deg_inv_sqrt) | ops.isnan(deg_inv_sqrt), 0.0, deg_inv_sqrt
@@ -361,10 +362,10 @@ def softmax(src, index, num_nodes: Optional[int] = None, dim: int = -2):
     index = ops.cast(index, "int32")
     num_nodes = _infer_dim_size(index, num_nodes)
 
-    max_val = ops.segment_max(src, index, num_segments=num_nodes)
+    max_val = segment_max(src, index, num_segments=num_nodes)
     max_val = ops.take(max_val, index, axis=dim)
     exp = ops.exp(src - max_val)
-    sum_val = ops.segment_sum(exp, index, num_segments=num_nodes)
+    sum_val = segment_sum(exp, index, num_segments=num_nodes)
     sum_val = ops.take(sum_val, index, axis=dim)
     return exp / (sum_val + 1e-12)
 
@@ -375,24 +376,24 @@ def scatter(src, index, dim=0, dim_size=None, reduce="sum"):
     dim_size = _infer_dim_size(index, dim_size)
 
     if reduce in ("add", "sum"):
-        return ops.segment_sum(src, index, num_segments=dim_size)
+        return segment_sum(src, index, num_segments=dim_size)
     elif reduce == "mean":
-        sum_val = ops.segment_sum(src, index, num_segments=dim_size)
+        sum_val = segment_sum(src, index, num_segments=dim_size)
         ones = ops.ones_like(src)
-        count = ops.segment_sum(ones, index, num_segments=dim_size)
+        count = segment_sum(ones, index, num_segments=dim_size)
         count = ops.maximum(count, 1.0)
         return sum_val / count
     elif reduce == "max":
-        return ops.segment_max(src, index, num_segments=dim_size)
-        val = ops.segment_max(src, index, num_segments=dim_size)
+        return segment_max(src, index, num_segments=dim_size)
+        val = segment_max(src, index, num_segments=dim_size)
         ones = ops.ones((ops.shape(index)[0], 1), dtype=src.dtype)
-        count = ops.segment_sum(ones, index, num_segments=dim_size)
+        count = segment_sum(ones, index, num_segments=dim_size)
         return ops.where(ops.greater(count, 0), val, ops.zeros_like(val))
     elif reduce == "min":
-        return ops.segment_min(src, index, num_segments=dim_size)
-        val = ops.segment_min(src, index, num_segments=dim_size)
+        return segment_min(src, index, num_segments=dim_size)
+        val = segment_min(src, index, num_segments=dim_size)
         ones = ops.ones((ops.shape(index)[0], 1), dtype=src.dtype)
-        count = ops.segment_sum(ones, index, num_segments=dim_size)
+        count = segment_sum(ones, index, num_segments=dim_size)
         return ops.where(ops.greater(count, 0), val, ops.zeros_like(val))
     else:
         raise ValueError(f"Unknown reduce operation: {reduce}")

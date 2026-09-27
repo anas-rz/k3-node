@@ -9,6 +9,7 @@ from k3_node.layers.conv.utils import (
     remove_self_loops_masked,
     softmax,
 )
+from k3_node.ops.segment import segment_sum
 
 
 class GATConv(MessagePassing):
@@ -206,7 +207,7 @@ class GATConv(MessagePassing):
         # Message & aggregate
         x_src_j = ops.take(x_src_proj, row, axis=0)
         out = ops.expand_dims(alpha, -1) * x_src_j
-        out = ops.segment_sum(out, col, num_segments=num_nodes_dst)
+        out = segment_sum(out, col, num_segments=num_nodes_dst)
 
         if self.concat:
             out = ops.reshape(out, (-1, H * C))

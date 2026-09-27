@@ -7,6 +7,7 @@ from k3_node.layers.conv.utils import (
     extend_mask_for_self_loops,
     remove_self_loops_masked,
 )
+from k3_node.ops.segment import segment_sum
 
 
 class ClusterGCNConv(MessagePassing):
@@ -80,7 +81,7 @@ class ClusterGCNConv(MessagePassing):
         if keep_mask is None:
             deg = degree(col_cast, num_nodes=num_nodes)
         else:
-            deg = ops.segment_sum(ops.cast(keep_mask, x.dtype), col_cast, num_segments=num_nodes)
+            deg = segment_sum(ops.cast(keep_mask, x.dtype), col_cast, num_segments=num_nodes)
         deg_inv = 1.0 / ops.maximum(ops.cast(deg, x.dtype), 1.0)
 
         edge_weight = ops.take(deg_inv, col_cast, axis=0)

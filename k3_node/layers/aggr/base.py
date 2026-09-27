@@ -1,6 +1,7 @@
 from typing import Optional, Tuple
 from keras import layers, ops
 import numpy as np
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 def ptr2index(ptr):
@@ -247,26 +248,26 @@ class Aggregation(layers.Layer):
             dim_size = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
 
         if reduce in ["sum", "add"]:
-            return ops.segment_sum(x, index, num_segments=dim_size)
+            return segment_sum(x, index, num_segments=dim_size)
         elif reduce == "mean":
-            sum_val = ops.segment_sum(x, index, num_segments=dim_size)
+            sum_val = segment_sum(x, index, num_segments=dim_size)
             ones = ops.ones_like(x)
-            count = ops.segment_sum(ones, index, num_segments=dim_size)
+            count = segment_sum(ones, index, num_segments=dim_size)
             return sum_val / ops.maximum(count, 1.0)
         elif reduce == "max":
-            val = ops.segment_max(x, index, num_segments=dim_size)
+            val = segment_max(x, index, num_segments=dim_size)
             ones = ops.ones_like(x)
-            count = ops.segment_sum(ones, index, num_segments=dim_size)
+            count = segment_sum(ones, index, num_segments=dim_size)
             return ops.where(ops.greater(count, 0), val, ops.zeros_like(val))
         elif reduce == "min":
-            val = -ops.segment_max(-x, index, num_segments=dim_size)
+            val = -segment_max(-x, index, num_segments=dim_size)
             ones = ops.ones_like(x)
-            count = ops.segment_sum(ones, index, num_segments=dim_size)
+            count = segment_sum(ones, index, num_segments=dim_size)
             return ops.where(ops.greater(count, 0), val, ops.zeros_like(val))
         elif reduce == "mul":
             log_abs = ops.log(ops.maximum(ops.abs(x), 1e-7))
-            sum_log = ops.segment_sum(log_abs, index, num_segments=dim_size)
-            neg_count = ops.segment_sum(ops.cast(ops.less(x, 0.0), dtype=x.dtype), index, num_segments=dim_size)
+            sum_log = segment_sum(log_abs, index, num_segments=dim_size)
+            neg_count = segment_sum(ops.cast(ops.less(x, 0.0), dtype=x.dtype), index, num_segments=dim_size)
             sign = ops.cos(ops.cast(3.141592653589793, dtype=x.dtype) * neg_count)
             return ops.exp(sum_log) * sign
         else:

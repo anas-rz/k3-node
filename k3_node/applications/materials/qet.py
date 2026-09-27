@@ -12,6 +12,7 @@ from .core import MLP, scatter_add, infer_num_graphs
 from .basis import compute_pair_vector_and_distance, polynomial_cutoff
 from .tensornet import TensorNet
 from .readout import ReduceReadOut
+from k3_node.ops.segment import segment_sum
 
 
 class LinearQeq(layers.Layer):
@@ -53,8 +54,8 @@ class LinearQeq(layers.Layer):
         chi_inv_eta = chi * inv_eta
 
         batch_clipped = ops.clip(batch, 0, ops.maximum(n_graphs - 1, 0))
-        sum_inv_eta = ops.segment_sum(inv_eta, batch_clipped, num_segments=n_graphs)
-        sum_chi_inv_eta = ops.segment_sum(chi_inv_eta, batch_clipped, num_segments=n_graphs)
+        sum_inv_eta = segment_sum(inv_eta, batch_clipped, num_segments=n_graphs)
+        sum_chi_inv_eta = segment_sum(chi_inv_eta, batch_clipped, num_segments=n_graphs)
 
         denom = ops.maximum(sum_inv_eta, self._eps)
         lambda_val = (Q + sum_chi_inv_eta) / denom

@@ -3,15 +3,16 @@ from keras import ops
 
 from .consecutive import consecutive_cluster
 from .pool import pool_batch, pool_edge, pool_pos
+from k3_node.ops.segment import segment_sum
 
 
 def _avg_pool_x(cluster, x, size: Optional[int] = None):
     cluster = ops.cast(cluster, dtype="int32")
     if size is None:
         size = int(ops.max(cluster)) + 1 if ops.shape(cluster)[0] > 0 else 0
-    sum_x = ops.segment_sum(x, cluster, num_segments=size)
+    sum_x = segment_sum(x, cluster, num_segments=size)
     ones = ops.ones_like(x)
-    count = ops.segment_sum(ones, cluster, num_segments=size)
+    count = segment_sum(ones, cluster, num_segments=size)
     return sum_x / ops.maximum(count, 1.0)
 
 
@@ -152,9 +153,9 @@ def avg_pool_neighbor_x(
 
     col = ops.cast(col, dtype="int32")
     x_src = ops.take(x, row, axis=0)
-    sum_x = ops.segment_sum(x_src, col, num_segments=num_nodes)
+    sum_x = segment_sum(x_src, col, num_segments=num_nodes)
     ones = ops.ones_like(x_src)
-    count = ops.segment_sum(ones, col, num_segments=num_nodes)
+    count = segment_sum(ones, col, num_segments=num_nodes)
     out_x = sum_x / ops.maximum(count, 1.0)
     if is_data_obj:
         data.x = out_x

@@ -14,6 +14,7 @@ from k3_node.ops import get_source_target
 from k3_node.layers.aggr.resolver import aggregation_resolver
 from k3_node.layers.aggr.base import Aggregation
 from k3_node.layers.aggr.basic import SumAggregation
+from k3_node.ops.segment import segment_sum
 
 
 class MessagePassing(layers.Layer):
@@ -355,7 +356,7 @@ class MessagePassing(layers.Layer):
             return self.aggr_module(
                 inputs, index=index, ptr=ptr, dim_size=dim_size, dim=self.node_dim
             )
-        return ops.segment_sum(inputs, index, num_segments=dim_size)
+        return segment_sum(inputs, index, num_segments=dim_size)
 
     def update(self, embeddings=None, **kwargs):
         r"""Updates node embeddings."""

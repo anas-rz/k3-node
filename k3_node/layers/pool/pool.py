@@ -1,6 +1,7 @@
 from typing import Optional, Tuple
 from keras import ops
 import numpy as np
+from k3_node.ops.segment import segment_max, segment_sum
 
 
 def pool_edge(
@@ -54,13 +55,13 @@ def pool_edge(
         ea_tensor = ops.convert_to_tensor(ea_np, dtype=edge_attr.dtype)
         inv_tensor = ops.convert_to_tensor(inv, dtype="int32")
         if reduce == "sum":
-            out_edge_attr = ops.segment_sum(ea_tensor, inv_tensor, num_segments=num_unique)
+            out_edge_attr = segment_sum(ea_tensor, inv_tensor, num_segments=num_unique)
         elif reduce == "mean":
-            sum_ea = ops.segment_sum(ea_tensor, inv_tensor, num_segments=num_unique)
-            count = ops.segment_sum(ops.ones_like(ea_tensor), inv_tensor, num_segments=num_unique)
+            sum_ea = segment_sum(ea_tensor, inv_tensor, num_segments=num_unique)
+            count = segment_sum(ops.ones_like(ea_tensor), inv_tensor, num_segments=num_unique)
             out_edge_attr = sum_ea / ops.maximum(count, 1.0)
         elif reduce == "max":
-            out_edge_attr = ops.segment_max(ea_tensor, inv_tensor, num_segments=num_unique)
+            out_edge_attr = segment_max(ea_tensor, inv_tensor, num_segments=num_unique)
 
     return out_edge_index, out_edge_attr
 
@@ -100,6 +101,6 @@ def pool_pos(cluster, pos):
     """
     cluster = ops.cast(cluster, dtype="int32")
     num_clusters = int(ops.max(cluster)) + 1 if ops.shape(cluster)[0] > 0 else 0
-    sum_pos = ops.segment_sum(pos, cluster, num_segments=num_clusters)
-    count = ops.segment_sum(ops.ones_like(pos), cluster, num_segments=num_clusters)
+    sum_pos = segment_sum(pos, cluster, num_segments=num_clusters)
+    count = segment_sum(ops.ones_like(pos), cluster, num_segments=num_clusters)
     return sum_pos / ops.maximum(count, 1.0)

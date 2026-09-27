@@ -9,6 +9,7 @@ from k3_node.layers.conv.utils import (
     remove_self_loops_masked,
     softmax,
 )
+from k3_node.ops.segment import segment_sum
 
 
 class GATv2Conv(MessagePassing):
@@ -185,7 +186,7 @@ class GATv2Conv(MessagePassing):
             alpha = self.dropout(alpha)
 
         out = ops.expand_dims(alpha, -1) * x_l_j
-        out = ops.segment_sum(out, col, num_segments=num_nodes_dst)
+        out = segment_sum(out, col, num_segments=num_nodes_dst)
 
         if self.concat:
             out = ops.reshape(out, (-1, H * C))
