@@ -4,6 +4,7 @@ import numpy as np
 
 from .base import Aggregation
 from k3_node.ops.segment import segment_sum
+from k3_node.ops.creation import full
 
 
 class DegreeScalerAggregation(Aggregation):
@@ -81,8 +82,8 @@ class DegreeScalerAggregation(Aggregation):
         if hasattr(self.aggr, "reset_parameters"):
             self.aggr.reset_parameters()
         if self.train_norm:
-            self.avg_deg_lin.assign(ops.full((1,), self.init_avg_deg_lin, dtype=self.avg_deg_lin.dtype))
-            self.avg_deg_log.assign(ops.full((1,), self.init_avg_deg_log, dtype=self.avg_deg_log.dtype))
+            self.avg_deg_lin.assign(full((1,), self.init_avg_deg_lin, dtype=self.avg_deg_lin.dtype))
+            self.avg_deg_log.assign(full((1,), self.init_avg_deg_log, dtype=self.avg_deg_log.dtype))
 
     def call(
         self,

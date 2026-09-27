@@ -519,3 +519,17 @@ def test_cugraph_compatibility():
     edge_type = ops.convert_to_tensor([0, 1, 0, 1, 0, 1], dtype="int64")
     out_rgcn = rgcn(x, edge_index, edge_type=edge_type)
     assert ops.shape(out_rgcn) == (5, 16)
+
+
+def test_supergat_attention_loss():
+    import numpy as np
+    import keras
+
+    x = np.random.rand(10, 8).astype("float32")
+    edge_index = np.random.randint(0, 10, size=(2, 30))
+    layer = conv.SuperGATConv(8, 4, heads=2, attention_loss_weight=4.0, edge_sample_ratio=0.8)
+    layer(x, edge_index)  # inference: no attention loss
+    assert layer.get_attention_loss() is None and not layer.losses
+    layer(x, edge_index, training=True)
+    assert float(layer.get_attention_loss()) > 0
+    assert len(layer.losses) == 1  # added to the model loss while training

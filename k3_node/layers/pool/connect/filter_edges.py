@@ -7,6 +7,7 @@ from ..select.base import SelectOutput
 
 
 from k3_node.layers.conv.utils import is_tracing
+from k3_node.ops.creation import full
 
 
 def filter_adj(
@@ -53,7 +54,7 @@ def filter_adj(
     except (TypeError, ValueError):
         pass
 
-    mapping = ops.full((num_nodes,), -1, dtype="int32")
+    mapping = full((num_nodes,), -1, dtype="int32")
     mapping = ops.scatter_update(mapping, ops.expand_dims(node_index, -1), cluster_index)
 
     row = ops.take(mapping, edge_index[0], axis=0)

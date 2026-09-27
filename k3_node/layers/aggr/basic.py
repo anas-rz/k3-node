@@ -3,6 +3,7 @@ from keras import initializers, ops
 
 from .base import Aggregation
 from k3_node.ops.segment import segment_max, segment_sum
+from k3_node.ops.creation import full
 
 
 class SumAggregation(Aggregation):
@@ -288,7 +289,7 @@ class SoftmaxAggregation(Aggregation):
 
     def reset_parameters(self):
         if self.learn:
-            self.t.assign(ops.full((self.channels,), self._init_t, dtype=self.t.dtype))
+            self.t.assign(full((self.channels,), self._init_t, dtype=self.t.dtype))
 
     def call(
         self,
@@ -380,7 +381,7 @@ class PowerMeanAggregation(Aggregation):
 
     def reset_parameters(self):
         if self.learn:
-            self.p.assign(ops.full((self.channels,), self._init_p, dtype=self.p.dtype))
+            self.p.assign(full((self.channels,), self._init_p, dtype=self.p.dtype))
 
     def call(
         self,

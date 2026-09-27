@@ -7,6 +7,7 @@ from .base import Select, SelectOutput
 
 from k3_node.layers.conv.utils import is_tracing
 from k3_node.ops.segment import segment_max, segment_sum
+from k3_node.ops.creation import full
 
 
 def topk(
@@ -62,7 +63,7 @@ def topk(
         num_nodes_per_graph = segment_sum(ones, batch, num_segments=num_graphs)
 
         if ratio >= 1:
-            k = ops.full(ops.shape(num_nodes_per_graph), int(ratio), dtype="int32")
+            k = full(ops.shape(num_nodes_per_graph), int(ratio), dtype="int32")
         else:
             k = ops.cast(
                 ops.ceil(ratio * ops.cast(num_nodes_per_graph, x.dtype)),

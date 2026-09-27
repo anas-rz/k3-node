@@ -61,6 +61,8 @@ class GraphUNet(keras.Model):
             self.pool_ratios = [float(pool_ratios)] * depth
         else:
             self.pool_ratios = list(pool_ratios)
+            # As in PyG, a shorter list is padded with its last value (one ratio per level)
+            self.pool_ratios += self.pool_ratios[-1:] * (depth - len(self.pool_ratios))
 
         if isinstance(act, str):
             self.act = keras.activations.get(act)

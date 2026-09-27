@@ -10,6 +10,7 @@ from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.conv.utils import add_self_loops
 from k3_node.layers.pool import global_add_pool, global_max_pool, global_mean_pool
 from k3_node.data.download import download_url
+from k3_node.ops.creation import full
 
 
 MOLE_BERT_URL = (
@@ -78,7 +79,7 @@ class MoleBERTGINConv(MessagePassing):
         # Add features corresponding to self-loop edges: [4, 0]
         self_loop_attr = ops.stack(
             [
-                ops.full((num_nodes,), 4, dtype=edge_attr.dtype),
+                full((num_nodes,), 4, dtype=edge_attr.dtype),
                 ops.zeros((num_nodes,), dtype=edge_attr.dtype),
             ],
             axis=1,

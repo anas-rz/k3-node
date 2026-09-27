@@ -4,6 +4,7 @@ from keras import initializers, layers, ops
 from .connect.filter_edges import FilterEdges
 from .select.topk import SelectTopK
 from k3_node.ops.segment import segment_sum
+from k3_node.ops.creation import full
 
 
 class PANPooling(layers.Layer):
@@ -62,7 +63,7 @@ class PANPooling(layers.Layer):
 
     def reset_parameters(self):
         self.p.assign(ops.ones(self.p.shape, dtype=self.p.dtype))
-        self.beta.assign(ops.full(self.beta.shape, 0.5, dtype=self.beta.dtype))
+        self.beta.assign(full(self.beta.shape, 0.5, dtype=self.beta.dtype))
         self.select.reset_parameters()
 
     def build(self, input_shape=None):

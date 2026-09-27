@@ -31,6 +31,7 @@ from k3_node import transforms
 from k3_node import models
 from k3_node import applications
 
+from k3_node import metrics
 from k3_node import tasks
 from k3_node.tasks import (
     NodeClassifier,
@@ -79,6 +80,7 @@ __all__ = [
     "transforms",
     "models",
     "applications",
+    "metrics",
     "tasks",
     "NodeClassifier",
     "NodeRegressor",

@@ -1,6 +1,7 @@
 from typing import Any, Optional, Tuple, Union
 from keras import ops
 from k3_node.ops.segment import segment_max, segment_min, segment_sum
+from k3_node.ops.creation import full
 
 
 def is_tracing(x: Any) -> bool:
@@ -181,7 +182,7 @@ def mask_edge_logits(alpha, keep_mask):
     if keep_mask is None:
         return alpha
     mask = ops.reshape(keep_mask, (-1,) + (1,) * (len(alpha.shape) - 1))
-    return ops.where(mask, alpha, ops.full_like(alpha, float("-inf")))
+    return ops.where(mask, alpha, float("-inf"))  # a scalar also works on torch's meta device
 
 
 def add_self_loops(
@@ -213,11 +214,11 @@ def add_self_loops(
         if fill_value is None:
             loop_attr = ops.zeros(attr_shape, dtype=edge_attr.dtype)
         elif isinstance(fill_value, (int, float)):
-            loop_attr = ops.full(attr_shape, fill_value, dtype=edge_attr.dtype)
+            loop_attr = full(attr_shape, fill_value, dtype=edge_attr.dtype)
         elif fill_value == "add" or fill_value == "mean":
             loop_attr = ops.zeros(attr_shape, dtype=edge_attr.dtype)
         else:
-            loop_attr = ops.full(attr_shape, fill_value, dtype=edge_attr.dtype)
+            loop_attr = full(attr_shape, fill_value, dtype=edge_attr.dtype)
         edge_attr = ops.concatenate([edge_attr, loop_attr], axis=0)
 
     return edge_index, edge_attr

@@ -2,6 +2,7 @@ from typing import Optional, Tuple
 from keras import layers, ops
 import numpy as np
 from k3_node.ops.segment import segment_max, segment_sum
+from k3_node.ops.creation import full
 
 
 def ptr2index(ptr):
@@ -82,7 +83,7 @@ def to_dense_batch(
             if fill_value != 0.0:
                 mask_t = ops.convert_to_tensor(mask_np)
                 mask_expanded = ops.reshape(mask_t, (B, max_nodes) + (1,) * len(feat_shape))
-                fill = ops.full((B, max_nodes, *feat_shape), fill_value, dtype=x.dtype)
+                fill = full((B, max_nodes, *feat_shape), fill_value, dtype=x.dtype)
                 out = ops.where(mask_expanded, out, fill)
 
             return out, ops.convert_to_tensor(mask_np, dtype="bool")
@@ -111,13 +112,63 @@ def to_dense_batch(
     else:
         B = ops.max(index) + 1
 
-    dense_x = ops.full((B, max_nodes, *ops.shape(x)[1:]), fill_value, dtype=x.dtype)
+    dense_x = full((B, max_nodes, *ops.shape(x)[1:]), fill_value, dtype=x.dtype)
     mask = ops.zeros((B, max_nodes), dtype="bool")
 
     scatter_indices = ops.stack([ops.cast(index, "int32"), ops.cast(local_idx, "int32")], axis=1)
     dense_x = ops.scatter_update(dense_x, scatter_indices, x)
     mask = ops.scatter_update(mask, scatter_indices, ops.ones((N,), dtype="bool"))
     return dense_x, mask
+
+
+def to_dense_adj(edge_index, batch=None, edge_attr=None, max_num_nodes: Optional[int] = None,
+                 batch_size: Optional[int] = None):
+    r"""Converts a batch of graphs into dense adjacency matrices of shape
+    ``[num_graphs, max_nodes, max_nodes]`` (or ``[..., edge_features]`` with ``edge_attr``), as in PyG.
+
+    The node dimension matches :func:`to_dense_batch` for the same ``batch`` vector, so the two can
+    be used together. Duplicate edges are summed.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.layers import to_dense_adj
+
+        edge_index = np.array([[0, 1, 2, 3, 4], [1, 2, 0, 4, 3]])
+        batch = np.array([0, 0, 0, 1, 1])  # two graphs with 3 and 2 nodes
+        adj = to_dense_adj(edge_index, batch)
+        print(tuple(adj.shape))  # (2, 3, 3)
+        ```
+    """
+    from k3_node.layers.conv.utils import is_tracing
+
+    edge_index = ops.cast(ops.convert_to_tensor(edge_index), "int32")
+    if batch is None:
+        num_nodes = max_num_nodes or (int(ops.convert_to_numpy(ops.max(edge_index))) + 1)
+        batch = ops.zeros((num_nodes,), dtype="int32")
+    batch = ops.cast(ops.convert_to_tensor(batch), "int32")
+
+    if not is_tracing(batch):
+        index_np = ops.convert_to_numpy(batch).astype(np.int64)
+        num_graphs = int(index_np.max()) + 1 if len(index_np) else 0
+        num_graphs = max(num_graphs, int(batch_size or 0))
+        local = np.arange(len(index_np)) - np.searchsorted(index_np, index_np, side="left")
+        max_nodes = int(np.bincount(index_np, minlength=num_graphs).max()) if len(index_np) else 0
+        max_nodes = max(max_nodes, int(max_num_nodes or 0))
+        local = ops.convert_to_tensor(local.astype("int32"))
+    else:  # compiled: same local indices as to_dense_batch, padded to the total node count
+        n = ops.shape(batch)[0]
+        same = ops.cast(ops.equal(ops.expand_dims(batch, 1), ops.expand_dims(batch, 0)), "int32")
+        local = ops.sum(same * ops.tril(ops.ones((n, n), dtype="int32")), axis=1) - 1
+        num_graphs = batch_size if batch_size is not None else ops.max(batch) + 1
+        max_nodes = max_num_nodes if max_num_nodes is not None else batch.shape[0]
+
+    src, dst = edge_index[0], edge_index[1]
+    indices = ops.stack([ops.take(batch, src), ops.take(local, src), ops.take(local, dst)], axis=1)
+    num_edges = ops.shape(edge_index)[1]
+    values = ops.ones((num_edges,), dtype="float32") if edge_attr is None else ops.convert_to_tensor(edge_attr)
+    extra = tuple(values.shape[1:])
+    return ops.scatter(indices, values, (num_graphs, max_nodes, max_nodes) + extra)
 
 
 class Aggregation(layers.Layer):

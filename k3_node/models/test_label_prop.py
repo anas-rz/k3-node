@@ -23,3 +23,15 @@ def test_label_prop():
     out = model(y, edge_index, mask, post_step=lambda y: ops.zeros_like(y))
     assert float(ops.sum(out)) == 0.0
 
+
+
+def test_label_prop_with_boolean_mask_matches_index_mask():
+    import numpy as np
+
+    y = np.array([0, 1, 2, 0, 1, 2])
+    edge_index = np.array([[0, 1, 2, 3, 4, 5], [3, 4, 5, 0, 1, 2]])
+    model = LabelPropagation(num_layers=3, alpha=0.9)
+    by_bool = model(y, edge_index, mask=np.array([True, True, True, False, False, False]))
+    by_index = model(y, edge_index, mask=np.array([0, 1, 2]))
+    np.testing.assert_allclose(ops.convert_to_numpy(by_bool), ops.convert_to_numpy(by_index), rtol=1e-6)
+    assert (ops.convert_to_numpy(by_bool).argmax(-1) == y).all()

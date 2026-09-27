@@ -63,7 +63,8 @@ class LabelPropagation(MessagePassing):
         out = y
         if mask is not None:
             mask_shape = ops.shape(mask)
-            if len(mask_shape) == 1 and mask.dtype == "bool":
+            # standardize_dtype: torch.bool does not compare equal to the string "bool"
+            if len(mask_shape) == 1 and keras.backend.standardize_dtype(mask.dtype) == "bool":
                 mask_expanded = ops.expand_dims(mask, axis=-1)
                 out = ops.where(mask_expanded, y, ops.zeros_like(y))
             else:

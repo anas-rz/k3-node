@@ -53,7 +53,7 @@ def _as_array(value) -> Optional[np.ndarray]:
         array = np.asarray(ops.convert_to_numpy(value))
     except Exception:
         return None
-    if array.dtype == object or array.ndim == 0:
+    if array.dtype.kind not in "biuf" or array.ndim == 0:  # skip strings (e.g. SMILES) and objects
         return None
     if array.dtype == np.float64:
         array = array.astype(np.float32)
