@@ -3,4 +3,8 @@ scipy
 pynndescent
 sympy
 pandas
-huggingface_hub
+huggingface_hub>=0.20.0
+onnx>=1.15.0
+onnxruntime>=1.17.0
+tf2onnx>=1.16.0
+onnxscript

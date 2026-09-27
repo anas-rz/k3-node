@@ -396,6 +396,87 @@ class K3NodeHubMixin:
 
         return f"https://huggingface.co/{repo_id}"
 
+    def export_onnx(
+        self,
+        output_path: Union[str, Path],
+        dummy_inputs: Optional[Any] = None,
+        opset: int = 17,
+        dynamic_axes: bool = True,
+        **kwargs,
+    ) -> Path:
+        r"""Exports this model or task to high-performance ONNX format.
+
+        Args:
+            output_path: Target path for the `.onnx` file.
+            dummy_inputs: Optional sample input data.
+            opset: ONNX operator set version. (default: 17)
+            dynamic_axes: Whether graph size dimensions are dynamic. (default: True)
+
+        Returns:
+            Path object pointing to the generated `.onnx` file.
+        """
+        from k3_node.export.onnx_exporter import export_onnx
+        return export_onnx(
+            self,
+            output_path=output_path,
+            dummy_inputs=dummy_inputs,
+            opset=opset,
+            dynamic_axes=dynamic_axes,
+            **kwargs,
+        )
+
+    def export_tflite(
+        self,
+        output_path: Union[str, Path],
+        dummy_inputs: Optional[Any] = None,
+        quantization: Optional[str] = None,
+        **kwargs,
+    ) -> Path:
+        r"""Exports this model or task to an optimized TensorFlow Lite flatbuffer.
+
+        Args:
+            output_path: Target path for the `.tflite` file.
+            dummy_inputs: Optional sample input data.
+            quantization: Quantization mode (None, "fp16", "int8_dynamic", "int8_full").
+
+        Returns:
+            Path object pointing to the generated `.tflite` file.
+        """
+        from k3_node.export.tflite_exporter import export_tflite
+        return export_tflite(
+            self,
+            output_path=output_path,
+            dummy_inputs=dummy_inputs,
+            quantization=quantization,
+            **kwargs,
+        )
+
+    def export_tensorrt(
+        self,
+        output_path: Union[str, Path],
+        dummy_inputs: Optional[Any] = None,
+        precision: str = "fp16",
+        **kwargs,
+    ) -> Path:
+        r"""Compiles this model or task into a high-throughput NVIDIA TensorRT engine.
+
+        Args:
+            output_path: Target path for the `.engine` binary.
+            dummy_inputs: Optional sample input data.
+            precision: Precision mode ("fp32", "fp16", "int8").
+
+        Returns:
+            Path object pointing to the generated TensorRT `.engine` file.
+        """
+        from k3_node.export.tensorrt_exporter import export_tensorrt
+        return export_tensorrt(
+            self,
+            output_path=output_path,
+            dummy_inputs=dummy_inputs,
+            precision=precision,
+            **kwargs,
+        )
+
 
 def _build_model_if_needed(instance: Any, config: Dict[str, Any]) -> None:
     r"""Builds/initializes weights for tasks and models so weights can be loaded."""

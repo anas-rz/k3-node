@@ -61,6 +61,16 @@ from k3_node.hub import (
     push_dataset_to_hub,
 )
 
+from k3_node import export
+from k3_node.export import (
+    export_onnx,
+    export_tflite,
+    export_tensorrt,
+    generate_triton_config,
+    ONNXModel,
+    TFLiteModel,
+)
+
 __all__ = [
     "data",
     "Data",
@@ -93,5 +103,12 @@ __all__ = [
     "save_pretrained",
     "load_dataset_from_hub",
     "push_dataset_to_hub",
+    "export",
+    "export_onnx",
+    "export_tflite",
+    "export_tensorrt",
+    "generate_triton_config",
+    "ONNXModel",
+    "TFLiteModel",
 ]
 

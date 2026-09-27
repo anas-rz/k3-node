@@ -19,4 +19,9 @@ tqdm
 fsspec
 requests
 pandas
+onnx>=1.15.0
+onnxruntime>=1.17.0
+tf2onnx>=1.16.0
+onnxscript
+
 
