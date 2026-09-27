@@ -17,9 +17,10 @@ from k3_node.layers.conv import (
 )
 from k3_node.models.mlp import MLP, _normalization_resolver
 from k3_node.models.jumping_knowledge import JumpingKnowledge
+from k3_node.hub.hub_mixin import K3NodeHubMixin
 
 
-class BasicGNN(keras.Model):
+class BasicGNN(K3NodeHubMixin, keras.Model):
     r"""An abstract base class for implementing basic GNN models.
 
     Args:
@@ -74,6 +75,7 @@ class BasicGNN(keras.Model):
         self.in_channels = in_channels
         self.hidden_channels = hidden_channels
         self.num_layers = num_layers
+        dropout = float(dropout) if dropout is not None else 0.0
         self.dropout_p = dropout
         self.dropout = keras.layers.Dropout(rate=dropout) if dropout > 0 else None
 

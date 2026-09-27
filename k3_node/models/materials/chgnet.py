@@ -17,6 +17,7 @@ from .basis import (
     polynomial_cutoff,
 )
 from .readout import ReduceReadOut
+from k3_node.hub.hub_mixin import K3NodeHubMixin
 
 
 class CHGNetAtomGraphBlock(layers.Layer):
@@ -130,7 +131,7 @@ class CHGNetBondGraphBlock(layers.Layer):
         return new_bond_features
 
 
-class CHGNet(keras.Model):
+class CHGNet(K3NodeHubMixin, keras.Model):
     """Crystal Hamiltonian Graph Neural Network (CHGNet) with charge and angular terms."""
 
     def __init__(
@@ -153,9 +154,21 @@ class CHGNet(keras.Model):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.dim_atom_embedding = dim_atom_embedding
+        self.dim_bond_embedding = dim_bond_embedding
+        self.dim_angle_embedding = dim_angle_embedding
         self.cutoff = cutoff
         self.threebody_cutoff = threebody_cutoff
         self.cutoff_exponent = cutoff_exponent
+        self.max_n = max_n
+        self.max_f = max_f
+        self.num_blocks = num_blocks
+        self.atom_conv_hidden_dims = list(atom_conv_hidden_dims)
+        self.bond_conv_hidden_dims = list(bond_conv_hidden_dims)
+        self.activation_type = activation_type
+        self.normalization = normalization
+        self.num_targets = num_targets
+        self.ntypes_node = ntypes_node
 
         self.atom_embedding = layers.Embedding(ntypes_node, dim_atom_embedding)
         self.rbf = RadialBesselFunction(max_n=max_n, cutoff=cutoff, learnable=True)

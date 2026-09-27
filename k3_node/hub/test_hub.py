@@ -258,3 +258,125 @@ def test_load_dataset_from_hub_mocked():
             loaded = load_dataset_from_hub("test-user/test-graph-dataset")
             assert isinstance(loaded, Data)
             np.testing.assert_allclose(ops.convert_to_numpy(data.x), ops.convert_to_numpy(loaded.x))
+
+
+def test_schnet_hub_save_load_predict():
+    """Test k3.models.SchNet.from_pretrained and model.predict(molecule_data)."""
+    from k3_node.models import SchNet
+
+    model = SchNet(
+        hidden_channels=16,
+        num_filters=16,
+        num_interactions=2,
+        num_gaussians=10,
+        cutoff=5.0,
+    )
+    z = ops.convert_to_tensor([1, 6, 8, 1])
+    pos = ops.convert_to_tensor([
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [1.0, 1.0, 0.0],
+    ], dtype="float32")
+    molecule_data = Data(z=z, pos=pos)
+
+    energy = model.predict(molecule_data)
+    assert energy.shape == (1, 1)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        model.save_pretrained(tmpdir, repo_id="k3-node/schnet-qm9")
+
+        # Load pre-trained weights with one line
+        reloaded = SchNet.from_pretrained(tmpdir)
+        assert isinstance(reloaded, SchNet)
+        energy_reloaded = reloaded.predict(molecule_data)
+        np.testing.assert_allclose(
+            ops.convert_to_numpy(energy),
+            ops.convert_to_numpy(energy_reloaded),
+            atol=1e-5,
+        )
+
+        # Test generic hub.from_pretrained
+        generic_loaded = from_pretrained(tmpdir)
+        assert isinstance(generic_loaded, SchNet)
+        np.testing.assert_allclose(
+            ops.convert_to_numpy(energy),
+            ops.convert_to_numpy(generic_loaded.predict(molecule_data)),
+            atol=1e-5,
+        )
+
+    # Push community checkpoints directly to the hub (mocked)
+    with patch("huggingface_hub.HfApi") as MockApi:
+        mock_api_instance = MagicMock()
+        MockApi.return_value = mock_api_instance
+        url = model.push_to_hub("k3-node/schnet-qm9", token="dummy_token")
+        assert url == "https://huggingface.co/k3-node/schnet-qm9"
+
+
+def test_gcn_hub_save_load_predict():
+    """Test k3.models.GCN save_pretrained, from_pretrained, and predict."""
+    from k3_node.models import GCN
+
+    gcn = GCN(in_channels=8, hidden_channels=16, num_layers=2, out_channels=3)
+    x = ops.zeros((4, 8), dtype="float32")
+    edge_index = ops.convert_to_tensor([[0, 1, 2, 3], [1, 2, 3, 0]], dtype="int64")
+    graph = Data(x=x, edge_index=edge_index)
+
+    p1 = gcn.predict(graph)
+    assert p1.shape == (4, 3)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        gcn.save_pretrained(tmpdir)
+        reloaded = GCN.from_pretrained(tmpdir)
+        assert isinstance(reloaded, GCN)
+        p2 = reloaded.predict(graph)
+        np.testing.assert_allclose(
+            ops.convert_to_numpy(p1),
+            ops.convert_to_numpy(p2),
+            atol=1e-5,
+        )
+
+
+def test_chgnet_hub_save_load_predict():
+    """Test k3.models.CHGNet.from_pretrained, predict, and push_to_hub."""
+    from k3_node.models.materials import CHGNet
+
+    model = CHGNet(
+        dim_atom_embedding=16,
+        dim_bond_embedding=16,
+        dim_angle_embedding=16,
+        num_blocks=2,
+        atom_conv_hidden_dims=(16,),
+        bond_conv_hidden_dims=(16,),
+    )
+
+    crystal = {
+        "pos": np.array([[0.0, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.2, 0.8], [1.5, 1.5, 1.0]], dtype=np.float32),
+        "edge_index": np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]], dtype=np.int32),
+        "line_edge_index": np.array([[0, 1, 2, 3], [1, 2, 3, 0]], dtype=np.int32),
+        "node_type": np.array([6, 8, 1, 6], dtype=np.int32),
+        "batch": np.array([0, 0, 0, 0], dtype=np.int32),
+        "state_attr": np.array([[0.0, 0.0]], dtype=np.float32),
+    }
+
+    pred = model.predict(crystal)
+    assert pred.shape == () or pred.shape == (1,)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        model.save_pretrained(tmpdir, repo_id="anas-rz/chgnet-mp-2026")
+        reloaded = CHGNet.from_pretrained(tmpdir)
+        assert isinstance(reloaded, CHGNet)
+        pred_reloaded = reloaded.predict(crystal)
+        np.testing.assert_allclose(
+            ops.convert_to_numpy(pred),
+            ops.convert_to_numpy(pred_reloaded),
+            atol=1e-5,
+        )
+
+    # Push community checkpoints directly to the hub (mocked)
+    with patch("huggingface_hub.HfApi") as MockApi:
+        mock_api_instance = MagicMock()
+        MockApi.return_value = mock_api_instance
+        url = model.push_to_hub("anas-rz/chgnet-mp-2026", token="dummy_token")
+        assert url == "https://huggingface.co/anas-rz/chgnet-mp-2026"
+

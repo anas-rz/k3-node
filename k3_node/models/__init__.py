@@ -378,3 +378,20 @@ __all__ = [
     "load_unimol_docking_weights",
 ]
 
+# Inject Hugging Face Hub capabilities (from_pretrained, save_pretrained, push_to_hub, predict)
+# to all models in k3_node.models
+import keras
+from k3_node.hub.hub_mixin import K3NodeHubMixin
+
+for _name in list(__all__):
+    _obj = globals().get(_name)
+    if isinstance(_obj, type) and issubclass(_obj, (keras.Model, keras.layers.Layer)):
+        if not issubclass(_obj, K3NodeHubMixin):
+            _obj.from_pretrained = classmethod(K3NodeHubMixin.from_pretrained.__func__)
+            _obj.save_pretrained = K3NodeHubMixin.save_pretrained
+            _obj.push_to_hub = K3NodeHubMixin.push_to_hub
+            _obj.predict = K3NodeHubMixin.predict
+            if not hasattr(_obj, "_get_config"):
+                _obj._get_config = K3NodeHubMixin._get_config
+
+

@@ -20,13 +20,23 @@ class K3NodeHubMixin:
         save_pretrained: Saves model weights, config, and Model Card to a local directory.
         from_pretrained: Loads a model from a local folder or Hugging Face Hub repository.
         push_to_hub: Automatically saves and pushes the model to a Hugging Face Hub repo.
+        predict: Runs inference on graph data (PyG Data, molecular structures, dicts, or tensors).
     """
 
     def _get_config(self) -> Dict[str, Any]:
         r"""Extracts serializable architecture and task hyperparameters."""
         config: Dict[str, Any] = {
-            "task_type": self.__class__.__name__,
+            "model_class": self.__class__.__name__,
         }
+        # Include task_type for tasks
+        if (
+            hasattr(self, "backbone")
+            or self.__class__.__name__.endswith("Classifier")
+            or self.__class__.__name__.endswith("Regressor")
+            or self.__class__.__name__.endswith("Predictor")
+        ):
+            config["task_type"] = self.__class__.__name__
+
         for attr in [
             "backbone",
             "in_channels",
@@ -34,18 +44,59 @@ class K3NodeHubMixin:
             "out_channels",
             "num_classes",
             "num_layers",
+            "num_filters",
+            "num_interactions",
+            "num_gaussians",
+            "cutoff",
+            "max_num_neighbors",
+            "readout",
+            "dipole",
+            "mean",
+            "std",
+            "units",
+            "nblocks",
+            "dim_atom_embedding",
+            "dim_bond_embedding",
+            "dim_angle_embedding",
+            "num_blocks",
             "pooling",
             "decoder",
             "loss_name",
-            "dropout",
+            "act",
             "multi_label",
         ]:
             if hasattr(self, attr):
                 val = getattr(self, attr)
                 if val is not None:
-                    if hasattr(val, "__class__") and not isinstance(val, (int, float, str, bool, list, dict)):
-                        val = val.__class__.__name__
-                    config[attr] = val
+                    if isinstance(val, (int, float, str, bool, list, dict)):
+                        config[attr] = val
+                    elif isinstance(val, tuple):
+                        config[attr] = list(val)
+                    elif hasattr(val, "__name__"):
+                        config[attr] = val.__name__
+
+        # Handle dropout specifically
+        if hasattr(self, "dropout_p") and isinstance(self.dropout_p, (int, float)):
+            config["dropout"] = float(self.dropout_p)
+        elif hasattr(self, "dropout") and isinstance(self.dropout, (int, float)):
+            config["dropout"] = float(self.dropout)
+
+        # Signature inspection for any remaining constructor arguments
+        try:
+            sig = inspect.signature(self.__class__.__init__)
+            for param_name, param in sig.parameters.items():
+                if param_name in ("self", "args", "kwargs", "name"):
+                    continue
+                if param_name not in config and hasattr(self, param_name):
+                    val = getattr(self, param_name)
+                    if isinstance(val, (int, float, str, bool, list, dict)):
+                        config[param_name] = val
+                    elif isinstance(val, tuple):
+                        config[param_name] = list(val)
+                    elif hasattr(val, "__name__"):
+                        config[param_name] = val.__name__
+        except Exception:
+            pass
 
         if hasattr(self, "backbone_kwargs") and isinstance(self.backbone_kwargs, dict):
             config["backbone_kwargs"] = self.backbone_kwargs
@@ -85,15 +136,17 @@ class K3NodeHubMixin:
             json.dump(final_config, f, indent=2)
 
         # 2. Weights
-        if getattr(self, "model", None) is not None:
-            weights_path = save_dir / "model.weights.h5"
+        weights_path = save_dir / "model.weights.h5"
+        if getattr(self, "model", None) is not None and hasattr(self.model, "save_weights"):
             self.model.save_weights(str(weights_path))
+        elif hasattr(self, "save_weights"):
+            self.save_weights(str(weights_path))
         else:
-            raise RuntimeError("Cannot save an uninitialized model. Initialize or train the model first.")
+            raise RuntimeError(f"Cannot save weights for model of type '{self.__class__.__name__}'.")
 
         # 3. Model Card (README.md)
         task_type = final_config.get("task_type", self.__class__.__name__)
-        backbone_str = str(final_config.get("backbone", "gnn"))
+        backbone_str = str(final_config.get("backbone", final_config.get("model_class", "gnn")))
         card_content = generate_model_card(
             task_type=task_type,
             backbone=backbone_str,
@@ -109,6 +162,71 @@ class K3NodeHubMixin:
 
         return save_dir
 
+    def predict(self, data: Any = None, *args: Any, **kwargs: Any) -> Any:
+        r"""Infers predictions on graph or molecular data.
+
+        Supports PyG / K3-Node ``Data`` objects (extracting ``(z, pos, batch)``
+        for molecular models or ``(x, edge_index, ...)`` for standard GNNs),
+        dictionaries, tuples of tensors, or direct positional tensors.
+
+        Args:
+            data: Input graph or molecule Data, dict, or tensor.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Model prediction tensor or array.
+        """
+        # If this is a BaseTask wrapping a model with its own task predict logic:
+        if hasattr(self, "_task_predict"):
+            return self._task_predict(data, *args, **kwargs)
+
+        # 1. Molecular data (z, pos, batch)
+        if hasattr(data, "z") and hasattr(data, "pos"):
+            batch = getattr(data, "batch", None)
+            return self(data.z, data.pos, batch=batch, training=False, **kwargs)
+
+        # 2. Graph data with node features & edges (x, edge_index, ...)
+        if hasattr(data, "x") and hasattr(data, "edge_index"):
+            edge_weight = getattr(data, "edge_weight", None)
+            edge_attr = getattr(data, "edge_attr", None)
+            batch = getattr(data, "batch", None)
+            call_kwargs = {}
+            try:
+                sig = inspect.signature(self.call if hasattr(self, "call") else self.__call__)
+                params = sig.parameters
+                if "edge_weight" in params and edge_weight is not None:
+                    call_kwargs["edge_weight"] = edge_weight
+                elif "edge_attr" in params and edge_attr is not None:
+                    call_kwargs["edge_attr"] = edge_attr
+                if "batch" in params and batch is not None:
+                    call_kwargs["batch"] = batch
+            except Exception:
+                pass
+            call_kwargs.update(kwargs)
+            return self(data.x, data.edge_index, training=False, **call_kwargs)
+
+        # 3. Dictionary input (e.g., Materials models CHGNet, MEGNet, M3GNet)
+        if isinstance(data, dict):
+            if "z" in data and "pos" in data:
+                return self(data["z"], data["pos"], batch=data.get("batch"), training=False, **kwargs)
+            elif "x" in data and "edge_index" in data:
+                return self(data["x"], data["edge_index"], training=False, **kwargs)
+            else:
+                return self(data, training=False, **kwargs)
+
+        # 4. Tuple or list of inputs
+        if isinstance(data, (tuple, list)):
+            return self(*data, training=False, **kwargs)
+
+        # 5. Direct arguments
+        if data is not None and len(args) > 0:
+            return self(data, *args, training=False, **kwargs)
+        elif data is not None:
+            return self(data, training=False, **kwargs)
+        else:
+            return self(*args, training=False, **kwargs)
+
     @classmethod
     def from_pretrained(
         cls: Type[T],
@@ -121,14 +239,14 @@ class K3NodeHubMixin:
         r"""Loads a pretrained K3-Node task or model from a local folder or Hugging Face Hub.
 
         Args:
-            repo_id_or_path: Local directory path or Hugging Face repo ID (e.g. ``"org/cora-gcn"``).
+            repo_id_or_path: Local directory path or Hugging Face repo ID (e.g. ``"k3-node/schnet-qm9"``).
             revision: Specific git revision/branch on Hugging Face Hub.
             token: Hugging Face authentication token.
             cache_dir: Cache directory for downloaded Hub files.
             **model_kwargs: Overrides for configuration parameters.
 
         Returns:
-            Restored and initialized task instance with loaded weights.
+            Restored and initialized model or task instance with loaded weights.
         """
         repo_path = Path(repo_id_or_path)
 
@@ -172,12 +290,17 @@ class K3NodeHubMixin:
         # Merge any user overrides
         config.update(model_kwargs)
 
-        # Resolve target task class
+        # Resolve target class
         target_cls = cls
         if target_cls.__name__ in ("BaseTask", "K3NodeHubMixin"):
-            task_type = config.get("task_type", "NodeClassifier")
-            from k3_node import tasks
-            target_cls = getattr(tasks, task_type, cls)
+            if "task_type" in config:
+                from k3_node import tasks
+                target_cls = getattr(tasks, config["task_type"], None)
+            if target_cls is None or target_cls.__name__ in ("BaseTask", "K3NodeHubMixin"):
+                model_class = config.get("model_class")
+                if model_class:
+                    from k3_node import models
+                    target_cls = getattr(models, model_class, cls)
 
         # Extract arguments compatible with target_cls.__init__
         sig = inspect.signature(target_cls.__init__)
@@ -185,48 +308,31 @@ class K3NodeHubMixin:
 
         init_kwargs = {}
         for k, v in config.items():
-            if k in accepted_params:
+            if k in accepted_params and v is not None:
                 init_kwargs[k] = v
 
         if "backbone_kwargs" in config and "backbone_kwargs" not in accepted_params:
             init_kwargs.update(config["backbone_kwargs"])
 
-        # Instantiate task
+        # Instantiate model or task
         instance = target_cls(**init_kwargs)
 
-        # Initialize model topology
+        # Initialize model topology if task
         if hasattr(instance, "_init_model"):
             instance._init_model(None)
 
-        # Build variables with dummy forward pass so weights can be loaded
-        in_c = getattr(instance, "in_channels", None) or 16
-        cls_name = instance.__class__.__name__
-
-        if cls_name == "NodeClassifier":
-            dummy_x = np.zeros((2, in_c), dtype="float32")
-            dummy_edge = np.zeros((2, 1), dtype="int64")
-            instance.model((dummy_x, dummy_edge))
-        elif cls_name in ("GraphClassifier", "GraphRegressor"):
-            dummy_x = np.zeros((2, in_c), dtype="float32")
-            dummy_edge = np.zeros((2, 1), dtype="int64")
-            dummy_batch = np.zeros((2,), dtype="int64")
-            if hasattr(instance.model, "num_graphs"):
-                instance.model.num_graphs = 1
-            instance.model((dummy_x, dummy_edge, dummy_batch))
-        elif cls_name == "LinkPredictor":
-            dummy_x = np.zeros((2, in_c), dtype="float32")
-            dummy_edge = np.zeros((2, 1), dtype="int64")
-            dummy_label_idx = np.zeros((2, 1), dtype="int64")
-            instance.model(((dummy_x, dummy_edge), dummy_label_idx))
-        elif hasattr(instance, "model") and instance.model is not None and not instance.model.built:
-            try:
-                instance.model.build(None)
-            except Exception:
-                pass
+        # Build variables so weights can be loaded
+        _build_model_if_needed(instance, config)
 
         # Load weights
-        instance.model.load_weights(str(weights_path))
-        instance._is_compiled = True
+        if hasattr(instance, "model") and instance.model is not None and hasattr(instance.model, "load_weights"):
+            instance.model.load_weights(str(weights_path))
+            instance._is_compiled = True
+        elif hasattr(instance, "load_weights"):
+            instance.load_weights(str(weights_path))
+        else:
+            raise RuntimeError(f"Instance '{instance}' does not support load_weights.")
+
         return instance
 
     def push_to_hub(
@@ -289,6 +395,88 @@ class K3NodeHubMixin:
             )
 
         return f"https://huggingface.co/{repo_id}"
+
+
+def _build_model_if_needed(instance: Any, config: Dict[str, Any]) -> None:
+    r"""Builds/initializes weights for tasks and models so weights can be loaded."""
+    cls_name = instance.__class__.__name__
+
+    # Task estimators
+    if cls_name == "NodeClassifier":
+        in_c = getattr(instance, "in_channels", None) or 16
+        dummy_x = np.zeros((2, in_c), dtype="float32")
+        dummy_edge = np.zeros((2, 1), dtype="int64")
+        instance.model((dummy_x, dummy_edge))
+        return
+    elif cls_name in ("GraphClassifier", "GraphRegressor"):
+        in_c = getattr(instance, "in_channels", None) or 16
+        dummy_x = np.zeros((2, in_c), dtype="float32")
+        dummy_edge = np.zeros((2, 1), dtype="int64")
+        dummy_batch = np.zeros((2,), dtype="int64")
+        if hasattr(instance.model, "num_graphs"):
+            instance.model.num_graphs = 1
+        instance.model((dummy_x, dummy_edge, dummy_batch))
+        return
+    elif cls_name == "LinkPredictor":
+        in_c = getattr(instance, "in_channels", None) or 16
+        dummy_x = np.zeros((2, in_c), dtype="float32")
+        dummy_edge = np.zeros((2, 1), dtype="int64")
+        dummy_label_idx = np.zeros((2, 1), dtype="int64")
+        instance.model(((dummy_x, dummy_edge), dummy_label_idx))
+        return
+    elif hasattr(instance, "model") and instance.model is not None:
+        if not getattr(instance.model, "built", False):
+            try:
+                instance.model.build(None)
+            except Exception:
+                pass
+        return
+
+    # Direct models
+    # Molecular 3D models (SchNet, DimeNet, DimeNetPlusPlus, ViSNet)
+    if cls_name in ("SchNet", "DimeNet", "DimeNetPlusPlus", "ViSNet", "GNNFF"):
+        try:
+            import keras.ops as ops
+            z = ops.convert_to_tensor([1, 6], dtype="int32")
+            pos = ops.convert_to_tensor([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]], dtype="float32")
+            instance(z, pos)
+            return
+        except Exception:
+            pass
+
+    # Materials models (CHGNet, MEGNet, M3GNet, TensorNet, SO3Net)
+    if cls_name in ("CHGNet", "MEGNet", "M3GNet", "TensorNet", "SO3Net"):
+        try:
+            crystal = {
+                "pos": np.array([[0.0, 0.0, 0.0], [1.0, 0.5, 0.0], [0.5, 1.2, 0.8], [1.5, 1.5, 1.0]], dtype=np.float32),
+                "edge_index": np.array([[0, 1, 1, 2, 2, 3, 3, 0], [1, 0, 2, 1, 3, 2, 0, 3]], dtype=np.int32),
+                "line_edge_index": np.array([[0, 1, 2, 3], [1, 2, 3, 0]], dtype=np.int32),
+                "node_type": np.array([6, 8, 1, 6], dtype=np.int32),
+                "batch": np.array([0, 0, 0, 0], dtype=np.int32),
+                "state_attr": np.array([[0.0, 0.0]], dtype=np.float32),
+            }
+            instance(crystal)
+            return
+        except Exception:
+            pass
+
+    # Standard GNNs (GCN, GraphSAGE, GIN, GAT, PNA, EdgeCNN, BasicGNN)
+    in_c = getattr(instance, "in_channels", None) or config.get("in_channels") or 16
+    try:
+        import keras.ops as ops
+        dummy_x = ops.zeros((2, in_c), dtype="float32")
+        dummy_edge = ops.zeros((2, 1), dtype="int64")
+        instance(dummy_x, dummy_edge)
+        return
+    except Exception:
+        pass
+
+    # Generic fallback
+    if hasattr(instance, "build"):
+        try:
+            instance.build(None)
+        except Exception:
+            pass
 
 
 # Standalone functional API wrappers

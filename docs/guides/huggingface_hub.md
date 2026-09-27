@@ -126,7 +126,33 @@ All 4 high-level task estimators support `save_pretrained`, `from_pretrained`, a
 
 ---
 
-## 5. Graph Dataset Hub Integration
+## 5. Direct Model Architecture Hub Integration (`k3.models.*`)
+
+Beyond the task estimators, **all models in `k3_node.models`** natively support saving, loading, inference, and pushing to the Hugging Face Hub:
+
+```python
+import k3_node as k3
+
+# 1. Load pre-trained weights with one line
+model = k3.models.SchNet.from_pretrained("k3-node/schnet-qm9")
+
+# 2. Predict directly on molecular or graph Data
+energy = model.predict(molecule_data)
+
+# 3. Push community checkpoints directly to the hub
+model.push_to_hub("anas-rz/chgnet-mp-2026")
+```
+
+### Supported Model Families
+Every model in `k3_node.models` has this capability built in, including:
+- **3D Molecular & Quantum GNNs**: [`SchNet`](file:///home/anas/k3-node/k3_node/models/schnet.py), [`DimeNet`](file:///home/anas/k3-node/k3_node/models/dimenet.py), [`DimeNetPlusPlus`](file:///home/anas/k3-node/k3_node/models/dimenet.py), [`ViSNet`](file:///home/anas/k3-node/k3_node/models/visnet.py), [`GNNFF`](file:///home/anas/k3-node/k3_node/models/gnnff.py)
+- **Materials & Crystal Models**: [`CHGNet`](file:///home/anas/k3-node/k3_node/models/materials/chgnet.py), [`MEGNet`](file:///home/anas/k3-node/k3_node/models/materials/megnet.py), [`M3GNet`](file:///home/anas/k3-node/k3_node/models/materials/m3gnet.py), [`TensorNet`](file:///home/anas/k3-node/k3_node/models/materials/tensornet.py), [`SO3Net`](file:///home/anas/k3-node/k3_node/models/materials/so3net.py)
+- **Classical & Modern GNNs**: [`GCN`](file:///home/anas/k3-node/k3_node/models/basic_gnn.py), [`GraphSAGE`](file:///home/anas/k3-node/k3_node/models/basic_gnn.py), [`GIN`](file:///home/anas/k3-node/k3_node/models/basic_gnn.py), [`GAT`](file:///home/anas/k3-node/k3_node/models/basic_gnn.py), [`PNA`](file:///home/anas/k3-node/k3_node/models/basic_gnn.py), [`EdgeCNN`](file:///home/anas/k3-node/k3_node/models/basic_gnn.py)
+- **Transformers & Foundation Models**: [`Graphormer`](file:///home/anas/k3-node/k3_node/models/graphormer.py), [`GPSModel`](file:///home/anas/k3-node/k3_node/models/gps_model.py), [`UniMolModel`](file:///home/anas/k3-node/k3_node/models/unimol.py), [`MoleBERT`](file:///home/anas/k3-node/k3_node/models/mole_bert.py)
+
+---
+
+## 6. Graph Dataset Hub Integration
 
 Sharing graph datasets (single graphs or collections of graphs) is just as simple:
 
@@ -160,7 +186,7 @@ print(f"Loaded {len(graphs)} graphs! Sample: {graphs[0]}")
 
 ---
 
-## 6. Summary Table
+## 7. Summary Table
 
 | Operation | Model Hub Function / Method | Dataset Hub Function |
 | :--- | :--- | :--- |

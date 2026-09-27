@@ -16,8 +16,8 @@ def generate_model_card(
     and markdown documentation for a K3-Node GNN model.
 
     Args:
-        task_type: Name of the task (e.g. 'NodeClassifier', 'GraphClassifier').
-        backbone: Name of the backbone architecture (e.g. 'gcn', 'gin', 'sage').
+        task_type: Name of the task or model (e.g. 'NodeClassifier', 'SchNet').
+        backbone: Name of the backbone architecture (e.g. 'gcn', 'schnet', 'chgnet').
         config: Dictionary containing model architecture and training hyperparameters.
         metrics: Optional dictionary of evaluation metrics (e.g. {'accuracy': 0.82}).
         dataset_name: Optional name of the dataset the model was trained on.
@@ -27,6 +27,7 @@ def generate_model_card(
     Returns:
         Formatted markdown string representing the README.md model card.
     """
+    model_class = config.get("model_class", task_type)
     task_slug = task_type.lower().replace("classifier", "-classification").replace("regressor", "-regression")
     title = repo_id if repo_id else f"{backbone.upper()} {task_type}"
     dataset_str = f" on `{dataset_name}`" if dataset_name else ""
@@ -57,8 +58,8 @@ It runs natively and seamlessly across **PyTorch**, **JAX**, and **TensorFlow** 
 
 ## Model Details
 
-- **Task**: `{task_type}`
-- **Backbone Architecture**: `{backbone}`
+- **Model / Task**: `{task_type}`
+- **Architecture**: `{backbone}`
 - **Library**: `k3-node` (Keras 3)
 - **Input Channels**: `{config.get('in_channels', 'Auto')}`
 - **Hidden Channels**: `{config.get('hidden_channels', 64)}`
@@ -78,6 +79,25 @@ It runs natively and seamlessly across **PyTorch**, **JAX**, and **TensorFlow** 
 
     # Usage code snippet
     target_repo = repo_id or "username/model-repo"
+    is_task = task_type in ("NodeClassifier", "GraphClassifier", "GraphRegressor", "LinkPredictor")
+
+    if is_task:
+        usage_code = f"""from k3_node.tasks import {task_type}
+
+# Load the pretrained model directly from Hugging Face Hub
+model = {task_type}.from_pretrained("{target_repo}")
+
+# Run predictions on your graph data
+predictions = model.predict(data)"""
+    else:
+        usage_code = f"""import k3_node as k3
+
+# Load pre-trained weights with one line
+model = k3.models.{model_class}.from_pretrained("{target_repo}")
+
+# Run predictions directly on graph or molecular data
+predictions = model.predict(data)"""
+
     content += f"""
 ## Usage
 
@@ -93,13 +113,7 @@ pip install k3-node huggingface_hub
 import os
 os.environ["KERAS_BACKEND"] = "torch"  # or "jax", "tensorflow"
 
-from k3_node.tasks import {task_type}
-
-# Load the pretrained model directly from Hugging Face Hub
-model = {task_type}.from_pretrained("{target_repo}")
-
-# Run predictions on your graph data
-predictions = model.predict(data)
+{usage_code}
 ```
 
 ## Framework & Citation

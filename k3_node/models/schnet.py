@@ -5,6 +5,7 @@ from typing import Optional, Callable
 
 from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.pool import radius_graph, global_add_pool, global_mean_pool
+from k3_node.hub.hub_mixin import K3NodeHubMixin
 
 
 DEFAULT_ATOMIC_MASSES = [
@@ -155,7 +156,7 @@ class InteractionBlock(keras.layers.Layer):
         return x
 
 
-class SchNet(keras.layers.Layer):
+class SchNet(K3NodeHubMixin, keras.Model):
     r"""The continuous-filter convolutional neural network SchNet from the
     `"SchNet: A Continuous-filter Convolutional Neural Network for Modeling
     Quantum Interactions" <https://arxiv.org/abs/1706.08566>`_ paper.
