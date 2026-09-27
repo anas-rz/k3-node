@@ -4,11 +4,12 @@ import keras
 from keras import ops
 
 from k3_node.models.basic_gnn import GCN
+from k3_node.ops.host import to_numpy
 
 
 def compute_ppr_matrix(edge_index, num_nodes: int, alpha: float = 0.15, max_iter: int = 20):
     r"""Computes the Personalized PageRank (PPR) matrix using power iteration."""
-    edge_index_np = ops.convert_to_numpy(edge_index)
+    edge_index_np = to_numpy(edge_index)
     A = np.zeros((num_nodes, num_nodes), dtype=np.float32)
     A[edge_index_np[0], edge_index_np[1]] = 1.0
     deg = A.sum(axis=1, keepdims=True)
@@ -259,8 +260,8 @@ class LPFormer(keras.Model):
                 x, edge_index, batch = batch, x, edge_index
 
         num_nodes = ops.shape(x)[0]
-        if ppr_matrix is None:
-            ppr_matrix = compute_ppr_matrix(edge_index, num_nodes)
+        # Note: unlike PyG's LPFormer, this simplified version does not use PPR scores yet, so
+        # `ppr_matrix` is accepted for API compatibility but not computed or used.
 
         X_node = self.propagate(x, edge_index, training=training)
 
@@ -277,9 +278,9 @@ class LPFormer(keras.Model):
             pairwise_feats = att_layer(pairwise_feats, X_node, training=training)
 
         # Compute graph structural context counts (CNs, 1-hop, etc.)
-        edge_index_np = ops.convert_to_numpy(edge_index)
-        u_np = ops.convert_to_numpy(u)
-        v_np = ops.convert_to_numpy(v)
+        edge_index_np = to_numpy(edge_index)
+        u_np = to_numpy(u)
+        v_np = to_numpy(v)
 
         adj_matrix = np.zeros((num_nodes, num_nodes), dtype=np.float32)
         adj_matrix[edge_index_np[0], edge_index_np[1]] = 1.0

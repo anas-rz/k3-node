@@ -4,6 +4,7 @@ from keras.layers import Dense
 
 from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.aggr import DegreeScalerAggregation
+from k3_node.ops.creation import repeat
 
 
 class PNAConv(MessagePassing):
@@ -120,7 +121,7 @@ class PNAConv(MessagePassing):
         if self.divide_input:
             x_towers = ops.reshape(x, (-1, self.towers, self.F_in))
         else:
-            x_towers = ops.repeat(ops.expand_dims(x, 1), self.towers, axis=1)
+            x_towers = repeat(ops.expand_dims(x, 1), self.towers, axis=1)
 
         out = self.propagate(
             edge_index,
@@ -144,7 +145,7 @@ class PNAConv(MessagePassing):
     def message(self, x_i, x_j, edge_attr=None):
         if edge_attr is not None and self.edge_encoder is not None:
             edge_attr = self.edge_encoder(edge_attr)
-            edge_attr = ops.repeat(ops.expand_dims(edge_attr, 1), self.towers, axis=1)
+            edge_attr = repeat(ops.expand_dims(edge_attr, 1), self.towers, axis=1)
             h = ops.concatenate([x_i, x_j, edge_attr], axis=-1)
         else:
             h = ops.concatenate([x_i, x_j], axis=-1)

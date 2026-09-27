@@ -2,6 +2,7 @@
 from keras import ops
 from keras import activations, initializers, constraints, regularizers
 from keras.layers import Layer, dot
+from k3_node.ops.creation import repeat
 
 
 class GraphConvolution(Layer):
@@ -129,7 +130,7 @@ class GraphConvolution(Layer):
 
         h_graph = dot((A, features), axes=1)
         b = ops.shape(h_graph)[0]
-        kernel = ops.repeat(self.kernel, b, axis=0)
+        kernel = repeat(self.kernel, b, axis=0)
         output = dot((h_graph, kernel), axes=(-1, 1))
 
         # Add optional bias & apply activation

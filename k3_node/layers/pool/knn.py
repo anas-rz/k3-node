@@ -1,6 +1,7 @@
 from typing import NamedTuple, Optional
 from keras import ops
 import numpy as np
+from k3_node.ops.creation import repeat
 
 
 class KNNOutput(NamedTuple):
@@ -127,7 +128,7 @@ def knn(
         dist = ops.where(mask, 1e9, dist)
 
     _, col_indices = ops.top_k(-dist, k=k, sorted=True)
-    row = ops.repeat(ops.arange(0, M, dtype="int64"), k)
+    row = repeat(ops.arange(0, M, dtype="int64"), k)
     col = ops.reshape(ops.cast(col_indices, "int64"), (-1,))
     return ops.stack([row, col], axis=0)
 
@@ -180,7 +181,7 @@ def knn_graph(
         dist = ops.where(batch_mask, 1e9, dist)
 
     _, col_indices = ops.top_k(-dist, k=k, sorted=True)
-    row = ops.repeat(ops.arange(0, N, dtype="int64"), k)
+    row = repeat(ops.arange(0, N, dtype="int64"), k)
     col = ops.reshape(ops.cast(col_indices, "int64"), (-1,))
 
     if flow == "source_to_target":

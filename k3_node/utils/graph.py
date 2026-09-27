@@ -197,3 +197,90 @@ def normalized_cut(edge_index, edge_attr, num_nodes: Optional[int] = None):
         num_nodes = int(ops.max(edge_index)) + 1
     deg_inv = 1.0 / segment_sum(ops.ones_like(edge_attr), row, num_segments=num_nodes)
     return edge_attr * (ops.take(deg_inv, row, axis=0) + ops.take(deg_inv, col, axis=0))
+
+
+def k_hop_subgraph(node_idx, num_hops: int, edge_index, relabel_nodes: bool = False,
+                   num_nodes: Optional[int] = None, flow: str = "source_to_target"):
+    r"""Finds the nodes within ``num_hops`` hops of ``node_idx`` and the edges among them.
+
+    Returns ``(subset, edge_index, mapping, edge_mask)`` as in PyG: the nodes involved, the edges of
+    the subgraph (relabeled to ``0..len(subset)-1`` if ``relabel_nodes``), the positions of
+    ``node_idx`` in ``subset``, and which of the original edges were kept.
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.utils import k_hop_subgraph
+
+        edge_index = np.array([[0, 1, 2, 3], [1, 2, 3, 4]])  # a path 0 -> 1 -> 2 -> 3 -> 4
+        subset, sub_edge_index, mapping, edge_mask = k_hop_subgraph(3, 2, edge_index, relabel_nodes=True)
+        print(subset, sub_edge_index.tolist())  # [1 2 3] [[0, 1], [1, 2]]
+        ```
+    """
+    edge_index = np.asarray(ops.convert_to_numpy(edge_index)).astype(np.int64)
+    if num_nodes is None:
+        num_nodes = int(edge_index.max()) + 1 if edge_index.size else 0
+    row, col = (edge_index[0], edge_index[1]) if flow == "source_to_target" else (edge_index[1], edge_index[0])
+    node_idx = np.atleast_1d(np.asarray(ops.convert_to_numpy(node_idx)).astype(np.int64))
+
+    subsets = [node_idx]
+    for _ in range(num_hops):
+        node_mask = np.zeros(num_nodes, dtype=bool)
+        node_mask[subsets[-1]] = True
+        subsets.append(row[node_mask[col]])
+    subset, inverse = np.unique(np.concatenate(subsets), return_inverse=True)
+    mapping = inverse[: node_idx.shape[0]]
+
+    node_mask = np.zeros(num_nodes, dtype=bool)
+    node_mask[subset] = True
+    edge_mask = node_mask[row] & node_mask[col]
+    sub_edge_index = edge_index[:, edge_mask]
+    if relabel_nodes:
+        new_id = np.full(num_nodes, -1, dtype=np.int64)
+        new_id[subset] = np.arange(subset.shape[0])
+        sub_edge_index = new_id[sub_edge_index]
+    return subset, sub_edge_index, mapping, edge_mask
+
+
+def drnl_node_labeling(edge_index, src: int, dst: int, num_nodes: int):
+    r"""Double-radius node labeling from the SEAL paper: labels every node of an enclosing
+    subgraph by its distances to the two target nodes ``src`` and ``dst`` (which get label 1;
+    unreachable nodes get 0).
+
+    Example:
+        ```python
+        import numpy as np
+        from k3_node.utils import drnl_node_labeling
+
+        edge_index = np.array([[0, 1, 2, 2, 3, 1], [2, 2, 0, 1, 1, 3]])  # 0-2, 1-2, 1-3 in both directions
+        print(drnl_node_labeling(edge_index, src=0, dst=1, num_nodes=4))  # [1 1 2 0]
+        ```
+    """
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import shortest_path
+
+    edge_index = np.asarray(ops.convert_to_numpy(edge_index)).astype(np.int64)
+    src, dst = (dst, src) if src > dst else (src, dst)
+    adj = coo_matrix((np.ones(edge_index.shape[1]), (edge_index[0], edge_index[1])),
+                     shape=(num_nodes, num_nodes)).tocsr()
+    if src == dst:  # a self-loop link: both distances are the same
+        d = shortest_path(adj, directed=False, unweighted=True, indices=src)
+        with np.errstate(invalid="ignore"):
+            z = 1 + d * d
+        z[src] = 1.0
+        z[np.isnan(z) | np.isinf(z)] = 0.0
+        return z.astype(np.int64)
+    keep = [i for i in range(num_nodes) if i != src]
+    adj_wo_src = adj[keep, :][:, keep]
+    keep = [i for i in range(num_nodes) if i != dst]
+    adj_wo_dst = adj[keep, :][:, keep]
+
+    dist2src = np.insert(shortest_path(adj_wo_dst, directed=False, unweighted=True, indices=src), dst, 0, axis=0)
+    dist2dst = np.insert(shortest_path(adj_wo_src, directed=False, unweighted=True, indices=dst - 1), src, 0, axis=0)
+    with np.errstate(invalid="ignore"):  # unreachable nodes have infinite distance
+        dist = dist2src + dist2dst
+        dist_over_2, dist_mod_2 = dist // 2, dist % 2
+        z = 1 + np.minimum(dist2src, dist2dst) + dist_over_2 * (dist_over_2 + dist_mod_2 - 1)
+    z[src] = z[dst] = 1.0
+    z[np.isnan(z) | np.isinf(z)] = 0.0
+    return z.astype(np.int64)

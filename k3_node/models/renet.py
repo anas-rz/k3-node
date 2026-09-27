@@ -5,6 +5,7 @@ import keras
 from keras import ops
 
 from k3_node.layers.aggr import MeanAggregation
+from k3_node.ops.creation import repeat
 
 
 class RENet(keras.Model):
@@ -133,9 +134,9 @@ class RENet(keras.Model):
         rel_emb = ops.take(self.rel, rel, axis=0)
         obj_emb = ops.take(self.ent, obj, axis=0)
 
-        sub_rep = ops.repeat(ops.expand_dims(sub_emb, 1), seq_len, axis=1)
-        rel_rep = ops.repeat(ops.expand_dims(rel_emb, 1), seq_len, axis=1)
-        obj_rep = ops.repeat(ops.expand_dims(obj_emb, 1), seq_len, axis=1)
+        sub_rep = repeat(ops.expand_dims(sub_emb, 1), seq_len, axis=1)
+        rel_rep = repeat(ops.expand_dims(rel_emb, 1), seq_len, axis=1)
+        obj_rep = repeat(ops.expand_dims(obj_emb, 1), seq_len, axis=1)
 
         gru_sub_in = ops.concatenate([sub_rep, h_sub, rel_rep], axis=-1)
         gru_obj_in = ops.concatenate([obj_rep, h_obj, rel_rep], axis=-1)

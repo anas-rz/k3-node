@@ -3,6 +3,7 @@ from keras import ops
 import numpy as np
 
 from .base import Aggregation
+from k3_node.ops.creation import repeat
 
 
 class SortAggregation(Aggregation):
@@ -54,7 +55,7 @@ class SortAggregation(Aggregation):
         k = self.k
         k_val = min(k, int(scores.shape[1])) if hasattr(scores, "shape") and isinstance(scores.shape[1], int) else k
         _, perm = ops.top_k(scores, k=k_val, sorted=True)  # [B, k]
-        perm_expanded = ops.repeat(ops.expand_dims(perm, -1), D, axis=-1)
+        perm_expanded = repeat(ops.expand_dims(perm, -1), D, axis=-1)
         out_x = ops.take_along_axis(batch_x, perm_expanded, axis=1)
         out_x = ops.where(ops.equal(out_x, fill_value), ops.zeros_like(out_x), out_x)
         out_x = ops.reshape(out_x, (B, -1))

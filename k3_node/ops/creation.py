@@ -29,3 +29,15 @@ def scatter(indices, values, shape):
         out = torch.zeros(tuple(int(s) for s in shape), dtype=values.dtype, device=values.device)
         return out.index_put_(tuple(indices.long().T), values, accumulate=True)
     return ops.scatter(indices, values, shape)
+
+
+def repeat(x, repeats, axis=None):
+    r"""Like :func:`keras.ops.repeat`; an integer ``repeats`` also works on torch's ``meta`` device."""
+    from keras import backend
+
+    if backend.backend() == "torch" and isinstance(repeats, int):
+        import torch
+
+        x = x if torch.is_tensor(x) else ops.convert_to_tensor(x)
+        return torch.repeat_interleave(x.reshape(-1) if axis is None else x, repeats, dim=axis)
+    return ops.repeat(x, repeats, axis=axis)

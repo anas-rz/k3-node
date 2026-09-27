@@ -43,7 +43,20 @@ def _public_objects():
     return found
 
 
-PUBLIC = _public_objects()
+def _other_documented_objects():
+    """Helpers outside of layers/models whose docstring examples are checked too."""
+    from k3_node import metrics, training, utils
+    from k3_node.data import Data
+    from k3_node.datasets import Digits, SEALDataset
+    from k3_node.ops.sparse import spmm
+    from k3_node.transforms import RandomLinkSplit
+
+    objects = [utils.normalized_cut, utils.k_hop_subgraph, utils.drnl_node_labeling, Digits, SEALDataset,
+               Data.edge_subgraph, RandomLinkSplit, spmm, training.gradient_step, metrics.F1Score]
+    return {f"{obj.__module__}.{obj.__qualname__}": obj for obj in objects}
+
+
+PUBLIC = {**_public_objects(), **_other_documented_objects()}
 
 
 def _examples(obj):

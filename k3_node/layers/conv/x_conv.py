@@ -3,6 +3,7 @@ from typing import Optional
 import keras
 from keras import ops
 from k3_node.layers.conv.message_passing import MessagePassing
+from k3_node.ops.creation import repeat
 
 
 class GroupedConv1dFlat(keras.layers.Layer):
@@ -160,7 +161,7 @@ class XConv(keras.layers.Layer):
         if self.dilation > 1:
             top_k = top_k[:, ::self.dilation]
 
-        row = ops.repeat(ops.arange(N), K)
+        row = repeat(ops.arange(N), K)
         col = ops.reshape(top_k, (-1,))
 
         pos_diff = ops.take(pos, col, axis=0) - ops.take(pos, row, axis=0)

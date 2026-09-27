@@ -29,9 +29,11 @@ from .molecule_net import MoleculeNet
 from .ppi import PPI
 from .reddit import Reddit
 from .digits import Digits
+from .seal import SEALDataset
 
 __all__ = [
     "Digits",
+    "SEALDataset",
     "KarateClub",
     "FakeDataset",
     "FakeHeteroDataset",

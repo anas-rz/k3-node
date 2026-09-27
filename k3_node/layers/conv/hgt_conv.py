@@ -4,6 +4,7 @@ from keras import ops
 from k3_node.layers.conv.message_passing import MessagePassing
 from k3_node.layers.conv.utils import softmax
 from k3_node.layers.dense.linear import HeteroDictLinear, HeteroLinear
+from k3_node.ops.creation import repeat
 
 
 class HGTConv(MessagePassing):
@@ -123,7 +124,7 @@ class HGTConv(MessagePassing):
 
             edge_type_offset = self.edge_types_map[edge_type]
             type_vec = (
-                ops.repeat(ops.reshape(ops.arange(H, dtype="int32"), (-1, 1)), N, axis=1)
+                repeat(ops.reshape(ops.arange(H, dtype="int32"), (-1, 1)), N, axis=1)
                 * num_edge_types
                 + edge_type_offset
             )
@@ -181,7 +182,7 @@ class HGTConv(MessagePassing):
 
             p_val = self.p_rel["__".join(edge_type)]
             num_e = ops.shape(e_idx)[1]
-            edge_attrs.append(ops.repeat(p_val, num_e, axis=0))
+            edge_attrs.append(repeat(p_val, num_e, axis=0))
 
         edge_index = ops.concatenate(edge_indices, axis=1)
         edge_attr = ops.concatenate(edge_attrs, axis=0)

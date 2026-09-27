@@ -5,6 +5,7 @@ from typing import Optional, Union, Tuple, List, Dict, Any
 
 import keras
 from keras import layers, ops
+from k3_node.ops.creation import repeat
 
 
 class GraphNodeFeature(layers.Layer):
@@ -219,7 +220,7 @@ class GraphAttnBias(layers.Layer):
         batch_size, num_nodes = x_shape[0], x_shape[1]
 
         # [batch_size, num_heads, num_nodes + 1, num_nodes + 1]
-        graph_attn_bias = ops.repeat(
+        graph_attn_bias = repeat(
             ops.expand_dims(attn_bias, axis=1), repeats=self.num_heads, axis=1
         )
 
