@@ -15,6 +15,10 @@ def _seed_state():
     return global_seed_generator().state
 
 
+def _scalar(loss):
+    return ops.mean(loss) if len(ops.shape(loss)) > 0 else loss
+
+
 def gradient_step(loss_fn: Callable, variables: Sequence, optimizer, state_variables: Sequence = ()):
     r"""Runs ``loss_fn()``, then updates ``variables`` with one ``optimizer`` step on its gradients.
 
@@ -23,7 +27,8 @@ def gradient_step(loss_fn: Callable, variables: Sequence, optimizer, state_varia
     (for example the moving statistics of batch normalization); this matters on JAX only.
 
     Args:
-        loss_fn (callable): A function without arguments that returns a scalar loss.
+        loss_fn (callable): A function without arguments that returns the loss (a scalar, or
+            per-example losses, which are averaged).
         variables (list): The variables to train, e.g. ``model.trainable_variables``.
         optimizer (keras.optimizers.Optimizer): The optimizer applying the update.
         state_variables (list, optional): Non-trainable variables updated by ``loss_fn``.
@@ -50,12 +55,12 @@ def gradient_step(loss_fn: Callable, variables: Sequence, optimizer, state_varia
         import tensorflow as tf
 
         with tf.GradientTape() as tape:
-            loss = loss_fn()
+            loss = _scalar(loss_fn())
         grads = tape.gradient(loss, variables)
     elif backend == "torch":
         import torch
 
-        loss = loss_fn()
+        loss = _scalar(loss_fn())
         grads = torch.autograd.grad(loss, [v.value for v in variables], allow_unused=True)
     elif backend == "jax":
         import jax
@@ -65,7 +70,7 @@ def gradient_step(loss_fn: Callable, variables: Sequence, optimizer, state_varia
 
         def compute(values):
             with StatelessScope(state_mapping=list(zip(variables, values))) as scope:
-                out = loss_fn()
+                out = _scalar(loss_fn())
             return out, [scope.get_current_value(v) for v in tracked]
 
         (loss, updates), grads = jax.value_and_grad(compute, has_aux=True)([v.value for v in variables])

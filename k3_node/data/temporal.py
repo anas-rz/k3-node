@@ -45,6 +45,14 @@ class TemporalData(BaseData):
                 return get_shape(self._store[key])[0]
         return 0
 
+    def train_val_test_split(self, val_ratio: float = 0.15, test_ratio: float = 0.15):
+        r"""Splits the events chronologically into training, validation and test events (the
+        last ``val_ratio + test_ratio`` of the time span go to validation and test)."""
+        t = np.asarray(ops.convert_to_numpy(self.t))
+        val_time, test_time = np.quantile(t, [1.0 - val_ratio - test_ratio, 1.0 - test_ratio])
+        val_idx, test_idx = int((t <= val_time).sum()), int((t <= test_time).sum())
+        return self[:val_idx], self[val_idx:test_idx], self[test_idx:]
+
     @property
     def num_nodes(self) -> int:
         nodes = []

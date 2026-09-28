@@ -155,6 +155,53 @@ class RENet(keras.Model):
 
         return log_prob_obj, log_prob_sub
 
+    @staticmethod
+    def pre_transform(seq_len: int) -> Callable:
+        r"""Returns a pre-transform that adds to every event (processed in time order) the history
+        of its subject and object: the entities they were linked to by the same relation in each of
+        the last ``seq_len`` time steps (``h_sub`` / ``h_obj``, with the step in ``h_sub_t`` /
+        ``h_obj_t``), as in PyG."""
+
+        class PreTransform:
+            def __init__(self, seq_len):
+                self.seq_len = seq_len
+                self.t_last = 0
+                self.sub_hist, self.obj_hist = {}, {}  # node -> list of seq_len + 1 steps of (node, rel)
+
+            def _hist(self, hist, node):
+                if node not in hist:
+                    hist[node] = [[] for _ in range(self.seq_len + 1)]
+                return hist[node]
+
+            def _history(self, hist, node, rel):
+                steps = self._hist(hist, node)
+                nodes, ts = [], []
+                for s in range(self.seq_len):
+                    for other, r in steps[s]:
+                        if r == rel:
+                            nodes.append(other)
+                            ts.append(s)
+                return np.array(nodes, dtype=np.int64), np.array(ts, dtype=np.int64)
+
+            def __call__(self, data):
+                sub, rel, obj, t = int(data.sub), int(data.rel), int(data.obj), int(data.t)
+                if t > self.t_last:  # a new time step: forget the oldest one
+                    for hist in (self.sub_hist, self.obj_hist):
+                        for steps in hist.values():
+                            steps.pop(0)
+                            steps.append([])
+                    self.t_last = t
+                data.h_sub, data.h_sub_t = self._history(self.sub_hist, sub, rel)
+                data.h_obj, data.h_obj_t = self._history(self.obj_hist, obj, rel)
+                self._hist(self.sub_hist, sub)[-1].append((obj, rel))
+                self._hist(self.obj_hist, obj)[-1].append((sub, rel))
+                return data
+
+            def __repr__(self):
+                return f"{self.__class__.__name__}(seq_len={self.seq_len})"
+
+        return PreTransform(seq_len)
+
     def test(self, logits, y):
         r"""Given ground-truth :obj:`y`, computes Mean Reciprocal Rank (MRR)
         and Hits at 1/3/10.

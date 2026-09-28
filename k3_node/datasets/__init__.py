@@ -36,6 +36,8 @@ from .shape_scenes import ShapeScenes
 from .mesh_correspondence import MeshCorrespondence
 from .movielens import MovieLens100K
 from .qm9 import QM9
+from .jodie import JODIEDataset
+from .icews import ICEWS18
 
 __all__ = [
     "Digits",
@@ -46,6 +48,8 @@ __all__ = [
     "MeshCorrespondence",
     "MovieLens100K",
     "QM9",
+    "JODIEDataset",
+    "ICEWS18",
     "KarateClub",
     "FakeDataset",
     "FakeHeteroDataset",
