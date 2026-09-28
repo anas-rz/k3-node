@@ -104,33 +104,80 @@ def knn(
     """
     x = ops.convert_to_tensor(x)
     y = ops.convert_to_tensor(y)
-
     if len(ops.shape(x)) == 1:
         x = ops.expand_dims(x, axis=-1)
     if len(ops.shape(y)) == 1:
         y = ops.expand_dims(y, axis=-1)
 
-    N = ops.shape(x)[0]
+    col = _knn_indices(x, y, k, batch_x, batch_y, cosine=cosine)  # [M, k] indices into x
     M = ops.shape(y)[0]
-    if cosine:
-        x_norm = x / ops.maximum(ops.norm(x, axis=-1, keepdims=True), 1e-12)
-        y_norm = y / ops.maximum(ops.norm(y, axis=-1, keepdims=True), 1e-12)
-        dist = 1.0 - ops.matmul(y_norm, ops.transpose(x_norm))
-    else:
-        y_exp = ops.expand_dims(y, axis=1)
-        x_exp = ops.expand_dims(x, axis=0)
-        dist = ops.sum(ops.power(y_exp - x_exp, 2), axis=-1)
-
-    if batch_x is not None or batch_y is not None:
-        batch_x = ops.zeros((N,), dtype="int32") if batch_x is None else ops.cast(batch_x, "int32")
-        batch_y = ops.zeros((M,), dtype="int32") if batch_y is None else ops.cast(batch_y, "int32")
-        mask = ops.expand_dims(batch_y, axis=1) != ops.expand_dims(batch_x, axis=0)
-        dist = ops.where(mask, 1e9, dist)
-
-    _, col_indices = ops.top_k(-dist, k=k, sorted=True)
     row = repeat(ops.arange(0, M, dtype="int64"), k)
-    col = ops.reshape(ops.cast(col_indices, "int64"), (-1,))
-    return ops.stack([row, col], axis=0)
+    return ops.stack([row, ops.reshape(ops.cast(col, "int64"), (-1,))], axis=0)
+
+
+def _pairwise(y, x, cosine):
+    """Squared distances (or cosine distances) between the rows of ``y`` and ``x``, without
+    materializing ``[M, N, features]`` differences."""
+    if cosine:
+        y = y / ops.maximum(ops.norm(y, axis=-1, keepdims=True), 1e-12)
+        x = x / ops.maximum(ops.norm(x, axis=-1, keepdims=True), 1e-12)
+        return 1.0 - ops.matmul(y, ops.swapaxes(x, -1, -2))
+    y_sq = ops.sum(y * y, axis=-1, keepdims=True)
+    x_sq = ops.expand_dims(ops.sum(x * x, axis=-1), -2)
+    return ops.maximum(y_sq + x_sq - 2.0 * ops.matmul(y, ops.swapaxes(x, -1, -2)), 0.0)
+
+
+def _knn_indices(x, y, k, batch_x=None, batch_y=None, cosine=False, exclude_self=False):
+    """Indices ``[M, k]`` into ``x`` of the ``k`` nearest points of every row of ``y`` within the
+    same example. Eagerly, distances are computed per example (``[examples, n, n]``); when compiled,
+    in chunks of query rows masked by example."""
+    from k3_node.layers.aggr.base import to_dense_batch
+    from k3_node.layers.conv.utils import is_tracing
+
+    N, M = ops.shape(x)[0], ops.shape(y)[0]
+    if M == 0 or N == 0:
+        return ops.zeros((M, k), dtype="int32")
+    ids = [b for b in (batch_x, batch_y) if b is not None]
+    if not any(is_tracing(t) for t in [x, y] + ids) and isinstance(N, int) and isinstance(M, int):
+        try:
+            bx = np.zeros(N, np.int64) if batch_x is None else np.asarray(ops.convert_to_numpy(batch_x)).astype(np.int64)
+            by = np.zeros(M, np.int64) if batch_y is None else np.asarray(ops.convert_to_numpy(batch_y)).astype(np.int64)
+            num_examples = int(max(bx.max(initial=-1), by.max(initial=-1))) + 1
+            x_dense, x_mask = to_dense_batch(x, bx, dim_size=num_examples)
+            y_dense, _ = to_dense_batch(y, by, dim_size=num_examples)
+            dist = _pairwise(y_dense, x_dense, cosine)  # [examples, max_y, max_x]
+            dist = ops.where(ops.expand_dims(x_mask, 1), dist, 1e9)
+            x_start = np.concatenate([[0], np.cumsum(np.bincount(bx, minlength=num_examples))])[:-1]
+            y_start = np.concatenate([[0], np.cumsum(np.bincount(by, minlength=num_examples))])[:-1]
+            y_local = np.arange(M) - y_start[by]
+            if exclude_self:  # x and y are the same points
+                dist = ops.where(ops.expand_dims(ops.eye(dist.shape[1], dist.shape[2]), 0) > 0, 1e9, dist)
+            kk = min(k, int(dist.shape[2]))
+            _, idx = ops.top_k(-dist, k=kk, sorted=True)  # local indices [examples, max_y, kk]
+            flat = ops.reshape(idx, (-1, kk))
+            local = ops.take(flat, by * int(dist.shape[1]) + y_local, axis=0)  # [M, kk]
+            out = local + ops.convert_to_tensor(x_start[by][:, None].astype(np.int64), dtype=local.dtype)
+            if kk < k:  # fewer candidates than k: repeat the last one
+                out = ops.concatenate([out] + [out[:, -1:]] * (k - kk), axis=1)
+            return out
+        except (TypeError, ValueError, NotImplementedError, RuntimeError):
+            pass
+
+    # Compiled: masked distances for chunks of query rows ([chunk, N] memory at a time)
+    bx = ops.zeros((N,), "int32") if batch_x is None else ops.cast(batch_x, "int32")
+    by = ops.zeros((M,), "int32") if batch_y is None else ops.cast(batch_y, "int32")
+    chunk = M if not isinstance(M, int) or not isinstance(N, int) else max(1, min(M, (1 << 24) // max(N, 1)))
+    outs = []
+    for start in range(0, M, chunk) if isinstance(M, int) else [0]:
+        stop = start + chunk if isinstance(M, int) else None
+        dist = _pairwise(y[start:stop], x, cosine)
+        mask = ops.expand_dims(by[start:stop], 1) != ops.expand_dims(bx, 0)
+        if exclude_self:
+            rows = ops.arange(ops.shape(dist)[0], dtype="int32") + start
+            mask = ops.logical_or(mask, ops.expand_dims(rows, 1) == ops.expand_dims(ops.arange(N, dtype="int32"), 0))
+        _, idx = ops.top_k(-ops.where(mask, 1e9, dist), k=k, sorted=True)
+        outs.append(idx)
+    return outs[0] if len(outs) == 1 else ops.concatenate(outs, axis=0)
 
 
 def knn_graph(
@@ -163,24 +210,7 @@ def knn_graph(
         x = ops.expand_dims(x, axis=-1)
 
     N = ops.shape(x)[0]
-    if cosine:
-        x_norm = x / ops.maximum(ops.norm(x, axis=-1, keepdims=True), 1e-12)
-        dist = 1.0 - ops.matmul(x_norm, ops.transpose(x_norm))
-    else:
-        x_exp_0 = ops.expand_dims(x, axis=0)
-        x_exp_1 = ops.expand_dims(x, axis=1)
-        dist = ops.sum(ops.power(x_exp_1 - x_exp_0, 2), axis=-1)
-
-    if not loop:
-        diag_mask = ops.eye(N, dtype=dist.dtype) * 1e9
-        dist = dist + diag_mask
-
-    if batch is not None:
-        batch = ops.cast(batch, "int32")
-        batch_mask = ops.expand_dims(batch, axis=1) != ops.expand_dims(batch, axis=0)
-        dist = ops.where(batch_mask, 1e9, dist)
-
-    _, col_indices = ops.top_k(-dist, k=k, sorted=True)
+    col_indices = _knn_indices(x, x, k, batch, batch, cosine=cosine, exclude_self=not loop)
     row = repeat(ops.arange(0, N, dtype="int64"), k)
     col = ops.reshape(ops.cast(col_indices, "int64"), (-1,))
 

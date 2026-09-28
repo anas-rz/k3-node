@@ -54,7 +54,9 @@ def to_dense_batch(
             # tensor with the differentiable `ops.scatter` below -- a numpy
             # round-trip on `x` would silently detach it from the graph and
             # stop gradients from flowing back into whatever produced it.
-            index_np = ops.convert_to_numpy(index).astype(np.int64)
+            from k3_node.ops.host import to_numpy  # zeros during Keras' shape inference
+
+            index_np = np.asarray(to_numpy(index)).astype(np.int64)
             N = len(index_np)
 
             B = int(np.max(index_np)) + 1 if N > 0 else 0

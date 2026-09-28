@@ -33,6 +33,21 @@ def _normalization_resolver(query, *args, **kwargs):
     raise ValueError(f"Could not resolve normalization layer '{query}'")
 
 
+def _activation_resolver(act, **kwargs):
+    """Resolves Keras and PyG-style activation names ("relu", "leaky_relu", "LeakyReLU", ...)."""
+    if act is None:
+        return None
+    if isinstance(act, str):
+        name = act.lower().replace("_", "")
+        aliases = {"leakyrelu": "leaky_relu", "hardswish": "hard_swish", "hardsigmoid": "hard_sigmoid"}
+        act = keras.activations.get(aliases.get(name, act.lower()))
+    if kwargs:
+        import functools
+
+        return functools.partial(act, **kwargs)
+    return act
+
+
 class MLP(keras.Model):
     r"""A Multi-Layer Perceptron (MLP) model.
 
@@ -65,6 +80,8 @@ class MLP(keras.Model):
             to use. (default: `"relu"`)
         act_first (bool, optional): If set to `True`, activation is applied
             before normalization. (default: `False`)
+        act_kwargs (dict, optional): Arguments passed to the activation function, e.g.
+            ``{"negative_slope": 0.2}`` for ``"leaky_relu"``. (default: `None`)
         norm (str or Callable, optional): The normalization function to
             use. (default: `"batch_norm"`)
         norm_kwargs (dict, optional): Arguments passed to the respective
@@ -99,6 +116,7 @@ class MLP(keras.Model):
         dropout: Union[float, List[float]] = 0.0,
         act="relu",
         act_first: bool = False,
+        act_kwargs: Optional[dict] = None,
         norm="batch_norm",
         norm_kwargs: Optional[dict] = None,
         plain_last: bool = True,
@@ -136,7 +154,7 @@ class MLP(keras.Model):
         self.in_channels = self.channel_list[0]
         self.out_channels = self.channel_list[-1]
 
-        self.act = keras.activations.get(act) if act is not None else None
+        self.act = _activation_resolver(act, **(act_kwargs or {}))
         self.act_first = act_first
         self.plain_last = plain_last
 

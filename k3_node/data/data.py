@@ -318,7 +318,7 @@ class Data(BaseData):
         return 0
 
     def __cat_dim__(self, key: str, value: Any, *args, **kwargs) -> int:
-        if key in ("edge_index", "adj_t"):
+        if key in ("edge_index", "adj_t", "face"):  # [2 or 3, num_edges / num_faces]
             return -1
         if is_tensor_like(value) and len(get_shape(value)) == 2 and get_shape(value)[0] == 2 and "index" in key:
             return -1
@@ -392,6 +392,8 @@ class Data(BaseData):
             val = self[key]
             if is_tensor_like(val):
                 data[key] = ops.take(val, indices, axis=self.__cat_dim__(key, val))
+        if "num_nodes" in self._store:  # an explicitly stored node count must shrink too
+            data.num_nodes = int(len(indices))
         return data
 
     def edge_subgraph(self, subset) -> "Data":

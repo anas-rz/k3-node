@@ -31,11 +31,17 @@ from .reddit import Reddit
 from .digits import Digits
 from .seal import SEALDataset
 from .bitcoin_otc import BitcoinOTC
+from .geometric_shapes import GeometricShapes
+from .shape_scenes import ShapeScenes
+from .mesh_correspondence import MeshCorrespondence
 
 __all__ = [
     "Digits",
     "SEALDataset",
     "BitcoinOTC",
+    "GeometricShapes",
+    "ShapeScenes",
+    "MeshCorrespondence",
     "KarateClub",
     "FakeDataset",
     "FakeHeteroDataset",

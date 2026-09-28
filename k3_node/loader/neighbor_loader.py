@@ -2,7 +2,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from k3_node.data import Data, HeteroData
 from k3_node.loader.node_loader import HeteroSamplerOutput, NodeLoader, NodeSamplerInput, SamplerOutput
-from k3_node.loader.sampler_utils import FastGraph, sample_neighbors_hetero, sample_neighbors_homo
+import numpy as np
+
+from k3_node.loader.sampler_utils import (FastGraph, sample_neighbors_disjoint, sample_neighbors_hetero,
+                                       sample_neighbors_homo)
 
 
 class InternalNeighborSampler:
@@ -27,6 +30,18 @@ class InternalNeighborSampler:
         if isinstance(self.data, Data):
             if self._graph is None:
                 self._graph = FastGraph(self.data.edge_index, num_nodes=self.data.num_nodes)
+            if self.disjoint:  # one separate subgraph per seed node
+                seeds = input_data.node
+                is_torch = hasattr(seeds, "detach")
+                out = sample_neighbors_disjoint(self._graph, seeds.detach().cpu().numpy() if is_torch else seeds,
+                                                self.num_neighbors, replace=self.replace)
+                node, row, col, edge, batch, n_counts, e_counts = out
+                if is_torch:
+                    import torch
+                    node, row, col, edge, batch = (torch.from_numpy(a) for a in (node, row, col, edge, batch))
+                return SamplerOutput(node=node, row=row, col=col, edge=edge, batch=batch,
+                                     num_sampled_nodes=n_counts, num_sampled_edges=e_counts,
+                                     metadata=(input_data.input_id, input_data.time))
             node, row, col, edge, n_counts, e_counts = sample_neighbors_homo(
                 edge_index=self.data.edge_index,
                 seed_nodes=input_data.node,

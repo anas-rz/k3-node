@@ -78,6 +78,7 @@ class GroupAddRev(keras.layers.Layer):
             if len(x) >= 2:
                 x, edge_index = x[0], x[1]
         xs = ops.split(x, self.num_groups, axis=self.split_dim)
+        group_args = self._chunk_args(x, args)
 
         ys = []
         y_in = xs[1]
@@ -85,14 +86,27 @@ class GroupAddRev(keras.layers.Layer):
             y_in = y_in + item
 
         for i in range(self.num_groups):
-            conv_out = self.convs[i](y_in, edge_index, *args)
+            conv_out = self.convs[i](y_in, edge_index, *group_args[i])
             y_in = xs[i] + conv_out
             ys.append(y_in)
 
         return ops.concatenate(ys, axis=self.split_dim)
 
+    def _chunk_args(self, x, args):
+        """As in PyG, extra tensor arguments shaped like ``x`` (e.g. a dropout mask) are split into
+        one chunk per group; other arguments are passed to every group unchanged."""
+        channels = x.shape[self.split_dim]
+        chunked = []
+        for arg in args:
+            if hasattr(arg, "shape") and len(arg.shape) == len(x.shape) and arg.shape[self.split_dim] == channels:
+                chunked.append(ops.split(arg, self.num_groups, axis=self.split_dim))
+            else:
+                chunked.append([arg] * self.num_groups)
+        return [[c[i] for c in chunked] for i in range(self.num_groups)]
+
     def inverse(self, y, edge_index, *args):
         ys = ops.split(y, self.num_groups, axis=self.split_dim)
+        group_args = self._chunk_args(y, args)
 
         xs = []
         for i in range(self.num_groups - 1, -1, -1):
@@ -102,7 +116,7 @@ class GroupAddRev(keras.layers.Layer):
                 y_in = xs[0]
                 for item in xs[1:]:
                     y_in = y_in + item
-            conv_out = self.convs[i](y_in, edge_index, *args)
+            conv_out = self.convs[i](y_in, edge_index, *group_args[i])
             x_i = ys[i] - conv_out
             xs.append(x_i)
 

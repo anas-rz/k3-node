@@ -3,6 +3,8 @@ from typing import Any, List, Optional
 
 import numpy as np
 
+from k3_node.ops.host import to_numpy
+
 try:
     import torch
     import torch.utils.data
@@ -94,9 +96,18 @@ class ShaDowKHopSampler(*loader_bases(BaseDataLoader)):
             subgraphs.append(sub)
 
         batch = Batch.from_data_list(subgraphs)
+        # Each root is the first node of its subgraph; as in PyG, `root_n_id` holds the roots'
+        # positions in the batch and `y` the labels of the roots (one per subgraph).
+        ptr = np.asarray(to_numpy(batch.ptr)).astype(np.int64)
+        roots = ptr[:-1]
         if is_torch:
-            batch.root_n_id = torch.zeros(len(n_id), dtype=torch.long, device=self.data.edge_index.device)
+            batch.root_n_id = torch.as_tensor(roots, dtype=torch.long, device=self.data.edge_index.device)
         else:
-            batch.root_n_id = np.zeros(len(n_id), dtype=np.int64)
-
+            batch.root_n_id = roots
+        y = getattr(self.data, "y", None)
+        if y is not None and y.shape[0] == self.data.num_nodes:
+            if torch is not None and isinstance(y, Tensor):
+                batch.y = y[torch.as_tensor(list(n_id), dtype=torch.long, device=y.device)]
+            else:
+                batch.y = np.asarray(y)[np.asarray(list(n_id))]
         return batch

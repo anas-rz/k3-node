@@ -141,3 +141,63 @@ def test_loader_with_mask():
     loader = ClusterLoader(ClusterData(data, num_parts=4), batch_size=2).with_mask("train_mask")
     inputs, y, weight = loader[0]
     assert weight.shape == y.shape and "train_mask" not in inputs._fields
+
+
+def test_shadow_roots_and_labels():
+    import numpy as np
+    from k3_node.data import Data
+    from k3_node.loader import ShaDowKHopSampler
+
+    rng = np.random.default_rng(0)
+    data = Data(x=np.arange(50, dtype="float32")[:, None], edge_index=rng.integers(0, 50, (2, 200)),
+                y=np.arange(50), num_nodes=50)
+    loader = ShaDowKHopSampler(data, depth=2, num_neighbors=3, node_idx=np.arange(10, 20), batch_size=5)
+    batch = next(iter(loader))
+    root_x = np.asarray(batch.x)[np.asarray(batch.root_n_id), 0]
+    np.testing.assert_array_equal(root_x, np.arange(10, 15))  # the roots are the seed nodes
+    np.testing.assert_array_equal(np.asarray(batch.y), np.arange(10, 15))  # one label per subgraph
+
+
+def test_graph_saint_samplers():
+    import numpy as np
+    from k3_node.data import Data
+    from k3_node.loader import GraphSAINTEdgeSampler, GraphSAINTNodeSampler, GraphSAINTRandomWalkSampler
+
+    rng = np.random.default_rng(0)
+    edge_index = rng.integers(0, 100, (2, 400))
+    data = Data(x=np.arange(100, dtype="float32")[:, None], edge_index=edge_index,
+                edge_attr=np.arange(400, dtype="float32"), y=np.arange(100), num_nodes=100)
+    for loader in [GraphSAINTNodeSampler(data, batch_size=30, num_steps=3, sample_coverage=5),
+                   GraphSAINTEdgeSampler(data, batch_size=20, num_steps=3, sample_coverage=5),
+                   GraphSAINTRandomWalkSampler(data, batch_size=10, walk_length=2, num_steps=3, sample_coverage=5)]:
+        batches = list(loader)
+        assert len(batches) == 3
+        batch = batches[0]
+        x = np.asarray(batch.x)[:, 0].astype(int)
+        ei = np.asarray(batch.edge_index)
+        # every subgraph edge is a real edge between sampled nodes, carrying its own attribute
+        real = {tuple(e): i for i, e in enumerate(edge_index.T.tolist())}
+        for (a, b), attr in zip(ei.T.tolist(), np.asarray(batch.edge_attr).astype(int)):
+            assert (x[a], x[b]) in real and tuple(edge_index[:, attr]) == (x[a], x[b])
+        assert np.asarray(batch.node_norm).shape == (batch.num_nodes,)
+        assert np.asarray(batch.edge_norm).shape == (ei.shape[1],)
+        inputs, y = loader[0]  # Keras batch
+        assert inputs.x.shape[0] == y.shape[0]
+
+
+def test_neighbor_loader_disjoint():
+    import numpy as np
+    from k3_node.data import Data
+    from k3_node.loader import NeighborLoader
+
+    rng = np.random.default_rng(0)
+    edge_index = rng.integers(0, 30, (2, 150))
+    data = Data(x=np.arange(30, dtype="float32")[:, None], edge_index=edge_index, num_nodes=30)
+    batch = next(iter(NeighborLoader(data, num_neighbors=[3, 2], batch_size=8, disjoint=True)))
+    b, n_id, ei = np.asarray(batch.batch), np.asarray(batch.n_id), np.asarray(batch.edge_index)
+    np.testing.assert_array_equal(b[:8], np.arange(8))  # seeds first, one subgraph each
+    assert np.all(b[ei[0]] == b[ei[1]])  # edges never cross subgraphs
+    real = set(map(tuple, edge_index.T.tolist()))
+    assert all((n_id[s], n_id[t]) in real for s, t in ei.T.tolist())
+    for g in range(8):  # no node appears twice within one subgraph
+        assert len(set(n_id[b == g].tolist())) == int((b == g).sum())

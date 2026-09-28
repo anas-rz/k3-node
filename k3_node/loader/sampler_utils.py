@@ -435,3 +435,65 @@ def partition_graph(edge_index: Any, num_nodes: int, num_parts: int) -> Any:
         return torch.from_numpy(cluster).to(device=edge_index.device, dtype=torch.long)
     return cluster
 
+
+
+def sample_neighbors_disjoint(graph: FastGraph, seed_nodes: Any, num_neighbors: List[int], replace: bool = False):
+    r"""Samples a separate multi-hop neighborhood for every seed node, as PyG's ``disjoint=True``.
+
+    A node reached from two seeds appears twice, once in each seed's subgraph. The sampled edges
+    point from sources to the nodes that sampled them ("directional").
+
+    Returns:
+        (nodes, local_row, local_col, edge_ids, batch, num_sampled_nodes, num_sampled_edges), where
+        ``batch[i]`` is the seed (subgraph) that local node ``i`` belongs to.
+    """
+    seeds = np.asarray(seed_nodes).astype(np.int64).reshape(-1)
+    num_nodes = graph.num_nodes
+    frontier_nodes, frontier_ids = seeds, np.arange(len(seeds), dtype=np.int64)
+    node_chunks, batch_chunks = [seeds], [np.arange(len(seeds), dtype=np.int64)]
+    keys = np.arange(len(seeds), dtype=np.int64) * num_nodes + seeds  # (seed, node) of every local node
+    sorted_order = np.argsort(keys)
+    num_total = len(seeds)
+    rows, cols, eids = [], [], []
+    num_sampled_nodes, num_sampled_edges = [len(seeds)], []
+    for k in num_neighbors:
+        in_graph = frontier_nodes < num_nodes
+        starts = np.zeros(len(frontier_nodes), dtype=np.int64)
+        counts = np.zeros(len(frontier_nodes), dtype=np.int64)
+        starts[in_graph] = graph.indptr[frontier_nodes[in_graph]]
+        counts[in_graph] = graph.indptr[frontier_nodes[in_graph] + 1] - starts[in_graph]
+        segment, position = _sample_positions(starts, counts, k, replace)
+        srcs = graph.sorted_row[position].astype(np.int64)
+        dst_ids = frontier_ids[segment]
+        src_batch = np.concatenate(batch_chunks)[dst_ids]
+        src_keys = src_batch * num_nodes + srcs
+
+        # Look up which (seed, node) pairs already exist; the rest become new local nodes
+        pos = np.searchsorted(keys[sorted_order], src_keys)
+        pos = np.minimum(pos, len(keys) - 1)
+        known = keys[sorted_order][pos] == src_keys
+        src_ids = np.where(known, sorted_order[pos], -1)
+        new_keys, first, inverse = np.unique(src_keys[~known], return_index=True, return_inverse=True)
+        order = np.argsort(first, kind="stable")  # new nodes in order of first appearance
+        rank = np.empty(len(order), dtype=np.int64)
+        rank[order] = np.arange(len(order))
+        src_ids[~known] = num_total + rank[inverse.reshape(-1)]
+        new_keys = new_keys[order]
+
+        rows.append(src_ids)
+        cols.append(dst_ids)
+        eids.append(graph.sorted_edge_id[position])
+        num_sampled_edges.append(len(srcs))
+        new_nodes, new_batch = new_keys % num_nodes, new_keys // num_nodes
+        node_chunks.append(new_nodes)
+        batch_chunks.append(new_batch)
+        keys = np.concatenate([keys, new_keys])
+        sorted_order = np.argsort(keys, kind="stable")
+        frontier_nodes, frontier_ids = new_nodes, num_total + np.arange(len(new_nodes))
+        num_total += len(new_nodes)
+        num_sampled_nodes.append(len(new_nodes))
+
+    empty = np.empty(0, dtype=np.int64)
+    return (np.concatenate(node_chunks), np.concatenate(rows) if rows else empty,
+            np.concatenate(cols) if cols else empty, np.concatenate(eids).astype(np.int64) if eids else empty,
+            np.concatenate(batch_chunks), num_sampled_nodes, num_sampled_edges)

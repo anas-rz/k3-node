@@ -83,3 +83,20 @@ def test_edge_cnn():
     out = model(x, edge_index)
     assert ops.shape(out) == (4, 4)
 
+
+
+def test_trim_to_layer_keeps_seed_outputs():
+    import numpy as np
+    from keras import ops
+    from k3_node.data import Data
+    from k3_node.loader import NeighborLoader
+    from k3_node.models import GraphSAGE
+
+    rng = np.random.default_rng(0)
+    data = Data(x=rng.random((200, 8)).astype("float32"), edge_index=rng.integers(0, 200, (2, 1200)), num_nodes=200)
+    batch = next(iter(NeighborLoader(data, num_neighbors=[5, 4, 3], batch_size=16)))
+    model = GraphSAGE(8, hidden_channels=16, num_layers=3, out_channels=4)
+    full = ops.convert_to_numpy(model(batch.x, batch.edge_index))[:16]
+    trimmed = ops.convert_to_numpy(model(batch.x, batch.edge_index, num_sampled_nodes_per_hop=batch.num_sampled_nodes,
+                                         num_sampled_edges_per_hop=batch.num_sampled_edges))[:16]
+    np.testing.assert_allclose(full, trimmed, atol=1e-5)

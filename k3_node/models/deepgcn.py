@@ -83,7 +83,7 @@ class DeepGCNLayer(keras.layers.Layer):
         reset(self.conv)
         reset(self.norm)
 
-    def call(self, x, edge_index, training=None, **kwargs):
+    def call(self, x, edge_index, *args, training=None, **kwargs):
         if self.block == "res+":
             h = x
             if self.norm is not None:
@@ -92,12 +92,12 @@ class DeepGCNLayer(keras.layers.Layer):
                 h = self.act(h)
             if self.dropout is not None:
                 h = self.dropout(h, training=training)
-            h = self.conv(h, edge_index, training=training, **kwargs)
+            h = self.conv(h, edge_index, *args, training=training, **kwargs)
 
             return x + h
 
         else:
-            h = self.conv(x, edge_index, training=training, **kwargs)
+            h = self.conv(x, edge_index, *args, training=training, **kwargs)
             if self.norm is not None:
                 h = self.norm(h, training=training)
             if self.act is not None:

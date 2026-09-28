@@ -50,6 +50,13 @@ class BasicGNN(K3NodeHubMixin, keras.Model):
             :obj:`"lstm"`). (default: :obj:`None`)
         **kwargs (optional): Additional arguments of the underlying
             :class:`torch_geometric.nn.conv.MessagePassing` layers.
+    
+    Call arguments: ``x``, ``edge_index`` and optionally ``edge_weight``, ``edge_attr`` and
+    ``batch``. With mini-batches from :class:`~k3_node.loader.NeighborLoader`, also pass
+    ``num_sampled_nodes_per_hop`` and ``num_sampled_edges_per_hop`` (the batch's
+    ``num_sampled_nodes`` / ``num_sampled_edges``) to skip the nodes and edges that no longer
+    affect the seed nodes after each layer, as in PyG. This trimming needs concrete sizes, so
+    compile the model with ``run_eagerly=True`` when using it.
     """
     supports_edge_weight: bool = False
     supports_edge_attr: bool = False
@@ -175,6 +182,8 @@ class BasicGNN(K3NodeHubMixin, keras.Model):
         edge_attr=None,
         batch=None,
         batch_size=None,
+        num_sampled_nodes_per_hop=None,
+        num_sampled_edges_per_hop=None,
         training=None,
     ):
         if hasattr(x, "edge_index") and edge_index is None:
@@ -190,9 +199,24 @@ class BasicGNN(K3NodeHubMixin, keras.Model):
                 edge_attr = x[2]
             x = x[0]
 
+        trim = num_sampled_nodes_per_hop is not None and num_sampled_edges_per_hop is not None
+        if trim:
+            from k3_node.ops.host import to_numpy
+
+            nodes_per_hop = [int(n) for n in to_numpy(num_sampled_nodes_per_hop)]
+            edges_per_hop = [int(n) for n in to_numpy(num_sampled_edges_per_hop)]
+
         xs: List = []
         # `training` is forwarded explicitly: Keras does not propagate it to nested layers on JAX.
         for i, (conv, norm) in enumerate(zip(self.convs, self.norms)):
+            if trim and i > 0:
+                # Hierarchical neighborhood sampling: the nodes and edges of the outermost hop no
+                # longer influence the seed nodes, so drop them (as PyG's `trim_to_layer`).
+                x = x[: x.shape[0] - nodes_per_hop[-i]]
+                num_edges = edge_index.shape[1] - edges_per_hop[-i]
+                edge_index = edge_index[:, :num_edges]
+                edge_weight = None if edge_weight is None else edge_weight[:num_edges]
+                edge_attr = None if edge_attr is None else edge_attr[:num_edges]
             if self.supports_edge_weight and self.supports_edge_attr:
                 x = conv(x, edge_index, edge_weight=edge_weight, edge_attr=edge_attr, training=training)
             elif self.supports_edge_weight:
