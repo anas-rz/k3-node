@@ -1,7 +1,7 @@
 from typing import Tuple, Union
 from keras import ops
 import numpy as np
-from k3_node.ops.host import to_numpy
+from k3_node.ops.host import _in_shape_inference, to_numpy
 
 
 def decimation_indices(
@@ -29,6 +29,8 @@ def decimation_indices(
     ptr_np = to_numpy(ptr)
     batch_size = len(ptr_np) - 1
     count = ptr_np[1:] - ptr_np[:-1]
+    if _in_shape_inference():  # `ptr` is placeholder zeros: keep one (valid) node per graph
+        count = np.maximum(count, 1)
     decim_count = np.maximum(count // int(decimation_factor), 1)
 
     decim_indices_list = []

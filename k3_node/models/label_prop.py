@@ -46,6 +46,13 @@ class LabelPropagation(MessagePassing):
     def build(self, input_shape=None):
         self.built = True
 
+    # `mask` selects the labeled nodes; it is not a Keras sequence mask, so the output gets none
+    # (this also stops Keras from warning that the layer drops the mask).
+    supports_masking = True
+
+    def compute_mask(self, *args, **kwargs):
+        return None
+
     def call(
         self,
         y,

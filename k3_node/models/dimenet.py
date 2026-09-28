@@ -267,10 +267,11 @@ class InteractionBlock(keras.layers.Layer):
         x_kj = self.act(self.lin_kj(x))
         x_kj = x_kj * rbf
 
-        x_kj_triplet = ops.take(x_kj, idx_kj, axis=0)
-        # einsum("wj,wl,ijl->wi", sbf, x_kj_triplet, W), one bilinear channel j at a time, so that no
-        # [triplets, num_bilinear, hidden] intermediate is materialized
-        x_kj = sum(sbf[:, j:j + 1] * ops.matmul(x_kj_triplet, ops.transpose(self.W[:, j, :]))
+        # einsum("wj,wl,ijl->wi", sbf, x_kj[idx_kj], W), one bilinear channel j at a time (no
+        # [triplets, num_bilinear, hidden] intermediate). Each edge is multiplied with W_j once and
+        # then gathered to its triplets: the same values, with far fewer multiplications, since a
+        # molecule has many more triplets than edges.
+        x_kj = sum(sbf[:, j:j + 1] * ops.take(ops.matmul(x_kj, ops.transpose(self.W[:, j, :])), idx_kj, axis=0)
                    for j in range(self.num_bilinear))
         x_kj = self.sum_aggr(x_kj, index=idx_ji, dim_size=ops.shape(x)[0])
 

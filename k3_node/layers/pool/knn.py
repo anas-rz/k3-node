@@ -163,7 +163,9 @@ def _knn_indices(x, y, k, batch_x=None, batch_y=None, cosine=False, exclude_self
         except (TypeError, ValueError, NotImplementedError, RuntimeError):
             pass
 
-    if y is x and batch_x is not None and batch_y is batch_x:  # compiled knn_graph: per example
+    if not isinstance(N, int) and y is x and batch_x is not None and batch_y is batch_x:
+        # compiled knn_graph with a point count known only at run time (TensorFlow): per example,
+        # since the chunks below would all be the full [N, N] distance matrix
         return _knn_graph_indices_traced(x, k, ops.cast(batch_x, "int32"), cosine, exclude_self)
 
     # Compiled: masked distances for chunks of query rows ([chunk, N] memory at a time)
@@ -178,7 +180,10 @@ def _knn_indices(x, y, k, batch_x=None, batch_y=None, cosine=False, exclude_self
         if exclude_self:
             rows = ops.arange(ops.shape(dist)[0], dtype="int32") + start
             mask = ops.logical_or(mask, ops.expand_dims(rows, 1) == ops.expand_dims(ops.arange(N, dtype="int32"), 0))
-        _, idx = ops.top_k(-ops.where(mask, 1e9, dist), k=k, sorted=True)
+        kk = min(k, N) if isinstance(N, int) else k
+        _, idx = ops.top_k(-ops.where(mask, 1e9, dist), k=kk, sorted=True)
+        if kk < k:  # fewer candidates than k: repeat the last one, as in the eager path
+            idx = ops.concatenate([idx] + [idx[:, -1:]] * (k - kk), axis=1)
         outs.append(idx)
     return outs[0] if len(outs) == 1 else ops.concatenate(outs, axis=0)
 
@@ -196,7 +201,10 @@ def _knn_graph_indices_traced(x, k, batch, cosine, exclude_self):
     if exclude_self:
         same = ops.expand_dims(ops.arange(n), 1) == ops.expand_dims(ops.arange(n), 0)
         dist = ops.where(ops.expand_dims(same, 0), 1e9, dist)
-    _, idx = ops.top_k(-dist, k=k, sorted=True)  # local indices [examples, max_points, k]
+    kk = min(k, x_dense.shape[1]) if isinstance(x_dense.shape[1], int) else k
+    _, idx = ops.top_k(-dist, k=kk, sorted=True)  # local indices [examples, max_points, kk]
+    if kk < k:  # fewer candidates than k (e.g. Keras' shape inference): repeat the last one
+        idx = ops.concatenate([idx] + [idx[..., -1:]] * (k - kk), axis=-1)
     counts = segment_sum(ops.ones_like(batch), batch, num_segments=num_points)
     starts = ops.take(ops.cumsum(counts) - counts, batch, axis=0)  # first point of each point's example
     local = ops.arange(num_points, dtype="int32") - starts
