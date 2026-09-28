@@ -62,14 +62,37 @@ def _as_array(value) -> Optional[np.ndarray]:
     return array
 
 
+HeteroGraphBatch = collections.namedtuple("HeteroGraphBatch", ["x_dict", "edge_index_dict"])
+
+
+def _hetero_keras_batch(data, target, mask, normalize_mask, node_type):
+    x_dict = {k: _as_array(v) for k, v in data.collect("x").items()}
+    edge_index_dict = {k: _as_array(v) for k, v in data.collect("edge_index").items()}
+    inputs = HeteroGraphBatch(x_dict, edge_index_dict)
+    if node_type is None:
+        return (inputs,)
+    store = data[node_type]
+    y = _as_array(getattr(store, target or "y"))
+    if mask is None:
+        return inputs, y
+    weight = np.asarray(ops.convert_to_numpy(getattr(store, mask))).astype(np.float32)
+    if normalize_mask and weight.sum() > 0:
+        weight = weight * (weight.shape[0] / weight.sum())
+    return inputs, y, weight
+
+
 def to_keras_batch(
     data: Any,
     target: Optional[str] = None,
     mask: Optional[str] = None,
     normalize_mask: bool = True,
     index: Optional[str] = None,
+    node_type: Optional[str] = None,
 ):
     r"""Converts a :class:`~k3_node.data.Data` / :class:`~k3_node.data.Batch` into Keras' format.
+
+    For a :class:`~k3_node.data.HeteroData` graph, ``inputs`` is a :class:`HeteroGraphBatch`
+    (``x_dict`` and ``edge_index_dict``) and ``target`` / ``mask`` are read from ``node_type``.
 
     Returns ``(inputs,)``, ``(inputs, y)`` or ``(inputs, y, sample_weight)``, where ``inputs`` is a
     :class:`GraphBatch` holding every array attribute except the target and ``*_mask`` attributes.
@@ -85,6 +108,8 @@ def to_keras_batch(
             splits as node indices, with ``target`` holding the labels of exactly those nodes
             (e.g. ``"train_y"``). The labels are placed at their nodes and only these nodes count.
     """
+    if hasattr(data, "node_types") and hasattr(data, "edge_types"):
+        return _hetero_keras_batch(data, target, mask, normalize_mask, node_type)
     attrs = data.to_dict() if hasattr(data, "to_dict") else dict(vars(data))
     if target is None:
         target = "edge_label" if attrs.get("edge_label") is not None else "y"
@@ -206,6 +231,9 @@ class FullGraphDataset(keras.utils.PyDataset):
             ``"train_idx"``), with ``target`` giving the labels of those nodes (e.g. ``"train_y"``).
         neg_sampling_ratio (float, optional): For link prediction: adds this many random
             non-edges per labeled edge (label 0), sampled anew every epoch.
+        node_type (str, optional): For a heterogeneous graph: the node type whose ``target`` is
+            predicted and whose ``mask`` selects the nodes. The model receives ``data.x_dict``
+            and ``data.edge_index_dict``.
 
     Example:
         ```python
@@ -216,10 +244,13 @@ class FullGraphDataset(keras.utils.PyDataset):
     """
 
     def __init__(self, data, mask: Optional[str] = None, target: Optional[str] = None,
-                 index: Optional[str] = None, neg_sampling_ratio: Optional[float] = None, **kwargs):
+                 index: Optional[str] = None, neg_sampling_ratio: Optional[float] = None,
+                 node_type: Optional[str] = None, **kwargs):
         super().__init__(**kwargs)
         self._data, self._neg_sampling_ratio = data, neg_sampling_ratio
         self._kwargs = dict(target=target, mask=mask, index=index)
+        if node_type is not None:
+            self._kwargs["node_type"] = node_type
         self._batch = None if neg_sampling_ratio else to_keras_batch(data, **self._kwargs)
 
     def __len__(self):

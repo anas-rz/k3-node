@@ -201,3 +201,21 @@ def test_neighbor_loader_disjoint():
     assert all((n_id[s], n_id[t]) in real for s, t in ei.T.tolist())
     for g in range(8):  # no node appears twice within one subgraph
         assert len(set(n_id[b == g].tolist())) == int((b == g).sum())
+
+
+def test_full_graph_dataset_hetero():
+    import numpy as np
+    from k3_node.data import HeteroData
+    from k3_node.loader import FullGraphDataset
+
+    data = HeteroData()
+    data["user"].x = np.ones((4, 2), "float32")
+    data["user"].y = np.array([0, 1, 0, 1])
+    data["user"].train_mask = np.array([True, True, False, False])
+    data["item"].x = np.ones((3, 5), "float32")
+    data["user", "buys", "item"].edge_index = np.array([[0, 1, 3], [0, 2, 1]])
+    inputs, y, weight = FullGraphDataset(data, node_type="user", mask="train_mask")[0]
+    assert set(inputs.x_dict) == {"user", "item"}
+    assert ("user", "buys", "item") in inputs.edge_index_dict
+    np.testing.assert_array_equal(y, [0, 1, 0, 1])
+    np.testing.assert_allclose(weight, [2, 2, 0, 0])

@@ -93,7 +93,20 @@ class HeteroData(BaseData):
             return self.__dict__[key]
         if "_node_store_dict" in self.__dict__ and key in self._node_store_dict:
             return self._node_store_dict[key]
+        if key.endswith("_dict") and "_node_store_dict" in self.__dict__:
+            return self.collect(key[:-5])
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{key}'")
+
+    def collect(self, key: str) -> Dict[Any, Any]:
+        r"""Returns the attribute ``key`` of every node and edge type that has it, e.g.
+        ``data.collect("x")`` (also available as ``data.x_dict``) or ``data.edge_index_dict``."""
+        out = {}
+        for stores in (self._node_store_dict, self._edge_store_dict):
+            for type_, store in stores.items():
+                value = store.get(key) if hasattr(store, "get") else getattr(store, key, None)
+                if value is not None:
+                    out[type_] = value
+        return out
 
     def __setattr__(self, key: str, value: Any):
         if key in ("_node_store_dict", "_edge_store_dict"):

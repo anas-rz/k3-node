@@ -139,12 +139,12 @@ class InMemoryDataset(Dataset):
             else:
                 data = obj[0]
             if isinstance(data, dict):
-                data = Data(**data)
+                data = _from_dict(data)
             self._data = data
         elif isinstance(obj, list):
             self._data_list = obj
         elif isinstance(obj, dict):
-            self._data = Data(**obj)
+            self._data = _from_dict(obj)
         else:
             self._data = obj
 
@@ -158,3 +158,20 @@ class InMemoryDataset(Dataset):
             from k3_node.data.storage import is_tensor_like, to_numpy
             self.slices = {k: to_numpy(v) if is_tensor_like(v) else v for k, v in self.slices.items()}
 
+
+
+def _from_dict(mapping):
+    """Rebuilds a saved graph: a ``HeteroData`` if the mapping holds per-type attribute
+    dictionaries (node types and ``(src, rel, dst)`` edge types), else a ``Data``."""
+    if any(isinstance(v, dict) or not isinstance(k, str) for k, v in mapping.items()):
+        from k3_node.data.hetero_data import HeteroData
+
+        data = HeteroData()
+        for key, value in mapping.items():
+            if isinstance(value, dict):
+                for attr, item in value.items():
+                    setattr(data[key], attr, item)
+            else:
+                setattr(data, key, value)
+        return data
+    return Data(**mapping)
