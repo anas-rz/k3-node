@@ -19,6 +19,36 @@ def _scalar(loss):
     return ops.mean(loss) if len(ops.shape(loss)) > 0 else loss
 
 
+def no_grad():
+    r"""A context manager for evaluating a model outside of ``fit`` / ``predict``, like PyTorch's
+    ``torch.no_grad()``.
+
+    On the torch backend, calling a model records every intermediate result for a possible
+    backward pass, which can take far more memory than the model itself. Inside ``no_grad()``
+    nothing is recorded. TensorFlow and JAX only record gradients when asked to, so there it does
+    nothing.
+
+    Example:
+        ```python
+        import keras
+        import numpy as np
+        from k3_node.training import no_grad
+
+        model = keras.layers.Dense(4)
+        with no_grad():
+            out = model(np.random.rand(10, 8).astype("float32"))
+        print(tuple(out.shape))  # (10, 4)
+        ```
+    """
+    if keras.config.backend() == "torch":
+        import torch
+
+        return torch.no_grad()
+    import contextlib
+
+    return contextlib.nullcontext()
+
+
 def gradient_step(loss_fn: Callable, variables: Sequence, optimizer, state_variables: Sequence = ()):
     r"""Runs ``loss_fn()``, then updates ``variables`` with one ``optimizer`` step on its gradients.
 

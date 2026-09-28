@@ -191,8 +191,11 @@ class GAE:
 
     def embed(self, data):
         r"""Returns the node embeddings of ``data`` (without sampling noise)."""
+        from k3_node.training import no_grad
+
         self.eval()
-        return self.encode(data.x, data.edge_index, training=False)
+        with no_grad():
+            return self.encode(data.x, data.edge_index, training=False)
 
 
 class VGAE(GAE):

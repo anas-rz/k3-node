@@ -5,6 +5,7 @@ import keras
 from keras import ops
 
 from k3_node.layers.kge.loader import KGTripletLoader
+from k3_node.training import no_grad
 
 try:
     from tqdm import tqdm
@@ -141,11 +142,12 @@ class KGEModel(keras.layers.Layer):
                 ts = tail_indices[start:start + batch_size]
                 hs = np.full_like(ts, h)
                 rs = np.full_like(ts, r)
-                out = self(
-                    ops.convert_to_tensor(hs),
-                    ops.convert_to_tensor(rs),
-                    ops.convert_to_tensor(ts),
-                )
+                with no_grad():  # as PyG's @torch.no_grad()
+                    out = self(
+                        ops.convert_to_tensor(hs),
+                        ops.convert_to_tensor(rs),
+                        ops.convert_to_tensor(ts),
+                    )
                 scores.append(ops.convert_to_numpy(out))
             scores = np.concatenate(scores)
             rank = int(np.nonzero(np.argsort(-scores) == t)[0][0])
