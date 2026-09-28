@@ -487,6 +487,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../examples/getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../examples/node_classification/" class="md-nav__link">
         
   
@@ -1884,10 +1912,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#k3_node.models.LPFormer.call" class="md-nav__link">
+  <a href="#k3_node.models.LPFormer.calc_sparse_ppr" class="md-nav__link">
     <span class="md-ellipsis">
       
-        call
+        calc_sparse_ppr
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.models.LPFormer.compute_node_mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        compute_node_mask
       
     </span>
   </a>
@@ -6385,9 +6424,12 @@ Large-Graph Representations"
 
 
 
-        <p>The LPFormer model from the
-<code>"LPFormer: An Adaptive Graph Transformer for Link Prediction"
-&lt;https://arxiv.org/abs/2310.11009&gt;</code>_ paper.</p>
+        <p>The LPFormer model from the <code>"LPFormer: An Adaptive Graph Transformer for Link Prediction"
+&lt;https://arxiv.org/abs/2310.11009&gt;</code>_ paper, as in PyG.</p>
+<p>For every candidate link it attends over the common neighbors, the one-hop neighbors and the
+other nodes with a high personalized PageRank (PPR) from both endpoints (<code>ppr_thresholds</code>
+for the three kinds), using their PPR scores as relative positional encodings, and combines
+this with counts of each kind of node and with the GCN embeddings of the two endpoints.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -6442,7 +6484,7 @@ Large-Graph Representations"
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Number of GCN layers. (default: 2)</p>
+                <p>Number of GCN layers. (default: <code>2</code>)</p>
               </div>
             </td>
             <td>
@@ -6458,7 +6500,7 @@ Large-Graph Representations"
             </td>
             <td>
               <div class="doc-md-description">
-                <p>GNN dropout rate. (default: 0.1)</p>
+                <p>GCN dropout. (default: <code>0.1</code>)</p>
               </div>
             </td>
             <td>
@@ -6474,7 +6516,7 @@ Large-Graph Representations"
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Number of Transformer layers. (default: 1)</p>
+                <p>Number of attention layers. (default: <code>1</code>)</p>
               </div>
             </td>
             <td>
@@ -6490,7 +6532,7 @@ Large-Graph Representations"
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Number of attention heads. (default: 1)</p>
+                <p>Number of attention heads. (default: <code>1</code>)</p>
               </div>
             </td>
             <td>
@@ -6506,7 +6548,8 @@ Large-Graph Representations"
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Transformer dropout rate. (default: 0.1)</p>
+                <p>Attention dropout; during training this share of
+the selected nodes is also dropped. (default: <code>0.1</code>)</p>
               </div>
             </td>
             <td>
@@ -6522,7 +6565,8 @@ Large-Graph Representations"
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Thresholds for PPR node categorization. (default: [0, 1e-4, 1e-2])</p>
+                <p>Minimum PPR of common neighbors, one-hop neighbors and
+other nodes. (default: <code>[0, 1e-4, 1e-2]</code>)</p>
               </div>
             </td>
             <td>
@@ -6531,6 +6575,10 @@ Large-Graph Representations"
           </tr>
       </tbody>
     </table>
+        <p>Call arguments: <code>batch</code> (the <code>[2, num_links]</code> candidate links), <code>x</code> (node features),
+<code>edge_index</code> (the graph) and the keyword <code>ppr_matrix</code> (from :meth:<code>calc_sparse_ppr</code>). Returns one logit
+per link. The node selection runs on the host, so train with <code>run_eagerly=True</code> or
+:func:<code>~k3_node.training.gradient_step</code>.</p>
 
 
 <details class="example" open>
@@ -6538,14 +6586,12 @@ Large-Graph Representations"
   <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">LPFormer</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float32"</span><span class="p">)</span>  <span class="c1"># 10 nodes with 8 features each</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float32"</span><span class="p">)</span>  <span class="c1"># 10 nodes with 16 features each</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">edge_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span>  <span class="c1"># 30 random edges</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float32"</span><span class="p">)</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">model</span> <span class="o">=</span> <span class="n">LPFormer</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">ppr</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">calc_sparse_ppr</span><span class="p">(</span><span class="n">edge_index</span><span class="p">,</span> <span class="n">num_nodes</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">target_links</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>  <span class="c1"># the (source, target) pairs to score</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">model</span> <span class="o">=</span> <span class="n">LPFormer</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">num_gnn_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">out</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">target_links</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">)</span>  <span class="c1"># one score per link</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nb">print</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>  <span class="c1"># (2, 1)</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nb">print</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">target_links</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">ppr_matrix</span><span class="o">=</span><span class="n">ppr</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>  <span class="c1"># (2,): one logit per link</span>
 </span></code></pre></div>
 </details>
 
@@ -6572,90 +6618,38 @@ Large-Graph Representations"
 <div class="doc doc-object doc-function">
 
 
-<h4 id="k3_node.models.LPFormer.call" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">batch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">edge_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ppr_matrix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<h4 id="k3_node.models.LPFormer.calc_sparse_ppr" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">calc_sparse_ppr</span><span class="p">(</span><span class="n">edge_index</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">5e-05</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
 
 </h4>
 
 
     <div class="doc doc-contents ">
 
-        <p>Forward pass of LPFormer.</p>
+        <p>The personalized PageRank matrix LPFormer needs (see :func:<code>get_ppr</code>).</p>
 
 
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>batch</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Tensor of shape (2, B) with link pairs (u, v) to predict.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>x</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Node features of shape (N, in_channels).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>edge_index</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Graph edge index (2, E).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>ppr_matrix</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Optional precomputed PPR matrix of shape (N, N).</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.models.LPFormer.compute_node_mask" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">compute_node_mask</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">adj</span><span class="p">,</span> <span class="n">ppr</span><span class="p">,</span> <span class="n">training</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>For the links <code>(u, v)</code>: <code>(pair index, node, PPR from u, PPR from v)</code> of their common
+neighbors, one-hop neighbors and other high-PPR nodes.</p>
 
 
     </div>

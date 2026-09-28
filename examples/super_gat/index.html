@@ -21,7 +21,7 @@
     
     
       
-        <title>Self-Supervised Graph Attention Network (SuperGAT) on Cora - K3Node</title>
+        <title>SuperGAT on Cora - K3Node</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#self-supervised-graph-attention-network-supergat-on-cora" class="md-skip">
+        <a href="#supergat-on-cora" class="md-skip">
           Skip to content
         </a>
       
@@ -109,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Self-Supervised Graph Attention Network (SuperGAT) on Cora
+              SuperGAT on Cora
             
           </span>
         </div>
@@ -463,6 +463,34 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
   
 
     
@@ -1657,21 +1685,21 @@
 
 
 
-<h1 id="self-supervised-graph-attention-network-supergat-on-cora">Self-Supervised Graph Attention Network (SuperGAT) on Cora</h1>
+<h1 id="supergat-on-cora">SuperGAT on Cora</h1>
 <p><strong>Author:</strong> K3-Node Team<br>
 <strong>Backend:</strong> Multi-Backend<br>
 <strong>Dataset:</strong> <code>Cora (Planetoid)</code><br>
-<strong>Description:</strong> Self-supervised edge agreement objective guiding graph attention weights.</p>
+<strong>Description:</strong> Classify papers in the Cora citation network by topic.</p>
 <p><a class="md-button md-button--primary" href="https://colab.research.google.com/github/anas-rz/k3-node/blob/main/examples/node_classification/super_gat.ipynb"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.941 4.976a7.03 7.03 0 0 0-4.93 2.064 7.033 7.033 0 0 0-.124 9.807l2.395-2.395a3.646 3.646 0 0 1 5.15-5.148l2.397-2.399a7.03 7.03 0 0 0-4.888-1.93m-9.871.01a7.03 7.03 0 0 0-4.888 1.931l2.391 2.391a3.643 3.643 0 0 1 5.023.127l1.734-2.973-.1-.08a7.03 7.03 0 0 0-4.16-1.396m15.01 2.172-2.39 2.39a3.646 3.646 0 0 1-5.15 5.15l-2.406 2.407a7.036 7.036 0 0 0 9.945-9.947m-20.148.01a7.033 7.033 0 0 0-.002 9.681l2.397-2.397a3.643 3.643 0 0 1-.004-4.892zm7.664 7.423a3.635 3.635 0 0 1-5.017.113L2.182 17.1a7.03 7.03 0 0 0 9.007.546l.137-.112z"/></svg></span> <strong>View in Colab</strong></a> &nbsp; <a class="md-button" href="https://github.com/anas-rz/k3-node/blob/main/examples/node_classification/super_gat.ipynb"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M8 0c4.42 0 8 3.58 8 8a8.01 8.01 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27s-1.36.09-2 .27c-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8"/></svg></span> <strong>GitHub source</strong></a></p>
 <hr />
-<h1 id="supergat-on-cora">SuperGAT on Cora</h1>
+<h1 id="supergat-on-cora_1">SuperGAT on Cora</h1>
 <p>Classify papers in the Cora citation network by topic. SuperGAT
 (<a href="https://openreview.net/forum?id=Wi5KUNlqWty">Kim &amp; Oh, 2021</a>) is a graph attention network whose
 attention is also trained on a self-supervised task: telling real links apart from random pairs of
 papers. <code>attention_loss_weight=4.0</code> adds that task's loss to the model loss during training.</p>
 <p>Same model as PyG's <a href="https://github.com/pyg-team/pytorch_geometric/blob/master/examples/super_gat.py"><code>examples/super_gat.py</code></a>; trained for 200 epochs instead of PyG's 500 to keep the notebook quick.</p>
 <h2 id="install-k3-node-then-choose-a-backend-tensorflow-torch-or-jax">Install K3-Node, then choose a backend: "tensorflow", "torch" or "jax"</h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">anas</span><span class="o">-</span><span class="n">rz</span><span class="o">/</span><span class="n">k3</span><span class="o">-</span><span class="n">node</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="s2">"k3-node[examples] @ git+https://github.com/anas-rz/k3-node"</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"KERAS_BACKEND"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"tensorflow"</span>
 </span></code></pre></div>
