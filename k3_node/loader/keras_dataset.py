@@ -168,6 +168,18 @@ class KerasLoaderMixin(keras.utils.PyDataset):
                 batch = next(self._keras_iter)
         return to_keras_batch(batch, target=self.keras_target, mask=self.keras_mask)
 
+    def with_mask(self, mask: str):
+        r"""Only the nodes in the node mask attribute ``mask`` (e.g. ``"train_mask"``) of each batch
+        count in the loss and in ``weighted_metrics``. Returns the loader, for chaining."""
+        self.keras_mask = mask
+        return self
+
+    def with_target(self, target: str):
+        r"""Sets the attribute Keras predicts (default: ``"edge_label"`` if present, else ``"y"``).
+        Returns the loader, for chaining."""
+        self.keras_target = target
+        return self
+
     @property
     def num_batches(self):
         return len(self)

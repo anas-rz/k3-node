@@ -109,3 +109,35 @@ def test_full_graph_dataset_fresh_negatives_every_epoch():
     assert inputs1.edge_label_index.shape == (2, 12)
     np.testing.assert_array_equal(y1, [1] * 4 + [0] * 8)
     assert not np.array_equal(inputs1.edge_label_index[:, 4:], inputs2.edge_label_index[:, 4:])
+
+
+def test_link_neighbor_loader_uses_local_ids():
+    import numpy as np
+    from k3_node.data import Data
+    from k3_node.loader import LinkNeighborLoader
+
+    rng = np.random.default_rng(0)
+    edge_index = rng.integers(0, 200, size=(2, 600))
+    data = Data(x=np.arange(200, dtype="float32")[:, None], edge_index=edge_index, num_nodes=200)
+    loader = LinkNeighborLoader(data, num_neighbors=[5], batch_size=16, neg_sampling_ratio=1.0)
+    batch = next(iter(loader))
+    eli = np.asarray(batch.edge_label_index)
+    n_id = np.asarray(batch.n_id)
+    assert eli.max() < n_id.shape[0]  # local ids into the sampled subgraph
+    label = np.asarray(batch.edge_label)
+    pos = n_id[eli[:, label == 1]]  # back to global ids: must be real edges
+    real = set(map(tuple, edge_index.T.tolist()))
+    assert all(tuple(e) in real for e in pos.T.tolist())
+
+
+def test_loader_with_mask():
+    import numpy as np
+    from k3_node.data import Data
+    from k3_node.loader import ClusterData, ClusterLoader
+
+    rng = np.random.default_rng(0)
+    data = Data(x=rng.random((60, 3)).astype("float32"), edge_index=rng.integers(0, 60, (2, 200)),
+                y=rng.integers(0, 3, 60), train_mask=np.arange(60) < 30, num_nodes=60)
+    loader = ClusterLoader(ClusterData(data, num_parts=4), batch_size=2).with_mask("train_mask")
+    inputs, y, weight = loader[0]
+    assert weight.shape == y.shape and "train_mask" not in inputs._fields

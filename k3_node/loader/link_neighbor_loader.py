@@ -51,15 +51,16 @@ class InternalLinkNeighborSampler:
             num_neg = round(self.neg_sampling_ratio * pos_len)
             num_total_nodes = self.data.num_nodes
             if is_torch:
+                # As in PyG, both endpoints of a negative are random nodes
+                neg_row = torch.randint(0, num_total_nodes, (num_neg,), dtype=torch.long, device=pos_row.device)
                 neg_col = torch.randint(0, num_total_nodes, (num_neg,), dtype=torch.long, device=pos_row.device)
-                neg_row = pos_row[torch.randint(0, pos_len, (num_neg,), dtype=torch.long, device=pos_row.device)]
                 total_row = torch.cat([pos_row, neg_row], dim=0)
                 total_col = torch.cat([pos_col, neg_col], dim=0)
                 edge_label = torch.cat([torch.ones(pos_len, dtype=torch.float, device=pos_row.device),
                                         torch.zeros(num_neg, dtype=torch.float, device=pos_row.device)], dim=0)
             else:
+                neg_row = np.random.randint(0, num_total_nodes, size=(num_neg,), dtype=np.int64)
                 neg_col = np.random.randint(0, num_total_nodes, size=(num_neg,), dtype=np.int64)
-                neg_row = np.random.choice(pos_row, size=(num_neg,), replace=True)
                 total_row = np.concatenate([pos_row, neg_row], axis=0)
                 total_col = np.concatenate([pos_col, neg_col], axis=0)
                 edge_label = np.concatenate([np.ones(pos_len, dtype=np.float32), np.zeros(num_neg, dtype=np.float32)], axis=0)
@@ -68,12 +69,21 @@ class InternalLinkNeighborSampler:
             total_col = pos_col
             edge_label = input_data.label
 
+        # The sampled subgraph starts with the (sorted, unique) seed nodes, so `edge_label_index`
+        # is relabeled to their positions, i.e. to local node ids, as in PyG.
+        def unique_inverse(values):
+            if is_torch:
+                return torch.unique(values, return_inverse=True)
+            return np.unique(np.asarray(values), return_inverse=True)
+
+        def stack(a, b):
+            return torch.stack([a, b], dim=0) if is_torch else np.stack([a, b], axis=0)
+
         if is_torch:
-            seed_nodes = torch.cat([total_row, total_col], dim=0).unique()
-            edge_label_index = torch.stack([total_row, total_col], dim=0)
+            seed_nodes, inverse = unique_inverse(torch.cat([total_row, total_col], dim=0))
         else:
-            seed_nodes = np.unique(np.concatenate([total_row, total_col], axis=0))
-            edge_label_index = np.stack([total_row, total_col], axis=0)
+            seed_nodes, inverse = unique_inverse(np.concatenate([total_row, total_col], axis=0))
+        edge_label_index = stack(inverse[:len(total_row)], inverse[len(total_row):])
 
         if isinstance(self.data, Data):
             node, row, col, edge, n_counts, e_counts = sample_neighbors_homo(
@@ -104,8 +114,9 @@ class InternalLinkNeighborSampler:
             if src_type == dst_type:
                 seed_dict[src_type] = seed_nodes
             else:
-                seed_dict[src_type] = total_row
-                seed_dict[dst_type] = total_col
+                seed_dict[src_type], src_inverse = unique_inverse(total_row)
+                seed_dict[dst_type], dst_inverse = unique_inverse(total_col)
+                edge_label_index = stack(src_inverse, dst_inverse)
 
             norm_num_neighbors = self.num_neighbors
             if isinstance(norm_num_neighbors, dict):

@@ -5,13 +5,13 @@ from keras import ops
 from k3_node.ops.segment import segment_sum
 
 
-def to_dense_batch(x, batch=None):
+def to_dense_batch(x, batch=None, batch_size=None):
     """Differentiable dense batching; see :func:`k3_node.layers.aggr.to_dense_batch`."""
     from k3_node.layers.aggr.base import to_dense_batch as _to_dense_batch
 
     if batch is None:
         return ops.expand_dims(x, axis=0), ops.ones((1, ops.shape(x)[0]), dtype="bool")
-    return _to_dense_batch(x, batch)
+    return _to_dense_batch(x, batch, dim_size=batch_size)
 
 
 class GPSConv(keras.layers.Layer):
@@ -26,6 +26,10 @@ class GPSConv(keras.layers.Layer):
         dropout (float, optional): Dropout probability. (default: :obj:`0.0`)
         act (str, optional): Activation function. (default: :obj:`"relu"`)
         norm (str, optional): Normalization function. (default: :obj:`"batch_norm"`)
+
+    Call arguments: ``x``, ``edge_index``, ``batch`` (the graph of every node) and ``batch_size``
+    (the number of graphs; pass it when training compiled so that shapes are static), plus any
+    arguments of the local ``conv`` such as ``edge_attr``.
 
     Example:
         ```python
@@ -97,7 +101,7 @@ class GPSConv(keras.layers.Layer):
             self.mlp_l2.build((None, self.channels * 2))
         super().build(input_shape)
 
-    def call(self, x, edge_index, batch=None, training=None, **kwargs):
+    def call(self, x, edge_index, batch=None, batch_size=None, training=None, **kwargs):
         if not self.built:
             self.build((None, self.channels))
 
@@ -112,7 +116,8 @@ class GPSConv(keras.layers.Layer):
             hs.append(h)
 
         # Global attention
-        h_dense, mask = to_dense_batch(x, batch)
+        # `batch_size` (the number of graphs) keeps shapes static when compiled
+        h_dense, mask = to_dense_batch(x, batch, batch_size)
         # Attention mask for Keras: shape (B, 1, max_nodes)
         attn_mask = ops.expand_dims(mask, axis=1)
         attn_out = self.attn(h_dense, h_dense, attention_mask=attn_mask, training=training)

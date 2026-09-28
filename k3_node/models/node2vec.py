@@ -75,6 +75,7 @@ class Node2Vec(keras.layers.Layer):
         if edge_index_np.size > 0:
             for src, dst in zip(edge_index_np[0], edge_index_np[1]):
                 self.adj[src].append(int(dst))
+        self.adj_sets = [set(nbrs) for nbrs in self.adj]
 
         self.embedding = keras.layers.Embedding(num_nodes, embedding_dim)
 
@@ -95,17 +96,7 @@ class Node2Vec(keras.layers.Layer):
         repeated = np.repeat(batch_np, self.walks_per_node)
 
         # Sample random walks
-        all_walks = []
-        for node in repeated:
-            walk = [int(node)]
-            for _ in range(self.walk_length):
-                cur = walk[-1]
-                nbrs = self.adj[cur]
-                if len(nbrs) > 0:
-                    walk.append(nbrs[np.random.randint(len(nbrs))])
-                else:
-                    walk.append(cur)
-            all_walks.append(walk)
+        all_walks = [self._random_walk(int(node)) for node in repeated]
 
         rw = np.array(all_walks, dtype=np.int64)
         walks = []
@@ -114,6 +105,63 @@ class Node2Vec(keras.layers.Layer):
             walks.append(rw[:, j : j + self.context_size])
         out = np.concatenate(walks, axis=0) if len(walks) > 0 else rw
         return ops.convert_to_tensor(out, dtype="int64")
+
+    def _random_walk(self, start: int):
+        """A node2vec walk: from ``cur`` (reached from ``prev``) the next node is weighted by 1/p
+        if it returns to ``prev``, 1 if it is also a neighbor of ``prev`` and 1/q otherwise."""
+        walk = [start]
+        for _ in range(self.walk_length):
+            cur = walk[-1]
+            nbrs = self.adj[cur]
+            if not nbrs:
+                walk.append(cur)
+                continue
+            if (self.p == 1.0 and self.q == 1.0) or len(walk) == 1:
+                walk.append(nbrs[np.random.randint(len(nbrs))])
+                continue
+            prev = walk[-2]
+            prev_nbrs = self.adj_sets[prev]
+            weights = np.array([1.0 / self.p if n == prev else (1.0 if n in prev_nbrs else 1.0 / self.q)
+                                for n in nbrs])
+            walk.append(nbrs[np.random.choice(len(nbrs), p=weights / weights.sum())])
+        return walk
+
+    def loader(self, batch_size: int = 128, shuffle: bool = True):
+        r"""Yields ``(pos_rw, neg_rw)`` random-walk batches, starting from ``batch_size`` nodes
+        at a time, as PyG's ``Node2Vec.loader``."""
+        nodes = np.random.permutation(self.num_nodes) if shuffle else np.arange(self.num_nodes)
+        for start in range(0, self.num_nodes, batch_size):
+            batch = nodes[start:start + batch_size]
+            yield self.pos_sample(batch), self.neg_sample(batch)
+
+    def compile(self, optimizer):
+        r"""Sets the optimizer used by :meth:`fit`."""
+        self.optimizer = optimizer
+
+    def fit(self, epochs: int = 1, batch_size: int = 128, verbose: int = 1):
+        r"""Trains the embeddings on freshly sampled random walks for ``epochs`` passes over
+        all nodes; returns the mean loss of every epoch."""
+        from k3_node.training import gradient_step
+
+        if getattr(self, "optimizer", None) is None:
+            raise ValueError("Call `compile(optimizer=...)` before `fit`.")
+        self(ops.arange(1))  # create the embeddings
+        history = {"loss": []}
+        for epoch in range(1, epochs + 1):
+            losses = [gradient_step(lambda: self.loss(pos_rw, neg_rw), self.trainable_variables, self.optimizer)
+                      for pos_rw, neg_rw in self.loader(batch_size, shuffle=True)]
+            history["loss"].append(float(np.mean(losses)))
+            if verbose:
+                print(f"Epoch {epoch:03d}: loss: {history['loss'][-1]:.4f}")
+        return history
+
+    def test(self, train_z, train_y, test_z, test_y, solver: str = "lbfgs", *args, **kwargs):
+        r"""Evaluates the embeddings with a logistic regression classifier; returns its accuracy."""
+        from sklearn.linear_model import LogisticRegression
+
+        clf = LogisticRegression(*args, solver=solver, **kwargs).fit(
+            ops.convert_to_numpy(train_z), ops.convert_to_numpy(train_y))
+        return clf.score(ops.convert_to_numpy(test_z), ops.convert_to_numpy(test_y))
 
     def neg_sample(self, batch):
         batch_np = ops.convert_to_numpy(batch).astype(np.int64)

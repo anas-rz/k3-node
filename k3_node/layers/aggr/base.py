@@ -90,13 +90,16 @@ def to_dense_batch(
         except Exception:
             pass
 
-    # Pure ops implementation for symbolic tracing / graph execution
+    # Pure ops implementation for symbolic tracing / graph execution. `index` is sorted, so a
+    # node's position in its graph is its offset from the graph's first node (O(N) memory).
+    from k3_node.ops.segment import segment_sum
+
     N = ops.shape(x)[0]
-    idx_col = ops.expand_dims(index, 1)
-    idx_row = ops.expand_dims(index, 0)
-    same_seg = ops.cast(ops.equal(idx_col, idx_row), "int32")
-    tril = ops.tril(ops.ones((N, N), dtype="int32"))
-    local_idx = ops.sum(same_seg * tril, axis=1) - 1
+    index = ops.cast(index, "int32")
+    num_segments = int(dim_size) if dim_size is not None else N
+    counts = segment_sum(ops.ones_like(index), index, num_segments=num_segments)
+    starts = ops.cumsum(counts) - counts
+    local_idx = ops.arange(N, dtype="int32") - ops.take(starts, index, axis=0)
 
     if max_num_elements is not None:
         max_nodes = int(max_num_elements)
