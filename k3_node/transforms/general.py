@@ -653,3 +653,24 @@ class AttentiveFPFeatures(BaseTransform):
             data.edge_index = np.zeros((2, 0), dtype=np.int64)
             data.edge_attr = np.zeros((0, 10), dtype=np.float32)
         return data
+
+
+class CompleteGraph(BaseTransform):
+    r"""Connects every pair of distinct nodes. Edge features ``edge_attr`` are kept for the
+    existing edges and are zero for the new ones (as the ``Complete`` transform of PyG's QM9
+    example).
+    """
+
+    def forward(self, data):
+        n = data.num_nodes
+        row, col = np.repeat(np.arange(n), n), np.tile(np.arange(n), n)
+        keep = row != col
+        edge_attr = getattr(data, "edge_attr", None)
+        if edge_attr is not None:
+            old = to_numpy(data.edge_index).astype(np.int64)
+            attr = to_numpy(edge_attr)
+            dense = np.zeros((n * n,) + attr.shape[1:], dtype=attr.dtype)
+            dense[old[0] * n + old[1]] = attr
+            data.edge_attr = match_tensor(dense[keep], edge_attr)
+        data.edge_index = match_tensor(np.stack([row[keep], col[keep]]).astype(np.int64), data.edge_index)
+        return data

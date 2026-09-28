@@ -97,6 +97,8 @@ class NodeRegressor(BaseTask):
         y = ops.cast(data.y, "float32")
         m = getattr(data, mask) if mask and hasattr(data, mask) else None
         sample_weight = ops.cast(m, "float32") if m is not None else None
+        if sample_weight is not None:  # the loss is the mean over the masked nodes, as in PyG
+            sample_weight = sample_weight * (ops.cast(ops.size(sample_weight), "float32") / ops.maximum(ops.sum(sample_weight), 1.0))
 
         def gen_fn():
             while True:
@@ -109,6 +111,7 @@ class NodeRegressor(BaseTask):
             gen_fn(),
             steps_per_epoch=1,
             epochs=epochs,
+            shuffle=False,  # one full-graph batch per step
             verbose=verbose,
             callbacks=callbacks,
         )

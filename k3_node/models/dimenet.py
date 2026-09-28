@@ -268,7 +268,10 @@ class InteractionBlock(keras.layers.Layer):
         x_kj = x_kj * rbf
 
         x_kj_triplet = ops.take(x_kj, idx_kj, axis=0)
-        x_kj = ops.einsum("wj,wl,ijl->wi", sbf, x_kj_triplet, self.W)
+        # einsum("wj,wl,ijl->wi", sbf, x_kj_triplet, W), one bilinear channel j at a time, so that no
+        # [triplets, num_bilinear, hidden] intermediate is materialized
+        x_kj = sum(sbf[:, j:j + 1] * ops.matmul(x_kj_triplet, ops.transpose(self.W[:, j, :]))
+                   for j in range(self.num_bilinear))
         x_kj = self.sum_aggr(x_kj, index=idx_ji, dim_size=ops.shape(x)[0])
 
         h = x_ji + x_kj
@@ -631,3 +634,103 @@ class DimeNetPlusPlus(DimeNet):
             for _ in range(num_blocks)
         ]
 
+
+
+QM9_TARGETS = {0: 'mu', 1: 'alpha', 2: 'homo', 3: 'lumo', 5: 'r2', 6: 'zpve', 7: 'U0', 8: 'U', 9: 'H',
+               10: 'G', 11: 'Cv'}
+
+
+def _load_qm9_pretrained(cls, root, dataset, target, url, folder, config):
+    """Builds ``cls(**config)`` and copies the official TensorFlow DimeNet(++) checkpoint for
+    ``target`` into it; returns the model and PyG's train/val/test split of ``dataset``."""
+    import os
+    import os.path as osp
+
+    import tensorflow as tf
+
+    from k3_node.data.download import download_url
+
+    assert 0 <= target <= 11 and target != 4, "no pre-trained model for this target"
+    path = osp.join(osp.expanduser(root), folder, QM9_TARGETS[target])
+    os.makedirs(path, exist_ok=True)
+    if not osp.exists(osp.join(path, 'checkpoint')):
+        for name in ['checkpoint', 'ckpt.data-00000-of-00002', 'ckpt.data-00001-of-00002', 'ckpt.index']:
+            download_url(f'{url}/{QM9_TARGETS[target]}/{name}', path)
+    reader = tf.train.load_checkpoint(osp.join(path, 'ckpt'))
+
+    model = cls(**config)
+    model(np.array([6, 1, 1, 1, 1]), np.array([[0, 0, 0], [0.6, 0.6, 0.6], [-0.6, -0.6, 0.6], [-0.6, 0.6, -0.6],
+                                              [0.6, -0.6, -0.6]], dtype="float32"))  # create the weights
+
+    def copy_(variable, name):  # Keras kernels already use TensorFlow's (in, out) layout
+        variable.assign(reader.get_tensor(f'{name}/.ATTRIBUTES/VARIABLE_VALUE'))
+
+    def copy_dense(layer, name, bias=True):
+        copy_(layer.kernel, f'{name}/kernel')
+        if bias:
+            copy_(layer.bias, f'{name}/bias')
+
+    def copy_residuals(layers, name):
+        for j, layer in enumerate(layers):
+            copy_dense(layer.lin1, f'{name}/{j}/dense_1')
+            copy_dense(layer.lin2, f'{name}/{j}/dense_2')
+
+    plus = cls is DimeNetPlusPlus
+    copy_(model.rbf.freq, 'rbf_layer/frequencies')
+    copy_(model.emb.emb.embeddings, 'emb_block/embeddings')
+    copy_dense(model.emb.lin_rbf, 'emb_block/dense_rbf')
+    copy_dense(model.emb.lin, 'emb_block/dense')
+    for i, block in enumerate(model.output_blocks):
+        copy_dense(block.lin_rbf, f'output_blocks/{i}/dense_rbf', bias=False)
+        if plus:
+            copy_dense(block.lin_up, f'output_blocks/{i}/up_projection', bias=False)
+        for j, lin in enumerate(block.lins):
+            copy_dense(lin, f'output_blocks/{i}/dense_layers/{j}')
+        copy_dense(block.lin, f'output_blocks/{i}/dense_final', bias=False)
+    for i, block in enumerate(model.interaction_blocks):
+        name = f'int_blocks/{i}'
+        if plus:
+            for layer in ['rbf1', 'rbf2', 'sbf1', 'sbf2']:
+                copy_dense(getattr(block, f'lin_{layer}'), f'{name}/dense_{layer}', bias=False)
+            copy_dense(block.lin_down, f'{name}/down_projection', bias=False)
+            copy_dense(block.lin_up, f'{name}/up_projection', bias=False)
+        else:
+            copy_dense(block.lin_rbf, f'{name}/dense_rbf', bias=False)
+            copy_dense(block.lin_sbf, f'{name}/dense_sbf', bias=False)
+            copy_(block.W, f'{name}/bilinear')
+        copy_dense(block.lin_kj, f'{name}/dense_kj')
+        copy_dense(block.lin_ji, f'{name}/dense_ji')
+        copy_residuals(block.layers_before_skip, f'{name}/layers_before_skip')
+        copy_dense(block.lin, f'{name}/final_before_skip')
+        copy_residuals(block.layers_after_skip, f'{name}/layers_after_skip')
+
+    # The split of the official DimeNet implementation
+    perm = np.random.RandomState(seed=42).permutation(np.arange(130831))
+    return model, (dataset[perm[:110000]], dataset[perm[110000:120000]], dataset[perm[120000:]])
+
+
+def _dimenet_from_qm9_pretrained(cls, root: str, dataset, target: int):
+    r"""Returns a :class:`DimeNet` pre-trained on QM9 target ``target`` (the official weights of
+    the DimeNet authors, read with TensorFlow), and the train/validation/test split it used.
+    ``dataset`` is a :class:`~k3_node.datasets.QM9` whose targets were reordered as in PyG's
+    ``qm9_pretrained_dimenet`` example."""
+    return _load_qm9_pretrained(
+        cls, root, dataset, target, 'https://github.com/klicperajo/dimenet/raw/master/pretrained/dimenet',
+        'pretrained_dimenet', dict(hidden_channels=128, out_channels=1, num_blocks=6, num_bilinear=8,
+                                   num_spherical=7, num_radial=6, cutoff=5.0, envelope_exponent=5,
+                                   num_before_skip=1, num_after_skip=2, num_output_layers=3))
+
+
+def _dimenet_pp_from_qm9_pretrained(cls, root: str, dataset, target: int):
+    r"""Returns a :class:`DimeNetPlusPlus` pre-trained on QM9 target ``target`` and its split (see
+    :meth:`DimeNet.from_qm9_pretrained`)."""
+    return _load_qm9_pretrained(
+        cls, root, dataset, target, 'https://raw.githubusercontent.com/gasteigerjo/dimenet/master/pretrained/dimenet_pp',
+        'pretrained_dimenet_pp', dict(hidden_channels=128, out_channels=1, num_blocks=4, int_emb_size=64,
+                                      basis_emb_size=8, out_emb_channels=256, num_spherical=7, num_radial=6,
+                                      cutoff=5.0, max_num_neighbors=32, envelope_exponent=5, num_before_skip=1,
+                                      num_after_skip=2, num_output_layers=3))
+
+
+DimeNet.from_qm9_pretrained = classmethod(_dimenet_from_qm9_pretrained)
+DimeNetPlusPlus.from_qm9_pretrained = classmethod(_dimenet_pp_from_qm9_pretrained)

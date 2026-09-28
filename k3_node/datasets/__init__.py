@@ -34,6 +34,8 @@ from .bitcoin_otc import BitcoinOTC
 from .geometric_shapes import GeometricShapes
 from .shape_scenes import ShapeScenes
 from .mesh_correspondence import MeshCorrespondence
+from .movielens import MovieLens100K
+from .qm9 import QM9
 
 __all__ = [
     "Digits",
@@ -42,6 +44,8 @@ __all__ = [
     "GeometricShapes",
     "ShapeScenes",
     "MeshCorrespondence",
+    "MovieLens100K",
+    "QM9",
     "KarateClub",
     "FakeDataset",
     "FakeHeteroDataset",
