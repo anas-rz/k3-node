@@ -135,7 +135,7 @@ def _knn_indices(x, y, k, batch_x=None, batch_y=None, cosine=False, exclude_self
     from k3_node.layers.conv.utils import is_tracing
 
     N, M = ops.shape(x)[0], ops.shape(y)[0]
-    if M == 0 or N == 0:
+    if isinstance(M, int) and isinstance(N, int) and (M == 0 or N == 0):  # sizes are tensors while tracing
         return ops.zeros((M, k), dtype="int32")
     ids = [b for b in (batch_x, batch_y) if b is not None]
     if not any(is_tracing(t) for t in [x, y] + ids) and isinstance(N, int) and isinstance(M, int):

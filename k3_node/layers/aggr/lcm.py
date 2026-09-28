@@ -73,6 +73,8 @@ class LCMAggregation(Aggregation):
         num_nodes = ops.shape(x_dense)[1]
         num_features = ops.shape(x_dense)[2]
 
+        if not isinstance(num_neighbors, int):  # a tensor while tracing (e.g. TensorFlow's fit)
+            return self._reduce_traced(x_dense)
         if num_neighbors == 0:
             return ops.zeros((num_nodes, self.out_channels), dtype=x.dtype)
 
@@ -111,6 +113,30 @@ class LCMAggregation(Aggregation):
             x_dense = out
 
         return ops.squeeze(x_dense, axis=0)
+
+    def _combine(self, left, right):
+        num_features = ops.shape(left)[-1]
+        left_flat, right_flat = ops.reshape(left, (-1, num_features)), ops.reshape(right, (-1, num_features))
+        out1, _ = self.gru_cell(left_flat, [right_flat])
+        out2, _ = self.gru_cell(right_flat, [left_flat])
+        return ops.reshape(0.5 * (out1 + out2), ops.shape(left))
+
+    def _reduce_traced(self, x_dense):
+        """The pairwise reduction of ``call`` for a neighbor count only known at run time: position
+        ``i`` absorbs position ``i + stride`` when ``i`` is a multiple of ``2 * stride``, with the
+        stride doubling every level. This pairs the same elements as ``call``, in a fixed shape."""
+        length = ops.shape(x_dense)[0]
+        if not self.gru_cell.built:  # no weights may be created inside the loop
+            self.gru_cell.build((None, x_dense.shape[-1]))
+        position = ops.arange(length, dtype="int32")
+
+        def body(stride, h):
+            combined = self._combine(h, ops.roll(h, -stride, axis=0))
+            active = ops.logical_and(position % (2 * stride) == 0, position + stride < length)
+            return stride * 2, ops.where(active[:, None, None], combined, h)
+
+        _, h = ops.while_loop(lambda stride, h: stride < length, body, (ops.convert_to_tensor(1, "int32"), x_dense))
+        return h[0]
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.in_channels}, {self.out_channels}, project={self.project})"
