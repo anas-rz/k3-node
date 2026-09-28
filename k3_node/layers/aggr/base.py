@@ -1,3 +1,4 @@
+import keras
 from typing import Optional, Tuple
 from keras import layers, ops
 import numpy as np
@@ -46,8 +47,10 @@ def to_dense_batch(
         ```
     """
     from k3_node.layers.conv.utils import is_tracing
+    from k3_node.ops.host import _in_shape_inference
 
-    if not is_tracing(index):
+    # Keras' shape inference traces too, but only needs shapes: the host path then sees zeros.
+    if not is_tracing(index) or _in_shape_inference():
         try:
             # `index` is purely structural (never differentiated), so plain
             # numpy is fine for it. `x` itself is placed into the dense
@@ -98,7 +101,8 @@ def to_dense_batch(
 
     N = ops.shape(x)[0]
     index = ops.cast(index, "int32")
-    num_segments = int(dim_size) if dim_size is not None else N
+    static_size = isinstance(dim_size, (int, np.integer))  # a tensor while tracing
+    num_segments = int(dim_size) if static_size else N
     counts = segment_sum(ops.ones_like(index), index, num_segments=num_segments)
     starts = ops.cumsum(counts) - counts
     local_idx = ops.arange(N, dtype="int32") - ops.take(starts, index, axis=0)
@@ -110,12 +114,15 @@ def to_dense_batch(
     else:
         max_nodes = ops.max(local_idx) + 1
 
-    if dim_size is not None and isinstance(dim_size, int):
-        B = dim_size
-    elif hasattr(index, "shape") and index.shape[0] is not None and dim_size is not None:
-        B = int(dim_size)
-    else:
-        B = ops.max(index) + 1
+    B = int(dim_size) if static_size else ops.max(index) + 1
+    from k3_node.layers.conv.utils import is_tracing
+
+    if not static_size and keras.config.backend() == "jax" and is_tracing(index):
+        raise ValueError(
+            "Compiled JAX code needs the number of graphs as a Python int to build the dense batch. "
+            "Pass it explicitly, e.g. `batch_size=data.num_graphs` (or `dim_size=` for "
+            "`to_dense_batch`), or train with `run_eagerly=True`."
+        )
 
     dense_x = full((B, max_nodes, *ops.shape(x)[1:]), fill_value, dtype=x.dtype)
     mask = ops.zeros((B, max_nodes), dtype="bool")
@@ -173,6 +180,7 @@ def to_dense_adj(edge_index, batch=None, edge_attr=None, max_num_nodes: Optional
         ```
     """
     from k3_node.layers.conv.utils import is_tracing
+    from k3_node.ops.host import _in_shape_inference
 
     edge_index = ops.cast(ops.convert_to_tensor(edge_index), "int32")
     if batch is None:
@@ -180,20 +188,30 @@ def to_dense_adj(edge_index, batch=None, edge_attr=None, max_num_nodes: Optional
         batch = ops.zeros((num_nodes,), dtype="int32")
     batch = ops.cast(ops.convert_to_tensor(batch), "int32")
 
-    if not is_tracing(batch):
-        index_np = ops.convert_to_numpy(batch).astype(np.int64)
+    if not is_tracing(batch) or (_in_shape_inference() and None not in tuple(batch.shape)):
+        from k3_node.ops.host import to_numpy  # zeros during Keras' shape inference
+
+        index_np = np.asarray(to_numpy(batch)).astype(np.int64)
         num_graphs = int(index_np.max()) + 1 if len(index_np) else 0
         num_graphs = max(num_graphs, int(batch_size or 0))
         local = np.arange(len(index_np)) - np.searchsorted(index_np, index_np, side="left")
         max_nodes = int(np.bincount(index_np, minlength=num_graphs).max()) if len(index_np) else 0
         max_nodes = max(max_nodes, int(max_num_nodes or 0))
         local = ops.convert_to_tensor(local.astype("int32"))
-    else:  # compiled: same local indices as to_dense_batch, padded to the total node count
+    else:  # compiled: the same local indices and padding as to_dense_batch's compiled path
+        from k3_node.ops.segment import segment_sum
+
         n = ops.shape(batch)[0]
-        same = ops.cast(ops.equal(ops.expand_dims(batch, 1), ops.expand_dims(batch, 0)), "int32")
-        local = ops.sum(same * ops.tril(ops.ones((n, n), dtype="int32")), axis=1) - 1
-        num_graphs = batch_size if batch_size is not None else ops.max(batch) + 1
-        max_nodes = max_num_nodes if max_num_nodes is not None else batch.shape[0]
+        static = isinstance(batch_size, (int, np.integer))
+        counts = segment_sum(ops.ones_like(batch), batch, num_segments=int(batch_size) if static else n)
+        local = ops.arange(n, dtype="int32") - ops.take(ops.cumsum(counts) - counts, batch, axis=0)
+        num_graphs = batch_size if static else ops.max(batch) + 1
+        if max_num_nodes is not None:
+            max_nodes = int(max_num_nodes)
+        elif batch.shape[0] is not None:
+            max_nodes = int(batch.shape[0])
+        else:
+            max_nodes = ops.max(local) + 1
 
     src, dst = edge_index[0], edge_index[1]
     indices = ops.stack([ops.take(batch, src), ops.take(local, src), ops.take(local, dst)], axis=1)

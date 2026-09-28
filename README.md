@@ -43,7 +43,10 @@ K3-Node achieves **100% public API parity** with [PyTorch Geometric (PyG)](https
 
 ```bash
 # git should be installed
-pip install git+http://github.com/anas-rz/k3-node/
+pip install git+https://github.com/anas-rz/k3-node/
+
+# with the extra packages the example notebooks use (scikit-learn, rdflib, matplotlib)
+pip install "k3-node[examples] @ git+https://github.com/anas-rz/k3-node"
 ```
 
 ### Selecting your Backend
@@ -95,6 +98,33 @@ edge_index = ops.convert_to_tensor([[0, 1, 2, 3], [1, 2, 3, 0]], dtype="int64")
 out = model(x, edge_index)
 print("Output shape:", out.shape)  # (10, 7)
 ```
+
+### Training in a Few Lines
+
+The task estimators in `k3_node.tasks` pick the loss, readout and metrics for you:
+
+```python
+from k3_node.datasets import Planetoid
+from k3_node.tasks import NodeClassifier
+
+cora = Planetoid("data/Planetoid", name="Cora")[0]
+
+classifier = NodeClassifier(backbone="gcn", hidden_channels=64, num_layers=2, dropout=0.5)
+classifier.fit(cora, epochs=100, lr=0.01)
+print(classifier.evaluate(cora, mask="test_mask"))
+```
+
+`GraphClassifier`, `GraphRegressor`, `NodeRegressor` and `LinkPredictor` work the same way.
+
+### Example Notebooks
+
+The [`examples/`](examples) folder has 90+ notebooks that follow the architectures of
+[PyG's examples](https://github.com/pyg-team/pytorch_geometric/tree/master/examples), written with
+`keras.Model.fit` and K3-Node's loaders. They cover node, link and graph classification,
+knowledge graphs, molecules (including pre-trained DimeNet, DimeNet++ and SchNet on QM9), point
+clouds, temporal graphs and large-graph mini-batching. Each notebook opens in Colab and runs on
+any backend: change `KERAS_BACKEND` in its first cell. Browse them in the
+[documentation](https://anas-rz.github.io/k3-node/examples/).
 
 ---
 
@@ -191,7 +221,10 @@ Run the comprehensive test suite across backends:
 
 ```bash
 # Run all unit tests
-pytest tests/
+pytest k3_node/
+
+# Run training tests (each layer's weights learn; slower, not run in CI)
+pytest tests_training/
 
 # Run reference parity check against PyTorch implementations
 pytest tests_reference/

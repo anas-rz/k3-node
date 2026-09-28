@@ -54,6 +54,7 @@ nav:
       - Multi-Backend Guide: backends.md
   - Examples:
       - Overview: examples/index.md
+      - Getting Started: examples/getting_started.md
       - Node Classification: examples/node_classification.md
       - Large-Scale & Scalable Training: examples/large_scale_training.md
       - Inductive Learning: examples/inductive_learning.md

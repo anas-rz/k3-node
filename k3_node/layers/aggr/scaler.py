@@ -99,7 +99,8 @@ class DegreeScalerAggregation(Aggregation):
         out = self.aggr(x, index=index, ptr=ptr, dim_size=dim_size, dim=dim)
 
         index = ops.cast(index, dtype="int32")
-        dim_size = dim_size or (int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0)
+        if dim_size is None:  # a tensor while tracing; don't test its truth value
+            dim_size = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
 
         # Compute degree per index
         ones = ops.ones((ops.shape(index)[0],), dtype=out.dtype)

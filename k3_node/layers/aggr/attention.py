@@ -59,7 +59,8 @@ class AttentionalAggregation(Aggregation):
             index = ptr2index(ptr)
 
         index = ops.cast(index, dtype="int32")
-        dim_size = dim_size or (int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0)
+        if dim_size is None:  # a tensor while tracing; don't test its truth value
+            dim_size = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
 
         # Graph-wise softmax over groups
         max_val = segment_max(gate, index, num_segments=dim_size)

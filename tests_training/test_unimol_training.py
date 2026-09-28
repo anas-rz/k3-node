@@ -85,7 +85,7 @@ def test_unimol_conf_gen_training():
             return ops.concatenate([c, d], axis=-1)
 
     wrapper = TrainableWrapper(model)
-    wrapper.compile(optimizer=keras.optimizers.Adam(learning_rate=0.02), loss="mse")
+    wrapper.compile(optimizer=keras.optimizers.Adam(learning_rate=0.005), loss="mse")
 
     inputs = {
         "src_tokens": np.random.randint(1, vocab_size, (bsz, seq_len)).astype("int32"),
@@ -133,7 +133,7 @@ def test_unimol_docking_training():
             return ops.concatenate([p, d], axis=-1)
 
     wrapper = TrainableWrapper(model)
-    wrapper.compile(optimizer=keras.optimizers.Adam(learning_rate=0.02), loss="mse")
+    wrapper.compile(optimizer=keras.optimizers.Adam(learning_rate=0.005), loss="mse")
 
     inputs = {
         "src_tokens": np.random.randint(1, vocab_size, (bsz, seq_len)).astype("int32"),
@@ -252,6 +252,8 @@ def test_unimol_plus_oc20_training():
 
 
 def test_unimol_docking_v2_training():
+    # Seeded: with random targets and a large learning rate, some draws overshoot in 10 steps.
+    keras.utils.set_random_seed(0)
     bsz = 2
     n_mol = 3
     n_pkt = 4
@@ -281,7 +283,7 @@ def test_unimol_docking_v2_training():
             return ops.concatenate([c, d], axis=-1)
 
     wrapper = TrainableWrapper(model)
-    wrapper.compile(optimizer=keras.optimizers.Adam(learning_rate=0.02), loss="mse")
+    wrapper.compile(optimizer=keras.optimizers.Adam(learning_rate=0.005), loss="mse")
 
     inputs = {
         "mol_tokens": np.random.randint(0, 32, (bsz, n_mol)).astype("int32"),

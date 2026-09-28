@@ -122,8 +122,9 @@ class MemPooling(layers.Layer):
         # Transpose S to [B, N, K, H] and multiply by [H, 1]
         S_perm = ops.transpose(S, (0, 2, 3, 1))  # [B, N, K, H]
         S_conv = ops.squeeze(ops.matmul(S_perm, self.conv_weight), axis=-1)  # [B, N, K]
-        # [B, N, K]; with a single cluster every node belongs to it fully
-        S = ops.softmax(S_conv, axis=-1) if K > 1 else ops.ones_like(S_conv)
+        # [B, N, K]. With one cluster the softmax is 1 with zero gradient (as in PyG); `0 * S_conv`
+        # keeps the keys and conv weights in the graph, so Keras doesn't warn about them.
+        S = ops.softmax(S_conv, axis=-1) if K > 1 else 1.0 + 0.0 * S_conv
 
         mask_f = ops.cast(ops.reshape(mask, (B, N, 1)), S.dtype)
         S = S * mask_f

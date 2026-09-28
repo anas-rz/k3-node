@@ -21,6 +21,12 @@ from k3_node import ...
 ```
 """
 
+import warnings
+
+# Index tensors are requested as int64; without `jax_enable_x64`, JAX stores them as int32
+# (which is all graphs of this size need) and would warn on every conversion.
+warnings.filterwarnings("ignore", message="Explicitly requested dtype int64", category=UserWarning)
+
 from k3_node import data
 from k3_node.data import Data, Batch
 from k3_node import datasets

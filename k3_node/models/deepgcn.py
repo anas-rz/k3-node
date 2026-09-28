@@ -77,6 +77,9 @@ class DeepGCNLayer(keras.layers.Layer):
         self.dropout_rate = dropout
         self.ckpt_grad = ckpt_grad
         self.dropout = keras.layers.Dropout(dropout) if dropout > 0.0 else None
+        # No weights of its own; the wrapped layers build themselves on first use (PyG's examples
+        # sometimes only call `layer.conv` / `layer.norm` of a block).
+        self.built = True
 
     def reset_parameters(self):
         r"""Resets all learnable parameters of the module."""

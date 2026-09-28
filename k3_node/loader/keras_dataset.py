@@ -125,6 +125,11 @@ def to_keras_batch(
         value = getattr(data, key, None)
         if key not in fields and value is not None and _as_array(value) is not None:
             fields[key] = _as_array(value)
+    if "batch" in fields and fields["batch"].shape[0] == 0:
+        # Graphs without nodes (e.g. batches of events): an empty `batch` would come first and
+        # make Keras weight the reported loss by 0.
+        fields.pop("batch")
+        fields.pop("ptr", None)
     inputs = _graph_batch_type(tuple(fields))(**fields)
 
     y = _as_array(attrs.get(target))
@@ -214,6 +219,39 @@ class KerasLoaderMixin(keras.utils.PyDataset):
         self._keras_iter = None
 
 
+def _patch_tf_signature():
+    """On TensorFlow, Keras fixes every tensor size that is the same in the first few batches it
+    reads (except the first axis). A sampling loader with fewer batches than that (e.g. a single
+    validation batch) returns different subgraphs on every call, so Keras would fix sizes that
+    change later. For K3-Node's loaders, the first batches are therefore read at least twice:
+    sizes that vary between calls become variable, and deterministic batches keep static shapes.
+    Falls back to Keras' behavior if its internals change."""
+    try:
+        from keras.src.trainers.data_adapters import data_adapter_utils
+        from keras.src.trainers.data_adapters.py_dataset_adapter import PyDatasetAdapter
+    except ImportError:
+        return
+    if getattr(PyDatasetAdapter, "_k3_node_patched", False):
+        return
+    original = PyDatasetAdapter.get_tf_dataset
+
+    def get_tf_dataset(self):
+        dataset = getattr(self, "py_dataset", None)
+        if getattr(self, "_output_signature", "missing") is None and isinstance(dataset, KerasLoaderMixin):
+            try:
+                num_samples = max(data_adapter_utils.NUM_BATCHES_FOR_TENSOR_SPEC, 2)
+                num_batches = dataset.num_batches or num_samples
+                # e.g. 3 samples of a 1-batch loader read batch 0 three times
+                batches = [self._standardize_batch(dataset[i % num_batches]) for i in range(num_samples)]
+                self._output_signature = data_adapter_utils.get_tensor_spec(batches)
+            except Exception:
+                self._output_signature = None
+        return original(self)
+
+    PyDatasetAdapter.get_tf_dataset = get_tf_dataset
+    PyDatasetAdapter._k3_node_patched = True
+
+
 class FullGraphDataset(keras.utils.PyDataset):
     r"""Feeds one whole graph to ``model.fit`` / ``evaluate`` / ``predict`` as a single batch.
 
@@ -290,3 +328,7 @@ def add_negative_edges(data, ratio: float = 1.0):
 def loader_bases(base: type) -> tuple:
     """Base classes for a graph loader: its data-loader base plus :class:`KerasLoaderMixin`."""
     return (base, KerasLoaderMixin) if base is not object else (KerasLoaderMixin,)
+
+
+if keras.config.backend() == "tensorflow":
+    _patch_tf_signature()

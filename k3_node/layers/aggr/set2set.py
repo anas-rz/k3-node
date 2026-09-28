@@ -55,7 +55,8 @@ class Set2Set(Aggregation):
         self.assert_two_dimensional_input(x, dim)
 
         index = ops.cast(index, dtype="int32")
-        dim_size = dim_size or (int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0)
+        if dim_size is None:  # a tensor while tracing; don't test its truth value
+            dim_size = int(ops.max(index)) + 1 if ops.shape(index)[0] > 0 else 0
 
         # Initial hidden states: [dim_size, in_channels]
         h = [

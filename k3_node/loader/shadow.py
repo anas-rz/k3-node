@@ -53,8 +53,10 @@ class ShaDowKHopSampler(*loader_bases(BaseDataLoader)):
                 node_idx = np.arange(data.num_nodes)
         elif torch is not None and isinstance(node_idx, Tensor) and node_idx.dtype == torch.bool:
             node_idx = node_idx.nonzero(as_tuple=False).view(-1)
-        elif isinstance(node_idx, np.ndarray) and node_idx.dtype == bool:
-            node_idx = np.nonzero(node_idx)[0]
+        elif not (torch is not None and isinstance(node_idx, Tensor)):
+            node_idx = np.asarray(to_numpy(node_idx))  # NumPy, TF or JAX
+            if node_idx.dtype == bool:
+                node_idx = np.nonzero(node_idx)[0]
 
         self.node_idx = node_idx
         idx_list = node_idx.tolist() if hasattr(node_idx, 'tolist') else list(node_idx)

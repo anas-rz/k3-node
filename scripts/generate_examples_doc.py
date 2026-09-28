@@ -21,6 +21,11 @@ COLAB_URL = "https://colab.research.google.com/github/anas-rz/k3-node/blob/main"
 
 # Display metadata for each examples/<slug>/ subdirectory.
 CATEGORY_META = {
+    "getting_started": {
+        "title": "Getting Started",
+        "icon": ":material-rocket-launch:",
+        "description": "Train, evaluate and predict with the high-level task APIs in a few lines.",
+    },
     "node_classification": {
         "title": "Node Classification",
         "icon": ":material-graph:",
@@ -29,7 +34,7 @@ CATEGORY_META = {
     "large_scale_training": {
         "title": "Large-Scale & Scalable Training",
         "icon": ":material-server-network:",
-        "description": "Sampling, partitioning, and OGB-scale techniques for training GNNs on big graphs.",
+        "description": "Sampling, partitioning, and mini-batching techniques for training GNNs on graphs too big for one step.",
     },
     "inductive_learning": {
         "title": "Inductive Learning",
@@ -54,7 +59,7 @@ CATEGORY_META = {
     "molecular_property_prediction": {
         "title": "Molecular Property Prediction",
         "icon": ":material-molecule:",
-        "description": "Property prediction on molecular graphs (QM9, ZINC, MoleculeNet).",
+        "description": "Property prediction on molecular graphs (QM9, MoleculeNet), including pretrained DimeNet and SchNet.",
     },
     "point_cloud_3d": {
         "title": "Point Cloud & 3D",
@@ -103,7 +108,38 @@ def get_category(path: str) -> str:
     """Derive the category slug from the notebook's parent directory under examples/."""
     rel = os.path.relpath(path, "examples")
     parts = rel.split(os.sep)
-    return parts[0] if len(parts) > 1 else ""
+    return parts[0] if len(parts) > 1 else "getting_started"
+
+
+_DATASET_RE = re.compile(r'\b([A-Z]\w*)\(\s*"data/[^"]*"(?:\s*,\s*(?:name=)?"([^"]+)")?')
+
+
+def _from_notebook(path, title, description, dataset, layer):
+    """Title, one-sentence description, dataset and main layers, read from the notebook itself
+    (its first markdown cell and its code), so the docs follow the notebooks."""
+    try:
+        with open(path) as f:
+            cells = json.load(f)["cells"]
+    except (OSError, ValueError, KeyError):
+        return title, description, dataset, layer
+    markdown = ["".join(c["source"]) for c in cells if c["cell_type"] == "markdown"]
+    code = "\n".join("".join(c["source"]) for c in cells if c["cell_type"] == "code")
+    if markdown and markdown[0].startswith("# "):
+        head, _, rest = markdown[0].partition("\n")
+        title = head[2:].strip()
+        intro = " ".join(rest.strip().split("\n\n")[0].split())
+        intro = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", intro)  # markdown links -> text
+        if intro:
+            description = re.split(r"(?<![ie]\.[eg]\.)(?<=[.!?])\s", intro, maxsplit=1)[0]
+    found = _DATASET_RE.findall(code)
+    if found:
+        cls, name = found[0]
+        dataset = f"{name} ({cls})" if name else cls
+    imported = re.findall(r"from k3_node\.(?:layers|models) import ([^\n]+)", code)
+    names = [n.strip() for line in imported for n in line.split(",") if n.strip()[:1].isupper()]
+    if names:
+        layer = " · ".join(names[:2])
+    return title, description, dataset, layer
 
 
 def get_example_meta(path: str) -> dict:
@@ -145,6 +181,7 @@ def get_example_meta(path: str) -> dict:
         layer = "GNN"
         icon = ":material-cube-outline:"
 
+    title, description, dataset, layer = _from_notebook(path, title, description, dataset, layer)
     return {
         "title": title,
         "description": description,
@@ -327,7 +364,8 @@ def generate_all():
     ]
 
     sorted_categories = sorted(
-        examples_by_category, key=lambda c: CATEGORY_META.get(c, {}).get("title", c)
+        examples_by_category,
+        key=lambda c: (c != "getting_started", CATEGORY_META.get(c, {}).get("title", c)),
     )
     for category in sorted_categories:
         examples_list = examples_by_category[category]

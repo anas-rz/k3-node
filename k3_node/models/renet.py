@@ -123,12 +123,12 @@ class RENet(keras.Model):
         h_sub_scatter = self.mean_aggr(
             ent_h_sub, index=h_sub_t, dim_size=batch_size * seq_len, dim=0
         )
-        h_sub = ops.reshape(h_sub_scatter, (batch_size, seq_len, -1))
+        h_sub = ops.reshape(h_sub_scatter, (-1, seq_len, self.hidden_channels))  # static feature size
 
         h_obj_scatter = self.mean_aggr(
             ent_h_obj, index=h_obj_t, dim_size=batch_size * seq_len, dim=0
         )
-        h_obj = ops.reshape(h_obj_scatter, (batch_size, seq_len, -1))
+        h_obj = ops.reshape(h_obj_scatter, (-1, seq_len, self.hidden_channels))  # static feature size
 
         sub_emb = ops.take(self.ent, sub, axis=0)
         rel_emb = ops.take(self.rel, rel, axis=0)

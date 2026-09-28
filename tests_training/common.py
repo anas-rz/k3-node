@@ -805,7 +805,7 @@ def get_layer_test(layer_name):
                         pooled = k3_layers.global_add_pool(x_p, batch_p, size=2)  # two graphs
                         return self.post(pooled)
                     elif layer_name == "MemPooling":
-                        out = self.layer(h, inputs["batch"])
+                        out = self.layer(h, inputs["batch"], batch_size=2)  # static for jit
                         return self.post(out[0] if isinstance(out, (list, tuple)) else out)
                     elif layer_name == "DMoNPooling":
                         x_dense = ops.expand_dims(h, 0)
