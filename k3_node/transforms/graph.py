@@ -967,16 +967,26 @@ class AddRandomWalkPE(BaseTransform):
 
 @functional_transform("add_gpse")
 class AddGPSE(BaseTransform):
-    r"""Adds GPSE encodings."""
+    r"""Adds the GPSE encodings of a pre-trained :class:`~k3_node.models.GPSE` model to every graph,
+    as ``pestat_GPSE`` (see :func:`~k3_node.models.gpse.precompute_gpse` to process a whole
+    dataset at once, which is faster).
 
-    def __init__(self, dim_in: int = 20, dim_out: int = 51, **kwargs):
-        self.dim_in = dim_in
-        self.dim_out = dim_out
+    Args:
+        model (GPSE): A pre-trained model, e.g. ``GPSE.from_pretrained("molpcba")``.
+        use_vn (bool): Add a virtual node while encoding, as during pre-training. (default: ``True``)
+        rand_type (str): The random input features (``"NormalSE"``, ``"UniformSE"`` or
+            ``"BernoulliSE"``). (default: ``"NormalSE"``)
+    """
+
+    def __init__(self, model, use_vn: bool = True, rand_type: str = "NormalSE"):
+        self.model = model
+        self.use_vn = use_vn
+        self.rand_type = rand_type
 
     def forward(self, data: Data) -> Data:
-        num_nodes = data.num_nodes or 1
-        pe = np.zeros((num_nodes, self.dim_out), dtype=np.float32)
-        data.gpse = match_tensor(pe, getattr(data, "x", getattr(data, "edge_index", None)), dtype="float32")
+        from k3_node.models.gpse import gpse_encodings
+
+        data.pestat_GPSE = gpse_encodings(self.model, [data], self.use_vn, self.rand_type)[0]
         return data
 
     def __repr__(self) -> str:

@@ -369,3 +369,116 @@ class SchNet(K3NodeHubMixin, keras.Model):
             out = self.scale * out
 
         return out
+
+
+QM9_TARGETS = {0: 'dipole_moment', 1: 'isotropic_polarizability', 2: 'homo', 3: 'lumo', 4: 'gap',
+               5: 'electronic_spatial_extent', 6: 'zpve', 7: 'energy_U0', 8: 'energy_U', 9: 'enthalpy_H',
+               10: 'free_energy', 11: 'heat_capacity'}
+_DEBYE, _BOHR = 0.20819433442462576, 0.5291772105638411  # ase.units.Debye and ase.units.Bohr
+
+
+def _load_schnetpack_model(path):
+    """Reads a pickled schnetpack model without schnetpack: its classes are replaced by stand-ins
+    that keep the modules' parameters (``_parameters``, ``_buffers``, ``_modules``)."""
+    import pickle
+    import warnings
+
+    import torch
+
+    class Stub:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __setstate__(self, state):
+            self.__dict__.update(state if isinstance(state, dict) else {"_state": state})
+
+    class StubUnpickler(pickle.Unpickler):
+        def find_class(self, module, name):
+            if module.startswith(("schnetpack", "ase")):
+                return type(name, (Stub,), {})
+            return super().find_class(module, name)
+
+    class PickleModule:
+        Unpickler = StubUnpickler
+        load = pickle.load
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        return torch.load(path, map_location="cpu", pickle_module=PickleModule, weights_only=False)
+
+
+def _schnet_from_qm9_pretrained(cls, root: str, dataset, target: int):
+    r"""Returns a :class:`SchNet` pre-trained on QM9 target ``target`` (the official SchNetPack
+    models, as in PyG), and the train/validation/test split it was trained with. Reading the
+    checkpoint needs PyTorch (not SchNetPack)."""
+    import os
+    import os.path as osp
+
+    from k3_node.data.download import download_url
+    from k3_node.data.extract import extract_zip
+
+    assert 0 <= target <= 11
+    root = osp.expanduser(root)
+    if not osp.exists(osp.join(root, 'trained_schnet_models')):
+        path = download_url('http://www.quantum-machine.org/datasets/trained_schnet_models.zip', root)
+        extract_zip(path, root)
+        os.unlink(path)
+    folder = osp.join(root, 'trained_schnet_models', f'qm9_{QM9_TARGETS[target]}')
+
+    # Keep only the characterized molecules of the split, as positions in `dataset`
+    split = np.load(osp.join(folder, 'split.npz'))
+    idx = np.asarray(ops.convert_to_numpy(dataset._data.idx)).reshape(-1)
+    assoc = np.full(int(idx.max()) + 1, -1)
+    assoc[idx] = np.arange(len(idx))
+    subsets = [assoc[s[np.isin(s, idx)]] for s in (split['train_idx'], split['val_idx'], split['test_idx'])]
+
+    state = _load_schnetpack_model(osp.join(folder, 'best_model'))
+
+    def mod(obj, *path):
+        for name in path:
+            obj = obj._modules[name]
+        return obj
+
+    def param(obj, name):
+        value = obj._parameters.get(name, None)
+        value = obj._buffers[name] if value is None else value
+        return value.detach().cpu().numpy()
+
+    output = mod(state, 'output_modules', '0')
+    dipole = type(output).__name__ == 'DipoleMoment'
+    has_atomref = output._modules.get('atomref') is not None
+    atomref = param(mod(output, 'atomref'), 'weight') if has_atomref else None
+    net = cls(hidden_channels=128, num_filters=128, num_interactions=6, num_gaussians=50, cutoff=10.0,
+              dipole=dipole, atomref=atomref)
+    net(np.array([6, 1, 1, 1, 1]), np.array([[0, 0, 0], [0.6, 0.6, 0.6], [-0.6, -0.6, 0.6], [-0.6, 0.6, -0.6],
+                                            [0.6, -0.6, -0.6]], dtype="float32"))  # create the weights
+
+    def dense(layer, source, bias=True):  # torch stores (out, in); Keras (in, out)
+        layer.kernel.assign(param(source, 'weight').T)
+        if bias:
+            layer.bias.assign(param(source, 'bias'))
+
+    rep = mod(state, 'representation')
+    net.embedding.embeddings.assign(param(mod(rep, 'embedding'), 'weight'))
+    for i, block in enumerate(net.interactions):
+        src = mod(rep, 'interactions', str(i))
+        dense(block.mlp.layers[0], mod(src, 'filter_network', '0'))
+        dense(block.mlp.layers[2], mod(src, 'filter_network', '1'))
+        dense(block.lin, mod(src, 'dense'))
+        dense(block.conv.lin1, mod(src, 'cfconv', 'in2f'), bias=False)
+        dense(block.conv.lin2, mod(src, 'cfconv', 'f2out'))
+    out_net = mod(output, 'out_net', '1', 'out_net')
+    dense(net.lin1, mod(out_net, '0'))
+    dense(net.lin2, mod(out_net, '1'))
+    average = getattr(output._modules.get('atom_pool'), 'average', False)
+    net.readout = 'mean' if average is True else 'add'
+    standardize = mod(output, 'standardize')
+    net.mean = float(param(standardize, 'mean').reshape(-1)[0])
+    net.std = float(param(standardize, 'stddev').reshape(-1)[0])
+    units = [1.0] * 12
+    units[0], units[1], units[5] = _DEBYE, _BOHR ** 3, _BOHR ** 2
+    net.scale = 1.0 / units[target]
+    return net, tuple(dataset[s] for s in subsets)
+
+
+SchNet.from_qm9_pretrained = classmethod(_schnet_from_qm9_pretrained)

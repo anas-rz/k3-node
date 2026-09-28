@@ -94,17 +94,20 @@ class LastAggregator(keras.layers.Layer):
         ```
     """
     def call(self, msg, index, t, dim_size: int):
-        t_np = ops.convert_to_numpy(t)
-        index_np = ops.convert_to_numpy(index).astype(np.int64)
-        msg_np = ops.convert_to_numpy(msg)
+        # Which message is the latest per node is decided on the host (it does not depend on the
+        # model); the chosen messages are gathered with ops, so gradients reach them.
+        from k3_node.ops.host import to_numpy
 
-        out_np = np.zeros((dim_size, msg_np.shape[-1]), dtype=msg_np.dtype)
-        max_t = np.full((dim_size,), -1e18, dtype=t_np.dtype)
-        for m, idx, ti in zip(msg_np, index_np, t_np):
-            if ti > max_t[idx]:
-                max_t[idx] = ti
-                out_np[idx] = m
-        return ops.convert_to_tensor(out_np, dtype=msg.dtype)
+        t_np = np.asarray(to_numpy(t)).reshape(-1)
+        index_np = np.asarray(to_numpy(index)).astype(np.int64).reshape(-1)
+        latest = np.full(dim_size, -1, dtype=np.int64)
+        order = np.lexsort((np.arange(len(t_np)), t_np))  # by time, ties: later message wins
+        latest[index_np[order]] = order
+        has_msg = latest >= 0
+        if msg.shape[0] == 0:  # no stored messages yet
+            return ops.zeros((dim_size, msg.shape[-1]), dtype=msg.dtype)
+        out = ops.take(msg, np.maximum(latest, 0), axis=0)
+        return out * ops.cast(ops.convert_to_tensor(has_msg[:, None]), out.dtype)
 
 
 class MeanAggregator(keras.layers.Layer):
@@ -285,99 +288,95 @@ class TGNMemory(keras.layers.Layer):
         self.reset_state()
 
     def reset_state(self):
+        r"""Starts again from an empty memory and message stores."""
         self.memory.assign(ops.zeros((self.num_nodes, self.memory_dim), dtype=self.memory.dtype))
         self.last_update.assign(ops.zeros((self.num_nodes,), dtype=self.last_update.dtype))
         self._reset_message_store()
 
     def _reset_message_store(self):
-        self.msg_s_store = {j: ([], [], [], []) for j in range(self.num_nodes)}
-        self.msg_d_store = {j: ([], [], [], []) for j in range(self.num_nodes)}
+        empty = (np.zeros(0, np.int64), np.zeros(0, np.int64), np.zeros(0, np.float32),
+                 np.zeros((0, self.raw_msg_dim), np.float32))
+        self.msg_s_store = {j: empty for j in range(self.num_nodes)}
+        self.msg_d_store = {j: empty for j in range(self.num_nodes)}
+
+    # Training mode, as in PyG: in training mode the forward pass computes the memory updated by
+    # the stored messages (differentiable); switching to evaluation flushes all pending updates.
+    training_mode = True
+
+    def train(self, mode: bool = True):
+        if self.training_mode and not mode:
+            self._update_memory(np.arange(self.num_nodes))
+            self._reset_message_store()
+        self.training_mode = mode
+        return self
+
+    def eval(self):
+        return self.train(False)
 
     def call(self, n_id):
-        mem = ops.take(self.memory, n_id, axis=0)
-        last_up = ops.take(self.last_update, n_id, axis=0)
-        return mem, last_up
+        r"""Returns the memory and last update time of the nodes ``n_id``."""
+        if self.training_mode:
+            return self._get_updated_memory(np.asarray(ops.convert_to_numpy(n_id)).astype(np.int64))
+        return ops.take(self.memory, n_id, axis=0), ops.take(self.last_update, n_id, axis=0)
 
     def update_state(self, src, dst, t, raw_msg):
-        src_np = ops.convert_to_numpy(src).astype(np.int64)
-        dst_np = ops.convert_to_numpy(dst).astype(np.int64)
-        t_np = ops.convert_to_numpy(t).astype(np.float32)
-        msg_np = ops.convert_to_numpy(raw_msg).astype(np.float32)
+        r"""Updates the memory with the new events ``(src, dst, t, raw_msg)``."""
+        src, dst = (np.asarray(ops.convert_to_numpy(a)).astype(np.int64) for a in (src, dst))
+        t = np.asarray(ops.convert_to_numpy(t)).astype(np.float32)
+        raw_msg = np.asarray(ops.convert_to_numpy(raw_msg)).astype(np.float32)
+        n_id = np.unique(np.concatenate([src, dst]))
+        if self.training_mode:
+            self._update_memory(n_id)
+            self._update_msg_store(src, dst, t, raw_msg, self.msg_s_store)
+            self._update_msg_store(dst, src, t, raw_msg, self.msg_d_store)
+        else:
+            self._update_msg_store(src, dst, t, raw_msg, self.msg_s_store)
+            self._update_msg_store(dst, src, t, raw_msg, self.msg_d_store)
+            self._update_memory(n_id)
 
-        # Update memory for interacting nodes
-        n_id_unique = np.unique(np.concatenate([src_np, dst_np]))
-        self._update_memory(n_id_unique)
+    def detach(self):
+        r"""Kept for PyG compatibility: the stored memory is never differentiated."""
 
-        # Store messages
-        for s, d, ti, m in zip(src_np, dst_np, t_np, msg_np):
-            self.msg_s_store[s][0].append(s)
-            self.msg_s_store[s][1].append(d)
-            self.msg_s_store[s][2].append(ti)
-            self.msg_s_store[s][3].append(m)
+    @staticmethod
+    def _update_msg_store(src, dst, t, raw_msg, store):
+        # every node keeps the messages of the latest batch it took part in
+        order = np.argsort(src, kind="stable")
+        nodes, starts = np.unique(src[order], return_index=True)
+        for node, idx in zip(nodes, np.split(order, starts[1:])):
+            store[int(node)] = (src[idx], dst[idx], t[idx], raw_msg[idx])
 
-            self.msg_d_store[d][0].append(d)
-            self.msg_d_store[d][1].append(s)
-            self.msg_d_store[d][2].append(ti)
-            self.msg_d_store[d][3].append(m)
+    def _compute_msg(self, n_id, store, module):
+        src, dst, t, raw = (np.concatenate(parts) for parts in zip(*[store[int(i)] for i in n_id]))
+        t_rel = ops.convert_to_tensor(t) - ops.take(self.last_update, src, axis=0)
+        t_enc = self.time_enc(t_rel)
+        msg = module(ops.take(self.memory, src, axis=0), ops.take(self.memory, dst, axis=0),
+                     ops.convert_to_tensor(raw), t_enc)
+        return msg, t, src
 
-    def _update_memory(self, n_id_np):
-        if len(n_id_np) == 0:
+    def _get_updated_memory(self, n_id):
+        assoc = np.full(self.num_nodes, -1, dtype=np.int64)
+        assoc[n_id] = np.arange(len(n_id))
+        msg_s, t_s, src_s = self._compute_msg(n_id, self.msg_s_store, self.msg_s_module)
+        msg_d, t_d, src_d = self._compute_msg(n_id, self.msg_d_store, self.msg_d_module)
+        idx = np.concatenate([src_s, src_d])
+        t = np.concatenate([t_s, t_d])
+        aggr = self.aggr_module(ops.concatenate([msg_s, msg_d], axis=0), assoc[idx], t, dim_size=len(n_id))
+        memory, _ = self.gru(aggr, [ops.take(self.memory, n_id, axis=0)])
+        latest = np.full(self.num_nodes, -np.inf, dtype=np.float32)
+        np.maximum.at(latest, idx, t)
+        has = np.isfinite(latest[n_id])
+        # as PyG: the last update time is the latest message time (0 for nodes without messages)
+        last = np.where(has, latest[n_id], 0.0).astype(np.float32)
+        return memory, ops.convert_to_tensor(last)
+
+    def _update_memory(self, n_id):
+        n_id = np.asarray(n_id).astype(np.int64)
+        if len(n_id) == 0:
             return
-
-        # Compute messages for n_id
-        all_msgs = []
-        all_indices = []
-        all_times = []
-
-        assoc = {int(node): i for i, node in enumerate(n_id_np)}
-
-        for store, module in [(self.msg_s_store, self.msg_s_module), (self.msg_d_store, self.msg_d_module)]:
-            for node in n_id_np:
-                s_list, d_list, t_list, m_list = store[int(node)]
-                if len(s_list) > 0:
-                    s_tensor = ops.convert_to_tensor(np.array(s_list, dtype=np.int64), dtype="int64")
-                    d_tensor = ops.convert_to_tensor(np.array(d_list, dtype=np.int64), dtype="int64")
-                    t_tensor = ops.convert_to_tensor(np.array(t_list, dtype=np.float32), dtype="float32")
-                    m_tensor = ops.convert_to_tensor(np.array(m_list, dtype=np.float32), dtype="float32")
-
-                    t_last = ops.take(self.last_update, s_tensor, axis=0)
-                    t_rel = t_tensor - t_last
-                    t_enc = self.time_enc(t_rel)
-
-                    mem_s = ops.take(self.memory, s_tensor, axis=0)
-                    mem_d = ops.take(self.memory, d_tensor, axis=0)
-                    computed_msg = module(mem_s, mem_d, m_tensor, t_enc)
-
-                    all_msgs.append(computed_msg)
-                    target_assoc = np.array([assoc[int(x)] for x in s_list], dtype=np.int64)
-                    all_indices.append(ops.convert_to_tensor(target_assoc, dtype="int64"))
-                    all_times.append(t_tensor)
-
-        if len(all_msgs) > 0:
-            cat_msgs = ops.concatenate(all_msgs, axis=0)
-            cat_indices = ops.concatenate(all_indices, axis=0)
-            cat_times = ops.concatenate(all_times, axis=0)
-
-            aggr = self.aggr_module(cat_msgs, cat_indices, cat_times, len(n_id_np))
-            n_id_tensor = ops.convert_to_tensor(n_id_np, dtype="int64")
-            cur_mem = ops.take(self.memory, n_id_tensor, axis=0)
-            new_mem, _ = self.gru(aggr, [cur_mem])
-
-            # Update memory tensor
-            mem_np = ops.convert_to_numpy(self.memory)
-            mem_np[n_id_np] = ops.convert_to_numpy(new_mem)
-            self.memory.assign(ops.convert_to_tensor(mem_np, dtype=self.memory.dtype))
-
-            # Update last_update tensor
-            times_np = ops.convert_to_numpy(cat_times)
-            indices_np = ops.convert_to_numpy(cat_indices)
-            last_up_np = ops.convert_to_numpy(self.last_update)
-            for idx, ti in zip(indices_np, times_np):
-                node = n_id_np[idx]
-                last_up_np[node] = max(last_up_np[node], ti)
-            self.last_update.assign(ops.convert_to_tensor(last_up_np, dtype=self.last_update.dtype))
-
-            # Clear processed messages
-            for node in n_id_np:
-                self.msg_s_store[int(node)] = ([], [], [], [])
-                self.msg_d_store[int(node)] = ([], [], [], [])
+        memory, last_update = self._get_updated_memory(n_id)
+        memory_np = np.asarray(ops.convert_to_numpy(self.memory)).copy()
+        memory_np[n_id] = np.asarray(ops.convert_to_numpy(ops.stop_gradient(memory)))
+        self.memory.assign(memory_np)
+        last_np = np.asarray(ops.convert_to_numpy(self.last_update)).copy()
+        last_np[n_id] = np.asarray(ops.convert_to_numpy(last_update))
+        self.last_update.assign(last_np)

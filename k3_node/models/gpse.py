@@ -1,4 +1,5 @@
 from typing import Optional, List, Union
+import numpy as np
 import keras
 from keras import ops
 
@@ -541,3 +542,97 @@ class GPSENodeEncoder(keras.layers.Layer):
         h = self.linear_x(x) if self.expand_x else x
         return ops.concatenate([h, pos_enc], axis=1)
 
+
+
+GPSE_URLS = {
+    'molpcba': 'https://zenodo.org/record/8145095/files/gpse_model_molpcba_1.0.pt',
+    'zinc': 'https://zenodo.org/record/8145095/files/gpse_model_zinc_1.0.pt',
+    'pcqm4mv2': 'https://zenodo.org/record/8145095/files/gpse_model_pcqm4mv2_1.0.pt',
+    'geom': 'https://zenodo.org/record/8145095/files/gpse_model_geom_1.0.pt',
+    'chembl': 'https://zenodo.org/record/8145095/files/gpse_model_chembl_1.0.pt',
+}
+
+
+def _gpse_from_pretrained(cls, name: str, root: str = 'GPSE_pretrained'):
+    r"""Returns a :class:`GPSE` pre-trained on ``name`` (``"molpcba"``, ``"zinc"``, ``"pcqm4mv2"``,
+    ``"geom"`` or ``"chembl"``), with the authors' weights converted from PyTorch (reading them
+    needs PyTorch). The model returns the 512-dimensional node representations."""
+    import os
+    import os.path as osp
+
+    import torch
+
+    from k3_node.data.download import download_url
+
+    root = osp.expanduser(root)
+    os.makedirs(root, exist_ok=True)
+    path = osp.join(root, GPSE_URLS[name].rsplit('/', 1)[1])
+    if not osp.exists(path):
+        path = download_url(GPSE_URLS[name], root)
+    state = torch.load(path, map_location='cpu', weights_only=False)['model_state']
+    state = {k.split('.', 1)[1]: v.detach().cpu().numpy() for k, v in state.items()}
+
+    model = cls()  # all pre-trained models use the default arguments
+    model(np.zeros((3, 20), 'float32'), np.array([[0, 1, 2], [1, 2, 0]]))  # create the weights
+
+    def batch_norm(bn, prefix):
+        bn.gamma.assign(state[f'{prefix}.weight'])
+        bn.beta.assign(state[f'{prefix}.bias'])
+        bn.moving_mean.assign(state[f'{prefix}.running_mean'])
+        bn.moving_variance.assign(state[f'{prefix}.running_var'])
+
+    for i, layer in enumerate(model.pre_mp.layers_list):
+        layer.layer.kernel.assign(state[f'pre_mp.Layer_{i}.layer.model.weight'].T)
+        batch_norm(layer.bn, f'pre_mp.Layer_{i}.post_layer.0')
+    for i, layer in enumerate(model.mp.layers_list):
+        prefix = f'mp.layer{i}.layer.model'
+        for lin in ['lin_key', 'lin_query', 'lin_value']:
+            getattr(layer.layer, lin).kernel.assign(state[f'{prefix}.{lin}.weight'].T)
+            getattr(layer.layer, lin).bias.assign(state[f'{prefix}.{lin}.bias'])
+        layer.layer.lin_skip.kernel.assign(state[f'{prefix}.lin_skip.weight'].T)
+        batch_norm(layer.bn, f'mp.layer{i}.post_layer.0')
+    return model
+
+
+GPSE.from_pretrained = classmethod(_gpse_from_pretrained)
+
+
+def _random_features(n, dim, rand_type, bernoulli_threshold=0.5):
+    if rand_type == 'NormalSE':
+        return np.random.normal(0.0, 1.0, size=(n, dim)).astype('float32')
+    if rand_type == 'UniformSE':
+        return np.random.uniform(0.0, 1.0, size=(n, dim)).astype('float32')
+    if rand_type == 'BernoulliSE':
+        return (np.random.uniform(0.0, 1.0, size=(n, dim)) < bernoulli_threshold).astype('float32')
+    raise ValueError(f'Unknown rand_type {rand_type!r}')
+
+
+def gpse_encodings(model, graphs, use_vn: bool = True, rand_type: str = 'NormalSE', dim_in: int = 20):
+    r"""Computes the GPSE encodings of a list of graphs at once: the model reads random node
+    features (plus a virtual node connected to all nodes if ``use_vn``) and returns one
+    representation per node. Returns one ``[num_nodes, dim]`` array per graph."""
+    from k3_node.data import Batch, Data
+    from k3_node.transforms import VirtualNode
+
+    structures = []
+    for g in graphs:
+        s = Data(edge_index=np.asarray(ops.convert_to_numpy(g.edge_index)), num_nodes=g.num_nodes)
+        structures.append(VirtualNode()(s) if use_vn else s)
+    batch = Batch.from_data_list(structures)
+    ptr = np.asarray(ops.convert_to_numpy(batch.ptr))
+    x = _random_features(int(ptr[-1]), dim_in, rand_type)
+    if use_vn:
+        x[ptr[1:] - 1] = 0  # the virtual nodes start from zero
+    out = np.asarray(ops.convert_to_numpy(model(x, batch.edge_index, training=False)))
+    return [out[start:end - (1 if use_vn else 0)] for start, end in zip(ptr[:-1], ptr[1:])]
+
+
+def precompute_gpse(model, dataset, use_vn: bool = True, rand_type: str = 'NormalSE', batch_size: int = 128):
+    r"""Returns the graphs of ``dataset`` as a list, each with its GPSE encodings in
+    ``pestat_GPSE`` (as PyG's ``precompute_GPSE``)."""
+    graphs = [dataset[i] for i in range(len(dataset))]
+    for start in range(0, len(graphs), batch_size):
+        chunk = graphs[start:start + batch_size]
+        for graph, enc in zip(chunk, gpse_encodings(model, chunk, use_vn, rand_type)):
+            graph.pestat_GPSE = enc
+    return graphs
