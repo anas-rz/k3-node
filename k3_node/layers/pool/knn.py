@@ -163,6 +163,9 @@ def _knn_indices(x, y, k, batch_x=None, batch_y=None, cosine=False, exclude_self
         except (TypeError, ValueError, NotImplementedError, RuntimeError):
             pass
 
+    if y is x and batch_x is not None and batch_y is batch_x:  # compiled knn_graph: per example
+        return _knn_graph_indices_traced(x, k, ops.cast(batch_x, "int32"), cosine, exclude_self)
+
     # Compiled: masked distances for chunks of query rows ([chunk, N] memory at a time)
     bx = ops.zeros((N,), "int32") if batch_x is None else ops.cast(batch_x, "int32")
     by = ops.zeros((M,), "int32") if batch_y is None else ops.cast(batch_y, "int32")
@@ -178,6 +181,27 @@ def _knn_indices(x, y, k, batch_x=None, batch_y=None, cosine=False, exclude_self
         _, idx = ops.top_k(-ops.where(mask, 1e9, dist), k=k, sorted=True)
         outs.append(idx)
     return outs[0] if len(outs) == 1 else ops.concatenate(outs, axis=0)
+
+
+def _knn_graph_indices_traced(x, k, batch, cosine, exclude_self):
+    """``_knn_indices(x, x, ...)`` for sizes only known at run time: distances within each example
+    (``[examples, max_points, max_points]``), like the eager path. Needs ``k`` <= points per example."""
+    from k3_node.layers.aggr.base import to_dense_batch
+    from k3_node.ops.segment import segment_sum
+
+    num_points = ops.shape(x)[0]
+    x_dense, mask = to_dense_batch(x, batch)
+    n = ops.shape(x_dense)[1]
+    dist = ops.where(ops.expand_dims(mask, 1), _pairwise(x_dense, x_dense, cosine), 1e9)
+    if exclude_self:
+        same = ops.expand_dims(ops.arange(n), 1) == ops.expand_dims(ops.arange(n), 0)
+        dist = ops.where(ops.expand_dims(same, 0), 1e9, dist)
+    _, idx = ops.top_k(-dist, k=k, sorted=True)  # local indices [examples, max_points, k]
+    counts = segment_sum(ops.ones_like(batch), batch, num_segments=num_points)
+    starts = ops.take(ops.cumsum(counts) - counts, batch, axis=0)  # first point of each point's example
+    local = ops.arange(num_points, dtype="int32") - starts
+    rows = ops.take(ops.reshape(idx, (-1, k)), batch * ops.cast(n, "int32") + local, axis=0)
+    return rows + ops.cast(ops.expand_dims(starts, 1), rows.dtype)
 
 
 def knn_graph(
