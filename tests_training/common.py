@@ -1,3 +1,4 @@
+import re
 import os
 import numpy as np
 import pytest
@@ -1122,7 +1123,8 @@ def _assert_layer_weights_trained(layer_name, layer, before):
     if "*" in allowed:
         assert any(changed), f"{layer_name}: none of its trainable weights received a gradient"
         return
-    unexpected = [p for p in stale if not any(a in p for a in allowed)]
+    # Keras numbers repeated layer names ("arma_conv_1"); match against the unnumbered path.
+    unexpected = [p for p in stale if not any(a in re.sub(r"_\d+(?=/|$)", "", p) for a in allowed)]
     assert not unexpected, f"{layer_name}: weights received no gradient during training: {unexpected}"
 
 
