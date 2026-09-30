@@ -1,0 +1,4836 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://anas-rz.github.io/k3-node/api/rag/">
+      
+      
+        <link rel="prev" href="../export/">
+      
+      
+        <link rel="next" href="../ops/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../images/logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>GraphRAG & KG-LLM - K3Node</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#graphrag-kg-llm-connectors" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="K3Node" class="md-header__button md-logo" aria-label="K3Node" data-md-component="logo">
+      
+  <img src="../../images/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            K3Node
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              GraphRAG & KG-LLM
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/anas-rz/k3-node" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    anas-rz/k3-node
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="K3Node" class="md-nav__button md-logo" aria-label="K3Node" data-md-component="logo">
+      
+  <img src="../../images/logo.png" alt="logo">
+
+    </a>
+    K3Node
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/anas-rz/k3-node" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    anas-rz/k3-node
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Backend Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/node_classification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Node Classification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/large_scale_training/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Large-Scale & Scalable Training
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/inductive_learning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inductive Learning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/link_prediction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Link Prediction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/knowledge_graphs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge Graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/graph_classification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Classification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/molecular_property_prediction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular Property Prediction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/point_cloud_3d/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Point Cloud & 3D
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/representation_learning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Representation Learning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/clustering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clustering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/utilities_and_misc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities & Misc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Convolution Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../attention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Attention Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../aggr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Aggregation Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../norm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Normalization Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pool/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pooling Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dense/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dense Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    High-Level Task APIs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knowledge Graph Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pretrained/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pretrained Foundation Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../materials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Materials & Crystal GNNs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Biological & Macromolecular Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Data Structures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datasets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../loader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Loaders & Samplers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../transforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Transforms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../etl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tabular-to-Graph ETL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hub/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hugging Face Hub
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Export & Runtimes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphRAG & KG-LLM
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphRAG & KG-LLM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-subgraph-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Subgraph Extraction
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Subgraph Extraction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extract_subgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_subgraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.extract_subgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract_subgraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kgentityretriever" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KGEntityRetriever
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.KGEntityRetriever" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KGEntityRetriever
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KGEntityRetriever">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.KGEntityRetriever.find_entities_in_text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find_entities_in_text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.KGEntityRetriever.get_entity_id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_entity_id
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.KGEntityRetriever.retrieve_subgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        retrieve_subgraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-graph-verbalization-prompt-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Graph Verbalization &amp; Prompt Formatting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Graph Verbalization &amp; Prompt Formatting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verbalize_subgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        verbalize_subgraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.verbalize_subgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        verbalize_subgraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#format_llm_prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        format_llm_prompt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.format_llm_prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        format_llm_prompt
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-subgraph-gnn-kge-encoders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Subgraph GNN &amp; KGE Encoders
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Subgraph GNN &amp; KGE Encoders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rgcnsubgraphencoder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RGCNSubGraphEncoder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.RGCNSubGraphEncoder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RGCNSubGraphEncoder
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RGCNSubGraphEncoder">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.RGCNSubGraphEncoder.call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        call
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.RGCNSubGraphEncoder.encode_subgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        encode_subgraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transeprefixencoder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TransEPrefixEncoder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.TransEPrefixEncoder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TransEPrefixEncoder
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TransEPrefixEncoder">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.TransEPrefixEncoder.call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        call
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.TransEPrefixEncoder.encode_subgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        encode_subgraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-connectors-virtual-prefix-projectors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Connectors &amp; Virtual Prefix Projectors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Connectors &amp; Virtual Prefix Projectors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graphprefixprojector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GraphPrefixProjector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.GraphPrefixProjector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GraphPrefixProjector
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GraphPrefixProjector">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.GraphPrefixProjector.call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        call
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kgllmconnector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KGLLMConnector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.KGLLMConnector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KGLLMConnector
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KGLLMConnector">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.KGLLMConnector.call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        call
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.KGLLMConnector.encode_subgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        encode_subgraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.KGLLMConnector.extend_attention_mask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extend_attention_mask
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.KGLLMConnector.inject_prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        inject_prefix
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-unified-end-to-end-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Unified End-to-End Pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Unified End-to-End Pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graphrag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GraphRAG
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.GraphRAG" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GraphRAG
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GraphRAG">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.GraphRAG.build_prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        build_prompt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.GraphRAG.encode_prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        encode_prefix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.GraphRAG.retrieve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        retrieve
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k3_node.rag.GraphRAG.verbalize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        verbalize
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Utilities & Ops
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    High-Level Task APIs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/etl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tabular-to-Graph ETL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/huggingface_hub/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hugging Face Hub
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/export_and_serving/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Export & Serving
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/graphrag_llm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphRAG & LLM Augmentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/finetuning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fine-Tuning Recipes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../checklist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Porting Checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="graphrag-kg-llm-connectors">GraphRAG &amp; KG-LLM Connectors</h1>
+<p>The <code>k3_node.rag</code> module provides a comprehensive suite of tools for connecting Knowledge Graphs to Large Language Models (LLMs) such as Meta Llama 3 and Mistral.</p>
+<hr />
+<h2 id="1-subgraph-extraction">1. Subgraph Extraction</h2>
+<h3 id="extract_subgraph">extract_subgraph</h3>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="k3_node.rag.extract_subgraph" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">k3_node</span><span class="o">.</span><span class="n">rag</span><span class="o">.</span><span class="n">extract_subgraph</span><span class="p">(</span><span class="n">entities</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">edge_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">edge_attr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_nodes_per_hop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">relabel_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_nodes</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Extract multi-hop enclosing or ego-subgraphs around retrieved entities.</p>
+<p>Given a knowledge graph or relational graph, this function expands <code>num_hops</code>
+around seed <code>entities</code>, keeping all induced edges, relation types, and node/edge
+attributes.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>entities</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="int">int</span>, <span title="typing.Sequence">Sequence</span>[<span title="int">int</span>], <span title="numpy.ndarray">ndarray</span>, <span title="any">any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Single node index or list/array of seed entity indices.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_index</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="numpy.ndarray">ndarray</span>, <span title="any">any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Graph connectivity tensor of shape <code>(2, num_edges)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_type</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Union">Union</span>[<span title="numpy.ndarray">ndarray</span>, <span title="any">any</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional 1D relation type tensor of shape <code>(num_edges,)</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_attr</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Union">Union</span>[<span title="numpy.ndarray">ndarray</span>, <span title="any">any</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional edge attribute tensor of shape <code>(num_edges, edge_dim)</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Union">Union</span>[<span title="numpy.ndarray">ndarray</span>, <span title="any">any</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional node feature tensor of shape <code>(total_nodes, in_channels)</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_hops</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of hops to expand around retrieved entities. (default: 2)</p>
+              </div>
+            </td>
+            <td>
+                  <code>2</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_nodes_per_hop</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional maximum number of neighboring nodes to keep
+per hop (useful to restrict explosion on hub entities).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>directed</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, only follows outgoing edges. If False, follows edges
+in both directions (standard for KG context expansion). (default: False)</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>relabel_nodes</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, relabels subgraph node IDs to <code>0..num_subgraph_nodes-1</code>.
+(default: True)</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_nodes</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional total number of nodes in graph. Inferred if not given.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="k3_node.rag.subgraph.SubgraphResult">SubgraphResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>SubgraphResult</code> containing relabeled edge_index, edge_type, features,</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="k3_node.rag.subgraph.SubgraphResult">SubgraphResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>and entity mappings.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><p><strong>Usage Example:</strong>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">keras</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">keras</span><span class="w"> </span><span class="kn">import</span> <span class="n">ops</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.rag</span><span class="w"> </span><span class="kn">import</span> <span class="n">extract_subgraph</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># A small knowledge graph with 5 nodes and 6 directed edges</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">edge_index</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int32"</span><span class="p">)</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">edge_type</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int32"</span><span class="p">)</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">x</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span> <span class="mi">16</span><span class="p">))</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Extract 1-hop enclosing subgraph around node 0</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">subgraph</span> <span class="o">=</span> <span class="n">extract_subgraph</span><span class="p">(</span><span class="n">entities</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge_index</span><span class="o">=</span><span class="n">edge_index</span><span class="p">,</span> <span class="n">edge_type</span><span class="o">=</span><span class="n">edge_type</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">num_hops</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nb">print</span><span class="p">(</span><span class="s2">"Nodes in subgraph:"</span><span class="p">,</span> <span class="n">subgraph</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nb">print</span><span class="p">(</span><span class="s2">"Subgraph edges:"</span><span class="p">,</span> <span class="n">subgraph</span><span class="o">.</span><span class="n">edge_index</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span></code></pre></div></p>
+<hr />
+<h3 id="kgentityretriever">KGEntityRetriever</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="k3_node.rag.KGEntityRetriever" class="doc doc-heading">
+            <code>k3_node.rag.KGEntityRetriever</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Knowledge Graph Entity and Subgraph Retriever for GraphRAG.</p>
+<p>Maintains entity name dictionaries and relation mappings, extracts seed entities
+from text queries, and retrieves enclosing multi-hop subgraphs.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>entity_to_id</code>
+            </td>
+            <td>
+                  <code><span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dictionary mapping entity strings to node integer IDs.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>relation_to_id</code>
+            </td>
+            <td>
+                  <code><span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dictionary mapping relation strings to edge_type integer IDs.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_index</code>
+            </td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="numpy.ndarray">ndarray</span>, <span title="any">any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Graph connectivity tensor of shape <code>(2, num_edges)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_type</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Union">Union</span>[<span title="numpy.ndarray">ndarray</span>, <span title="any">any</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional relation type tensor of shape <code>(num_edges,)</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_attr</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Union">Union</span>[<span title="numpy.ndarray">ndarray</span>, <span title="any">any</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional edge feature tensor.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Union">Union</span>[<span title="numpy.ndarray">ndarray</span>, <span title="any">any</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional node feature tensor.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.KGEntityRetriever.find_entities_in_text" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">find_entities_in_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Find matching known entity names mentioned in a query text.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.KGEntityRetriever.get_entity_id" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_entity_id</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Look up entity ID by exact name (case-insensitive fallback).</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.KGEntityRetriever.retrieve_subgraph" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">retrieve_subgraph</span><span class="p">(</span><span class="n">entities</span><span class="p">,</span> <span class="n">num_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_nodes_per_hop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Extract multi-hop subgraph around the specified entity names or IDs.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><p><strong>Usage Example:</strong>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.rag</span><span class="w"> </span><span class="kn">import</span> <span class="n">KGEntityRetriever</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">entity_to_id</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Aspirin"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"Headache"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"COX-1"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">relation_to_id</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"treats"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"inhibits"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">retriever</span> <span class="o">=</span> <span class="n">KGEntityRetriever</span><span class="p">(</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">entity_to_id</span><span class="o">=</span><span class="n">entity_to_id</span><span class="p">,</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">relation_to_id</span><span class="o">=</span><span class="n">relation_to_id</span><span class="p">,</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">edge_index</span><span class="o">=</span><span class="n">edge_index</span><span class="p">,</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">edge_type</span><span class="o">=</span><span class="n">edge_type</span><span class="p">,</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">)</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># Extract entities mentioned in free-form text query</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="n">matched_entities</span> <span class="o">=</span> <span class="n">retriever</span><span class="o">.</span><span class="n">find_entities_in_text</span><span class="p">(</span><span class="s2">"What treats Headache?"</span><span class="p">)</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="nb">print</span><span class="p">(</span><span class="n">matched_entities</span><span class="p">)</span>  <span class="c1"># ['Headache']</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="c1"># Retrieve multi-hop neighborhood</span>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="n">subgraph</span> <span class="o">=</span> <span class="n">retriever</span><span class="o">.</span><span class="n">retrieve_subgraph</span><span class="p">(</span><span class="n">matched_entities</span><span class="p">,</span> <span class="n">num_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</span></code></pre></div></p>
+<hr />
+<h2 id="2-graph-verbalization-prompt-formatting">2. Graph Verbalization &amp; Prompt Formatting</h2>
+<h3 id="verbalize_subgraph">verbalize_subgraph</h3>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="k3_node.rag.verbalize_subgraph" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">k3_node</span><span class="o">.</span><span class="n">rag</span><span class="o">.</span><span class="n">verbalize_subgraph</span><span class="p">(</span><span class="n">subgraph</span><span class="p">,</span> <span class="n">id_to_entity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">id_to_relation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">format_style</span><span class="o">=</span><span class="s1">'markdown'</span><span class="p">,</span> <span class="n">max_triples</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Verbalize an extracted subgraph into textual knowledge for LLM prompt augmentation.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>subgraph</code>
+            </td>
+            <td>
+                  <code><span title="k3_node.rag.subgraph.SubgraphResult">SubgraphResult</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Extracted SubgraphResult around retrieved entities.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>id_to_entity</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="str">str</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional dictionary mapping node ID to entity name.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>id_to_relation</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="str">str</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional dictionary mapping relation ID to relation name.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>format_style</code>
+            </td>
+            <td>
+                  <code><span title="typing.Literal">Literal</span>[&#39;triples&#39;, &#39;markdown&#39;, &#39;natural&#39;]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <ul>
+<li><code>"triples"</code>: List of <code>(Head, Relation, Tail)</code> text triples.</li>
+<li><code>"markdown"</code>: Markdown bullet list with facts.</li>
+<li><code>"natural"</code>: Natural language sentences (<code>"Head relation Tail."</code>).</li>
+</ul>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;markdown&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_triples</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum number of facts to include in the context.</p>
+              </div>
+            </td>
+            <td>
+                  <code>50</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Formatted textual context string ready to be injected into an LLM prompt.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><p><strong>Usage Example:</strong>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.rag</span><span class="w"> </span><span class="kn">import</span> <span class="n">verbalize_subgraph</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># Markdown format</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">markdown_context</span> <span class="o">=</span> <span class="n">verbalize_subgraph</span><span class="p">(</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">subgraph</span><span class="p">,</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">id_to_entity</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">"Aspirin"</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s2">"Headache"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"COX-1"</span><span class="p">},</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">id_to_relation</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">"treats"</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s2">"inhibits"</span><span class="p">},</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">format_style</span><span class="o">=</span><span class="s2">"markdown"</span><span class="p">,</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">)</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">markdown_context</span><span class="p">)</span>
+</span></code></pre></div></p>
+<hr />
+<h3 id="format_llm_prompt">format_llm_prompt</h3>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="k3_node.rag.format_llm_prompt" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">k3_node</span><span class="o">.</span><span class="n">rag</span><span class="o">.</span><span class="n">format_llm_prompt</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">system_prompt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_family</span><span class="o">=</span><span class="s1">'llama3'</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Format query and retrieved KG context into prompt templates for LLMs.</p>
+<p>Supported model families include:
+- <code>"llama3"</code>: Meta Llama 3 / 3.1 instruct template.
+- <code>"mistral"</code>: Mistral / Mixtral instruct template.
+- <code>"chatml"</code>: OpenAI / Qwen ChatML template.
+- <code>"standard"</code>: General markdown system/user format.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>query</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The user's input question or instruction.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The verbalized knowledge graph context.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>system_prompt</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional system prompt to instruct the LLM.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>model_family</code>
+            </td>
+            <td>
+                  <code><span title="typing.Literal">Literal</span>[&#39;llama3&#39;, &#39;mistral&#39;, &#39;chatml&#39;, &#39;standard&#39;]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Target model prompt format. (default: "llama3")</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;llama3&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Formatted prompt string.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><p><strong>Usage Example:</strong>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.rag</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_llm_prompt</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Llama 3 prompt formatting</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">prompt</span> <span class="o">=</span> <span class="n">format_llm_prompt</span><span class="p">(</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">query</span><span class="o">=</span><span class="s2">"How does Aspirin treat Headache?"</span><span class="p">,</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">context</span><span class="o">=</span><span class="n">markdown_context</span><span class="p">,</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">model_family</span><span class="o">=</span><span class="s2">"llama3"</span><span class="p">,</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">)</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+</span></code></pre></div></p>
+<hr />
+<h2 id="3-subgraph-gnn-kge-encoders">3. Subgraph GNN &amp; KGE Encoders</h2>
+<h3 id="rgcnsubgraphencoder">RGCNSubGraphEncoder</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="k3_node.rag.RGCNSubGraphEncoder" class="doc doc-heading">
+            <code>k3_node.rag.RGCNSubGraphEncoder</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="keras.Model">Model</span></code></p>
+
+
+
+        <p>Relational Graph Convolutional Network (RGCN) encoder for multi-relational subgraphs.</p>
+<p>Processes subgraphs extracted from Knowledge Graphs with multiple relation types,
+updating entity representations through relational message passing and pooling them
+into a dense graph embedding.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>in_channels</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dimensionality of input node features.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>hidden_channels</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Hidden representation dimension.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>out_channels</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Output graph embedding dimension.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_relations</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Total number of relation types in the Knowledge Graph.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_layers</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of RGCN message passing layers. (default: 2)</p>
+              </div>
+            </td>
+            <td>
+                  <code>2</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_bases</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional number of basis decomposition components for relation weights.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pooling</code>
+            </td>
+            <td>
+                  <code><span title="typing.Literal">Literal</span>[&#39;mean&#39;, &#39;sum&#39;, &#39;max&#39;, &#39;center&#39;, &#39;none&#39;]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Readout pooling strategy across subgraph nodes:
+- <code>"mean"</code>: Global average over all subgraph nodes.
+- <code>"sum"</code>: Global sum over all subgraph nodes.
+- <code>"max"</code>: Global maximum over all subgraph nodes.
+- <code>"center"</code>: Pool only the retrieved center seed entities.
+- <code>"none"</code>: Return all node embeddings without pooling.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;mean&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dropout</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dropout rate applied between convolution layers. (default: 0.0)</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.RGCNSubGraphEncoder.call" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">edge_index</span><span class="p">,</span> <span class="n">edge_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">center_nodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Forward pass encoding the subgraph into a graph embedding.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Node feature tensor of shape <code>(num_nodes, in_channels)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_index</code>
+            </td>
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Graph edge indices of shape <code>(2, num_edges)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_type</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="any">any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>1D tensor of relation IDs for each edge <code>(num_edges,)</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>center_nodes</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="any">any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional 1D tensor of seed entity indices in the subgraph.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>training</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether running in training mode.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tensor of shape <code>(1, out_channels)</code> (or <code>(num_nodes, out_channels)</code> if <code>pooling="none"</code>).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.RGCNSubGraphEncoder.encode_subgraph" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">encode_subgraph</span><span class="p">(</span><span class="n">subgraph</span><span class="p">,</span> <span class="n">default_x_dim</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Helper to encode a SubgraphResult directly.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><p><strong>Usage Example:</strong>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.rag</span><span class="w"> </span><span class="kn">import</span> <span class="n">RGCNSubGraphEncoder</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">encoder</span> <span class="o">=</span> <span class="n">RGCNSubGraphEncoder</span><span class="p">(</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">in_channels</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">hidden_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">num_relations</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">num_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">pooling</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">)</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1"># Encode subgraph</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="n">emb</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode_subgraph</span><span class="p">(</span><span class="n">subgraph</span><span class="p">)</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="nb">print</span><span class="p">(</span><span class="s2">"Graph representation shape:"</span><span class="p">,</span> <span class="n">emb</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (1, 64)</span>
+</span></code></pre></div></p>
+<hr />
+<h3 id="transeprefixencoder">TransEPrefixEncoder</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="k3_node.rag.TransEPrefixEncoder" class="doc doc-heading">
+            <code>k3_node.rag.TransEPrefixEncoder</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="keras.Model">Model</span></code></p>
+
+
+
+        <p>Knowledge Graph Embedding (KGE) prefix encoder using TransE representations.</p>
+<p>Uses pretrained or end-to-end entity and relation embeddings from TransE (<span class="arithmatex">\(h + r \approx t\)</span>)
+to encode extracted knowledge subgraphs into a unified dense embedding vector.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_nodes</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Total number of entities in the knowledge graph.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_relations</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Total number of relation types.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>embedding_dim</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dimension of entity and relation embeddings. (default: 64)</p>
+              </div>
+            </td>
+            <td>
+                  <code>64</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>out_channels</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Output projected graph embedding dimension. (default: 128)</p>
+              </div>
+            </td>
+            <td>
+                  <code>128</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>kge_model</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" title="k3_node.layers.kge.KGEModel" href="../kge/#k3_node.layers.kge.KGEModel">KGEModel</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional pretrained <code>KGEModel</code> (e.g. <code>TransE</code>). If provided,
+its embeddings are reused.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pooling</code>
+            </td>
+            <td>
+                  <code><span title="typing.Literal">Literal</span>[&#39;mean&#39;, &#39;sum&#39;, &#39;center&#39;]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Readout pooling strategy across entities (<code>"mean"</code>, <code>"center"</code>, <code>"sum"</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;mean&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.TransEPrefixEncoder.call" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">subgraph_nodes</span><span class="p">,</span> <span class="n">edge_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">edge_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">center_nodes</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Encode a set of subgraph entities and relations into a dense embedding.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>subgraph_nodes</code>
+            </td>
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>1D tensor of original entity IDs in the subgraph <code>(num_nodes,)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_index</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="any">any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional edge index tensor <code>(2, num_edges)</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_type</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="any">any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional relation type tensor <code>(num_edges,)</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>center_nodes</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="any">any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional indices of seed entities within <code>subgraph_nodes</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dense embedding tensor of shape <code>(1, out_channels)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.TransEPrefixEncoder.encode_subgraph" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">encode_subgraph</span><span class="p">(</span><span class="n">subgraph</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Helper to encode a SubgraphResult directly.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><p><strong>Usage Example:</strong>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.rag</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransEPrefixEncoder</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.layers.kge</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransE</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Option A: reuse a pretrained TransE model</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">transe</span> <span class="o">=</span> <span class="n">TransE</span><span class="p">(</span><span class="n">num_nodes</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">num_relations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">encoder</span> <span class="o">=</span> <span class="n">TransEPrefixEncoder</span><span class="p">(</span><span class="n">kge_model</span><span class="o">=</span><span class="n">transe</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># Option B: standalone encoder</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">encoder</span> <span class="o">=</span> <span class="n">TransEPrefixEncoder</span><span class="p">(</span><span class="n">num_nodes</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">num_relations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">emb</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode_subgraph</span><span class="p">(</span><span class="n">subgraph</span><span class="p">)</span>
+</span></code></pre></div></p>
+<hr />
+<h2 id="4-connectors-virtual-prefix-projectors">4. Connectors &amp; Virtual Prefix Projectors</h2>
+<h3 id="graphprefixprojector">GraphPrefixProjector</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="k3_node.rag.GraphPrefixProjector" class="doc doc-heading">
+            <code>k3_node.rag.GraphPrefixProjector</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="keras.layers.Layer">Layer</span></code></p>
+
+
+
+        <p>Projects graph/KGE representations into virtual prefix vectors for LLM prompt augmentation.</p>
+<p>Maps a graph embedding vector of shape <code>(batch_size, in_channels)</code> into <code>num_prefix_tokens</code>
+virtual token embeddings of dimension <code>llm_dim</code> (e.g. 4096 for Llama 3 / Mistral),
+suitable for prepending to text token embeddings in LLM forward passes.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>in_channels</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Input graph feature dimension from the GNN/KGE encoder.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>llm_dim</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Embedding dimension of the target LLM (e.g., 4096 for Llama-3-8B / Mistral-7B,
+2048 for Gemma-2B). (default: 4096)</p>
+              </div>
+            </td>
+            <td>
+                  <code>4096</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_prefix_tokens</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of virtual prefix tokens to produce. (default: 8)</p>
+              </div>
+            </td>
+            <td>
+                  <code>8</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>projector_type</code>
+            </td>
+            <td>
+                  <code><span title="typing.Literal">Literal</span>[&#39;mlp&#39;, &#39;linear&#39;]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Architecture of the projection head:
+- <code>"mlp"</code>: 2-layer MLP with LayerNorm and GELU activation.
+- <code>"linear"</code>: Single linear transformation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;mlp&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>hidden_dim</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional hidden dimension for MLP projector. (default: <code>2 * in_channels</code>)</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dropout</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dropout probability. (default: 0.0)</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.GraphPrefixProjector.call" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="n">graph_embedding</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Project graph embedding into soft prefix token embeddings.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>graph_embedding</code>
+            </td>
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tensor of shape <code>(batch_size, in_channels)</code> or <code>(in_channels,)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Prefix tensor of shape <code>(batch_size, num_prefix_tokens, llm_dim)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><p><strong>Usage Example:</strong>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">keras</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.rag</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphPrefixProjector</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">projector</span> <span class="o">=</span> <span class="n">GraphPrefixProjector</span><span class="p">(</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">in_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">llm_dim</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>           <span class="c1"># Llama 3 / Mistral embedding dimension</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">num_prefix_tokens</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>    <span class="c1"># Number of soft prefix tokens</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">projector_type</span><span class="o">=</span><span class="s2">"mlp"</span><span class="p">,</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="p">)</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">graph_embedding</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">prefix_tokens</span> <span class="o">=</span> <span class="n">projector</span><span class="p">(</span><span class="n">graph_embedding</span><span class="p">)</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">prefix_tokens</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (1, 8, 4096)</span>
+</span></code></pre></div></p>
+<hr />
+<h3 id="kgllmconnector">KGLLMConnector</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="k3_node.rag.KGLLMConnector" class="doc doc-heading">
+            <code>k3_node.rag.KGLLMConnector</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="keras.Model">Model</span></code></p>
+
+
+
+        <p>High-level Knowledge Graph to Large Language Model (KG-LLM) Connector.</p>
+<p>Connects a Knowledge Graph encoder (e.g. <code>RGCNSubGraphEncoder</code> or <code>TransEPrefixEncoder</code>)
+with a <code>GraphPrefixProjector</code> to produce soft prompt prefix embeddings and inject them
+into Llama 3, Mistral, or other LLMs.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.rag</span><span class="w"> </span><span class="kn">import</span> <span class="n">RGCNSubGraphEncoder</span><span class="p">,</span> <span class="n">GraphPrefixProjector</span><span class="p">,</span> <span class="n">KGLLMConnector</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">encoder</span> <span class="o">=</span> <span class="n">RGCNSubGraphEncoder</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">num_relations</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">projector</span> <span class="o">=</span> <span class="n">GraphPrefixProjector</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">llm_dim</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span> <span class="n">num_prefix_tokens</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">connector</span> <span class="o">=</span> <span class="n">KGLLMConnector</span><span class="p">(</span><span class="n">encoder</span><span class="o">=</span><span class="n">encoder</span><span class="p">,</span> <span class="n">projector</span><span class="o">=</span><span class="n">projector</span><span class="p">)</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Generate prefix embeddings for LLM prompt augmentation</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">prefix_embeds</span> <span class="o">=</span> <span class="n">connector</span><span class="o">.</span><span class="n">encode_subgraph</span><span class="p">(</span><span class="n">subgraph</span><span class="p">)</span>  <span class="c1"># [1, 4, 4096]</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Inject into LLM input embeddings [batch, seq_len, 4096]</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">augmented_inputs</span> <span class="o">=</span> <span class="n">connector</span><span class="o">.</span><span class="n">inject_prefix</span><span class="p">(</span><span class="n">text_token_embeds</span><span class="p">,</span> <span class="n">prefix_embeds</span><span class="p">)</span>
+</span></code></pre></div>
+</details>
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>encoder</code>
+            </td>
+            <td>
+                  <code><span title="keras.layers.Layer">Layer</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Graph or KGE encoder (e.g., <code>RGCNSubGraphEncoder</code>, <code>TransEPrefixEncoder</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>projector</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="k3_node.rag.GraphPrefixProjector (k3_node.rag.projector.GraphPrefixProjector)" href="#k3_node.rag.GraphPrefixProjector">GraphPrefixProjector</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>GraphPrefixProjector</code> instance.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.KGLLMConnector.call" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">call</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Encode graph inputs and project directly into LLM prefix tokens.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.KGLLMConnector.encode_subgraph" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">encode_subgraph</span><span class="p">(</span><span class="n">subgraph</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Encode an extracted SubgraphResult into LLM prefix tokens.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tensor of shape <code>(1, num_prefix_tokens, llm_dim)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.KGLLMConnector.extend_attention_mask" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">extend_attention_mask</span><span class="p">(</span><span class="n">attention_mask</span><span class="p">,</span> <span class="n">num_prefix_tokens</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Extend LLM binary attention mask with 1s for the prepended prefix tokens.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>attention_mask</code>
+            </td>
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tensor of shape <code>(batch, seq_len)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_prefix_tokens</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of prefix tokens prepended.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Extended mask of shape <code>(batch, num_prefix_tokens + seq_len)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.KGLLMConnector.inject_prefix" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">inject_prefix</span><span class="p">(</span><span class="n">text_embeddings</span><span class="p">,</span> <span class="n">prefix_embeddings</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Prepend graph prefix embeddings to text token embeddings along sequence dimension.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>text_embeddings</code>
+            </td>
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tensor of shape <code>(batch, seq_len, llm_dim)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>prefix_embeddings</code>
+            </td>
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tensor of shape <code>(batch, num_prefix_tokens, llm_dim)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Concatenated tensor of shape <code>(batch, num_prefix_tokens + seq_len, llm_dim)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><p><strong>Usage Example:</strong>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">keras</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.rag</span><span class="w"> </span><span class="kn">import</span> <span class="n">RGCNSubGraphEncoder</span><span class="p">,</span> <span class="n">GraphPrefixProjector</span><span class="p">,</span> <span class="n">KGLLMConnector</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">encoder</span> <span class="o">=</span> <span class="n">RGCNSubGraphEncoder</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">hidden_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">num_relations</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">projector</span> <span class="o">=</span> <span class="n">GraphPrefixProjector</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">llm_dim</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span> <span class="n">num_prefix_tokens</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">connector</span> <span class="o">=</span> <span class="n">KGLLMConnector</span><span class="p">(</span><span class="n">encoder</span><span class="o">=</span><span class="n">encoder</span><span class="p">,</span> <span class="n">projector</span><span class="o">=</span><span class="n">projector</span><span class="p">)</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1"># Encode extracted subgraph directly into LLM prefix tokens</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="n">prefix_embeds</span> <span class="o">=</span> <span class="n">connector</span><span class="o">.</span><span class="n">encode_subgraph</span><span class="p">(</span><span class="n">subgraph</span><span class="p">)</span>  <span class="c1"># [1, 4, 4096]</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="c1"># Inject prefix into LLM text token embeddings</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">text_token_embeds</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">4096</span><span class="p">))</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="n">augmented_embeds</span> <span class="o">=</span> <span class="n">connector</span><span class="o">.</span><span class="n">inject_prefix</span><span class="p">(</span><span class="n">text_token_embeds</span><span class="p">,</span> <span class="n">prefix_embeds</span><span class="p">)</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="nb">print</span><span class="p">(</span><span class="n">augmented_embeds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (1, 19, 4096)</span>
+</span></code></pre></div></p>
+<hr />
+<h2 id="5-unified-end-to-end-pipeline">5. Unified End-to-End Pipeline</h2>
+<h3 id="graphrag">GraphRAG</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="k3_node.rag.GraphRAG" class="doc doc-heading">
+            <code>k3_node.rag.GraphRAG</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>End-to-End Graph-Augmented Generation (GraphRAG) Pipeline for Knowledge Graphs.</p>
+<p>Provides a unified API for:
+1. Extracting subgraphs around query entities.
+2. Verbalizing structured facts into markdown or natural language prompts for Llama 3 / Mistral.
+3. Projecting GNN (RGCN) or KGE (TransE) embeddings into dense prefix vectors for soft prompt augmentation.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">k3_node</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">k3</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.rag</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphRAG</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Setup GraphRAG with your knowledge graph</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">rag</span> <span class="o">=</span> <span class="n">GraphRAG</span><span class="p">(</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">edge_index</span><span class="o">=</span><span class="n">edge_index</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">edge_type</span><span class="o">=</span><span class="n">edge_type</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">entity_to_id</span><span class="o">=</span><span class="p">{</span><span class="s2">"Aspirin"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"Headache"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"COX-1"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">relation_to_id</span><span class="o">=</span><span class="p">{</span><span class="s2">"treats"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"inhibits"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">llm_dim</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>  <span class="c1"># Llama 3 / Mistral embedding dimension</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">num_prefix_tokens</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># 1. Text-based GraphRAG prompt generation</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">prompt</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">build_prompt</span><span class="p">(</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">query</span><span class="o">=</span><span class="s2">"How does Aspirin alleviate headache?"</span><span class="p">,</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="n">entities</span><span class="o">=</span><span class="p">[</span><span class="s2">"Aspirin"</span><span class="p">,</span> <span class="s2">"Headache"</span><span class="p">],</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="n">model_family</span><span class="o">=</span><span class="s2">"llama3"</span><span class="p">,</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="p">)</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="c1"># 2. Dense Prefix Vector encoding</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="n">subgraph</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">retrieve</span><span class="p">([</span><span class="s2">"Aspirin"</span><span class="p">],</span> <span class="n">num_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="n">prefix_embeds</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">encode_prefix</span><span class="p">(</span><span class="n">subgraph</span><span class="p">)</span>  <span class="c1"># [1, 4, 4096]</span>
+</span></code></pre></div>
+</details>
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_index</code>
+            </td>
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Graph connectivity tensor of shape <code>(2, num_edges)</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>edge_type</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="any">any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional relation IDs tensor of shape <code>(num_edges,)</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>entity_to_id</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="int">int</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dictionary mapping entity strings to node IDs.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>relation_to_id</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="int">int</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional dictionary mapping relation strings to relation IDs.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>x</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="any">any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional node feature tensor.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_relations</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional total number of relation types.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>encoder_type</code>
+            </td>
+            <td>
+                  <code><span title="typing.Literal">Literal</span>[&#39;rgcn&#39;, &#39;transe&#39;, &#39;none&#39;]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Subgraph encoder architecture (<code>"rgcn"</code>, <code>"transe"</code>, or a custom encoder).</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;rgcn&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>hidden_dim</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Hidden dimension for GNN/KGE encoder. (default: 64)</p>
+              </div>
+            </td>
+            <td>
+                  <code>64</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>encoder_out_dim</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Output dimension of graph encoder before LLM projection. (default: 128)</p>
+              </div>
+            </td>
+            <td>
+                  <code>128</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>llm_dim</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Target LLM embedding dimension (e.g. 4096 for Llama 3 / Mistral). (default: 4096)</p>
+              </div>
+            </td>
+            <td>
+                  <code>4096</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_prefix_tokens</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of virtual prefix tokens to generate. (default: 8)</p>
+              </div>
+            </td>
+            <td>
+                  <code>8</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.GraphRAG.build_prompt" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">build_prompt</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">entities</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">format_style</span><span class="o">=</span><span class="s1">'markdown'</span><span class="p">,</span> <span class="n">model_family</span><span class="o">=</span><span class="s1">'llama3'</span><span class="p">,</span> <span class="n">system_prompt</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>End-to-end prompt builder: extracts subgraph and formats full LLM prompt.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.GraphRAG.encode_prefix" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">encode_prefix</span><span class="p">(</span><span class="n">subgraph</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Encode extracted subgraph into LLM prefix embeddings.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="any">any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tensor of shape <code>(1, num_prefix_tokens, llm_dim)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.GraphRAG.retrieve" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">retrieve</span><span class="p">(</span><span class="n">entities</span><span class="p">,</span> <span class="n">num_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_nodes_per_hop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve multi-hop subgraph around specified entities.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="k3_node.rag.GraphRAG.verbalize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">verbalize</span><span class="p">(</span><span class="n">subgraph</span><span class="p">,</span> <span class="n">format_style</span><span class="o">=</span><span class="s1">'markdown'</span><span class="p">,</span> <span class="n">max_triples</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Verbalize extracted subgraph into text knowledge for LLM prompt context.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><p><strong>Usage Example:</strong>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">k3_node.rag</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphRAG</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">rag</span> <span class="o">=</span> <span class="n">GraphRAG</span><span class="p">(</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">edge_index</span><span class="o">=</span><span class="n">edge_index</span><span class="p">,</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">edge_type</span><span class="o">=</span><span class="n">edge_type</span><span class="p">,</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">entity_to_id</span><span class="o">=</span><span class="p">{</span><span class="s2">"Aspirin"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"Headache"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"COX-1"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">relation_to_id</span><span class="o">=</span><span class="p">{</span><span class="s2">"treats"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"inhibits"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">llm_dim</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">num_prefix_tokens</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="p">)</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="c1"># Text-based GraphRAG prompt</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="n">prompt</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">build_prompt</span><span class="p">(</span><span class="s2">"What does Aspirin treat?"</span><span class="p">,</span> <span class="n">model_family</span><span class="o">=</span><span class="s2">"llama3"</span><span class="p">)</span>
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
+</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="c1"># Soft prompt prefix encoding</span>
+</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="n">subgraph</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">retrieve</span><span class="p">([</span><span class="s2">"Aspirin"</span><span class="p">],</span> <span class="n">num_hops</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="n">prefix_embeds</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">encode_prefix</span><span class="p">(</span><span class="n">subgraph</span><span class="p">)</span>  <span class="c1"># (1, 4, 4096)</span>
+</span></code></pre></div></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "toc.integrate", "header.autohide", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
