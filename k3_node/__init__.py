@@ -6,18 +6,15 @@ or JAX.
 To install the package, run:
     
 ```bash
-git clone https://github.com/anas-rz/k3-node.git # bash
+pip install k3-node
 ```
         
 ```python
 # in your code
-import sys
-sys.path.append('k3-node')
-
 import os
 os.environ['KERAS_BACKEND'] = 'tensorflow' # or 'torch' or 'jax'
 
-from k3_node import ...
+import k3_node as k3
 ```
 """
 __version__ = "1.0.0"

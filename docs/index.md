@@ -42,12 +42,11 @@ K3 Node brings together the comprehensive GNN operator coverage of **PyTorch Geo
 ## 🚀 Quick Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/anas-rz/k3-node.git
-cd k3-node
+# Install via pip
+pip install k3-node
 
-# Install in editable mode
-pip install -e .
+# Or install with extras for examples and domain applications
+pip install k3-node[examples]
 ```
 
 Select your backend of choice via an environment variable:

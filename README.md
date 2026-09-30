@@ -42,11 +42,11 @@ K3-Node achieves **100% public API parity** with [PyTorch Geometric (PyG)](https
 ## Installation
 
 ```bash
-# git should be installed
-pip install git+https://github.com/anas-rz/k3-node/
+# Install core package
+pip install k3-node
 
-# with the extra packages the example notebooks use (scikit-learn, rdflib, matplotlib)
-pip install "k3-node[examples] @ git+https://github.com/anas-rz/k3-node"
+# With extra packages used in example notebooks (scikit-learn, rdflib, matplotlib)
+pip install k3-node[examples]
 ```
 
 ### Selecting your Backend

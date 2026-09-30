@@ -1240,7 +1240,7 @@ def create_colab_notebook(stem: str, pyg_code: str) -> dict:
     setup_code = (
         "# Setup environment and install dependencies\n"
         "!pip install -q torch_geometric\n"
-        "!pip install git+http://github.com/anas-rz/k3-node/@examples-check\n\n"
+        "!pip install k3-node[examples]\n\n"
         "print('Dependencies installed and environment ready!')"
     )
 
