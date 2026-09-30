@@ -18,7 +18,8 @@ import os
 os.environ["KERAS_BACKEND"] = "torch"
 import numpy as np
 import torch
-from keras import ops
+import pytest
+pytest.importorskip("torch_cluster")
 from torch_cluster import knn as pyg_knn_ext
 from torch_geometric.utils import scatter as pyg_scatter
 

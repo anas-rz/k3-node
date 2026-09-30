@@ -21,6 +21,7 @@ def _graph(n=40):
 
 
 def test_ppr_matches_pyg_algorithm():
+    pytest.importorskip("numba")
     _, ei = _graph()
     n = 40
     rowptr = np.concatenate([[0], np.cumsum(np.bincount(ei[0], minlength=n))])

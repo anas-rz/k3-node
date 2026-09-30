@@ -86,12 +86,14 @@ nav:
       - Tabular-to-Graph ETL: api/etl.md
       - Hugging Face Hub: api/hub.md
       - Model Export & Runtimes: api/export.md
+      - GraphRAG & KG-LLM: api/rag.md
       - Graph Utilities & Ops: api/ops.md
   - Guides:
       - High-Level Task APIs: guides/tasks.md
       - Tabular-to-Graph ETL: guides/etl.md
       - Hugging Face Hub: guides/huggingface_hub.md
       - Model Export & Serving: guides/export_and_serving.md
+      - GraphRAG & LLM Augmentation: guides/graphrag_llm.md
       - Fine-Tuning Recipes: guides/finetuning.md
   - Porting Checklist: checklist.md
 

@@ -75,6 +75,9 @@ from k3_node.export import (
     TFLiteModel,
 )
 
+from k3_node import rag
+from k3_node.layers import kge
+
 __all__ = [
     "data",
     "Data",
@@ -112,5 +115,7 @@ __all__ = [
     "generate_triton_config",
     "ONNXModel",
     "TFLiteModel",
+    "rag",
+    "kge",
 ]
 

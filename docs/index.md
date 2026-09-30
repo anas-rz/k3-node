@@ -34,6 +34,7 @@ K3 Node brings together the comprehensive GNN operator coverage of **PyTorch Geo
   - **GraphGPS**: General Powerful Scalable Graph Transformer with RWSE positional encodings.
   - **GROVER**: Dual-track molecular message-passing transformer for molecular representation learning.
   - **Mole-BERT**: Self-supervised GNN foundation model with categorical bond and atom embeddings.
+- **GraphRAG & KG-LLM Connectors**: Multi-hop subgraph extraction around retrieved entities, GNN/KGE soft prefix encoding, and plug-and-play connectors for Meta Llama 3 and Mistral.
 - **Data & Loader Pipeline**: Flexible graph containers (`Data`, `HeteroData`, `Batch`, `TemporalData`, `HypergraphData`), neighbor loaders, and transform pipelines.
 
 ---
