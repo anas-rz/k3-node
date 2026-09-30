@@ -20,6 +20,7 @@ os.environ['KERAS_BACKEND'] = 'tensorflow' # or 'torch' or 'jax'
 from k3_node import ...
 ```
 """
+__version__ = "1.0.0"
 
 import warnings
 
